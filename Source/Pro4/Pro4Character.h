@@ -62,10 +62,7 @@ protected:
 	void TouchStopped(ETouchIndex::Type FingerIndex, FVector Location);
 
 	/* 플레이어가 줌 했을 때 실행되는 함수 */
-	void ZoomOn();
-
-	/* 플레이어가 줌 아웃 했을 때 실행되는 함수*/
-	void ZoomOut();
+	void Zoom();
 
 protected:
 	// APawn interface

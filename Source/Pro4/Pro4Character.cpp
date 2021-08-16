@@ -46,6 +46,9 @@ APro4Character::APro4Character()
 	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
 	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
 
+	// SkeletalmeshComponent
+	GetMesh()->SetOwnerNoSee(false);
+
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
 
@@ -55,17 +58,23 @@ APro4Character::APro4Character()
 void APro4Character::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 
-	/*if (isZoom == 0) {
-		if (CameraBoom->TargetArmLength >= 1.0f)
+	if (isZoom == 0) {
+		if (CameraBoom->TargetArmLength > 1.0f)
 		{
 			CameraBoom->TargetArmLength -= 20.0f;
 		}
+		else {
+			CameraBoom->TargetArmLength = 0.0f;
+		}
 	}else if (isZoom == 1) {
-		if (CameraBoom->TargetArmLength <= 300.0f)
+		if (CameraBoom->TargetArmLength < 300.0f)
 		{
 			CameraBoom->TargetArmLength += 20.0f;
 		}
-	}*/
+		else {
+			CameraBoom->TargetArmLength = 300.0f;
+		}
+	}
 
 }
 
@@ -97,8 +106,7 @@ void APro4Character::SetupPlayerInputComponent(class UInputComponent* PlayerInpu
 	// VR headset functionality
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &APro4Character::OnResetVR);
 
-	PlayerInputComponent->BindAction("Zoom", IE_Pressed, this, &APro4Character::ZoomOn);
-	PlayerInputComponent->BindAction("Zoom", IE_Released, this, &APro4Character::ZoomOut);
+	PlayerInputComponent->BindAction("Zoom", IE_Pressed, this, &APro4Character::Zoom);
 }
 
 
@@ -164,13 +172,14 @@ void APro4Character::MoveRight(float Value)
 	}
 }
 
-void APro4Character::ZoomOn() 
+void APro4Character::Zoom() 
 {
-
-	isZoom = 0;
-}
-
-void APro4Character::ZoomOut() 
-{
-	isZoom = 1;
+	if (isZoom == 0) {
+		isZoom = 1;
+		GetMesh()->SetOwnerNoSee(false);
+	}
+	else {
+		isZoom = 0;
+		GetMesh()->SetOwnerNoSee(true);
+	}
 }
