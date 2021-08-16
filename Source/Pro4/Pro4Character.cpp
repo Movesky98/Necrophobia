@@ -14,6 +14,8 @@
 
 APro4Character::APro4Character()
 {
+	PrimaryActorTick.bCanEverTick = true;
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
 
@@ -37,6 +39,7 @@ APro4Character::APro4Character()
 	CameraBoom->SetupAttachment(RootComponent);
 	CameraBoom->TargetArmLength = 300.0f; // The camera follows at this distance behind the character	
 	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
+	CameraBoom->ProbeSize = 12.0f;
 
 	// Create a follow camera
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
@@ -45,6 +48,25 @@ APro4Character::APro4Character()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
+
+	isZoom = 1;
+}
+
+void APro4Character::Tick(float DeltaTime) {
+	Super::Tick(DeltaTime);
+
+	/*if (isZoom == 0) {
+		if (CameraBoom->TargetArmLength >= 1.0f)
+		{
+			CameraBoom->TargetArmLength -= 20.0f;
+		}
+	}else if (isZoom == 1) {
+		if (CameraBoom->TargetArmLength <= 300.0f)
+		{
+			CameraBoom->TargetArmLength += 20.0f;
+		}
+	}*/
+
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -74,6 +96,9 @@ void APro4Character::SetupPlayerInputComponent(class UInputComponent* PlayerInpu
 
 	// VR headset functionality
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &APro4Character::OnResetVR);
+
+	PlayerInputComponent->BindAction("Zoom", IE_Pressed, this, &APro4Character::ZoomOn);
+	PlayerInputComponent->BindAction("Zoom", IE_Released, this, &APro4Character::ZoomOut);
 }
 
 
@@ -137,4 +162,15 @@ void APro4Character::MoveRight(float Value)
 		// add movement in that direction
 		AddMovementInput(Direction, Value);
 	}
+}
+
+void APro4Character::ZoomOn() 
+{
+
+	isZoom = 0;
+}
+
+void APro4Character::ZoomOut() 
+{
+	isZoom = 1;
 }

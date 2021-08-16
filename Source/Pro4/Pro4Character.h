@@ -29,6 +29,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
 	float BaseLookUpRate;
 
+	UPROPERTY(VIsibleAnywhere, BlueprintReadOnly, Category = Camera)
+	int isZoom;
+
 protected:
 
 	/** Resets HMD orientation in VR. */
@@ -58,12 +61,20 @@ protected:
 	/** Handler for when a touch input stops. */
 	void TouchStopped(ETouchIndex::Type FingerIndex, FVector Location);
 
+	/* 플레이어가 줌 했을 때 실행되는 함수 */
+	void ZoomOn();
+
+	/* 플레이어가 줌 아웃 했을 때 실행되는 함수*/
+	void ZoomOut();
+
 protected:
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	// End of APawn interface
 
 public:
+	virtual void Tick(float DeltaTime) override;
+
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
 	/** Returns FollowCamera subobject **/
