@@ -29,7 +29,7 @@ AProjectile::AProjectile()
 void AProjectile::BeginPlay()
 {
 	Super::BeginPlay();
-	InitialLifeSpan = 3.0f;
+	// InitialLifeSpan = 3000.0f;
 }
 
 // Called every frame

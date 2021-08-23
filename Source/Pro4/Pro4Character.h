@@ -18,6 +18,15 @@ class APro4Character : public ACharacter
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* FollowCamera;
+
+	/* Gun */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Gun, meta = (AllowPrivateAccess = "true"))
+	class UStaticMeshComponent* GunMesh;
+
+	/* Projectile */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Projectile, meta = (AllowPrivateAccess = "true"))
+	TSubclassOf<class AProjectile> Projectile;
+	
 public:
 	APro4Character();
 
@@ -63,6 +72,10 @@ protected:
 
 	/* 플레이어가 줌 했을 때 실행되는 함수 */
 	void Zoom();
+
+	/* 사격할 때 실행되는 함수 */
+	void Fire();
+
 
 protected:
 	// APawn interface
