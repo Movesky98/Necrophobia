@@ -8,6 +8,8 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Projectile.h"
 
 //////////////////////////////////////////////////////////////////////////
 // APro4Character
@@ -31,8 +33,9 @@ APro4Character::APro4Character()
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
-	GetCharacterMovement()->JumpZVelocity = 600.f;
+	GetCharacterMovement()->JumpZVelocity = 950.f;
 	GetCharacterMovement()->AirControl = 0.2f;
+	GetCharacterMovement()->GravityScale = 3.5f;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -48,6 +51,13 @@ APro4Character::APro4Character()
 
 	// SkeletalmeshComponent
 	GetMesh()->SetOwnerNoSee(false);
+
+	// Gun StaticMeshComponent
+	GunMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Gun"));
+	GunMesh->SetupAttachment(GetMesh());
+	GunMesh->SetRelativeLocation(FVector(-10.0f, 50.0f, 140.0f));
+	GunMesh->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
+	GunMesh->SetRelativeScale3D(FVector(50.0f, 50.0f, 50.0f));
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
@@ -90,6 +100,8 @@ void APro4Character::SetupPlayerInputComponent(class UInputComponent* PlayerInpu
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &APro4Character::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &APro4Character::MoveRight);
+
+	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &APro4Character::Fire);
 
 	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
 	// "turn" handles devices that provide an absolute delta, such as a mouse.
@@ -181,5 +193,42 @@ void APro4Character::Zoom()
 	else {
 		isZoom = 0;
 		GetMesh()->SetOwnerNoSee(true);
+	}
+}
+
+void APro4Character::Fire() {
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Mouse Left Button is Pressed"));
+	// Projectile이 있을 때에만 시도
+	if (Projectile) {
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Projectile is not NULL"));
+		FVector MuzzleLocation;
+		FRotator MuzzleRotation;
+
+
+
+		MuzzleLocation = GunMesh->GetComponentLocation() + FVector(0.0f, 0.0f, 5.0f);
+		MuzzleRotation = GunMesh->GetComponentRotation() + FRotator(0.0f, 180.0f, 0.0f);
+
+		UWorld* World = GetWorld();
+		if (World)
+		{
+			// SpawnActor 함수에 전달된 선택적 매개변수의 구조체!
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Owner = this;
+			SpawnParams.Instigator = GetInstigator();
+
+			// 위치에 발사체를 스폰
+			AProjectile* InstanceProjectile = World->SpawnActor<AProjectile>(Projectile, MuzzleLocation, MuzzleRotation, SpawnParams);
+
+			if (InstanceProjectile)
+			{
+				// 발사 방향
+				FVector LaunchDirection = MuzzleRotation.Vector();
+				InstanceProjectile->FireDirection(LaunchDirection);
+			}
+		}
+	}
+	else {
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Projectile is NULL"));
 	}
 }
