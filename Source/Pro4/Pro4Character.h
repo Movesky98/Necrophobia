@@ -1,93 +1,72 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
-#include "CoreMinimal.h"
+#include "Pro4.h"
 #include "GameFramework/Character.h"
 #include "Pro4Character.generated.h"
 
-UCLASS(config=Game)
-class APro4Character : public ACharacter
+UCLASS()
+class PRO4_API APro4Character : public ACharacter
 {
 	GENERATED_BODY()
 
-	/** Camera boom positioning the camera behind the character */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class USpringArmComponent* CameraBoom;
-
-	/** Follow camera */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* FollowCamera;
-
-	/* Gun */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Gun, meta = (AllowPrivateAccess = "true"))
-	class UStaticMeshComponent* GunMesh;
-
-	/* Projectile */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Projectile, meta = (AllowPrivateAccess = "true"))
-	TSubclassOf<class AProjectile> Projectile;
-	
 public:
+	// Sets default values for this character's properties
 	APro4Character();
 
-	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
-	float BaseTurnRate;
-
-	/** Base look up/down rate, in deg/sec. Other scaling may affect final rate. */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category=Camera)
-	float BaseLookUpRate;
-
-	UPROPERTY(VIsibleAnywhere, BlueprintReadOnly, Category = Camera)
-	int isZoom;
-
 protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
 
-	/** Resets HMD orientation in VR. */
-	void OnResetVR();
+	enum class WeaponMode
+	{
+		Main1,
+		Main2,
+		Sub,
+		ATW,
+		Disarming
+	};
 
-	/** Called for forwards/backward input */
-	void MoveForward(float Value);
+	WeaponMode CurrentWeaponMode=WeaponMode::Disarming;
 
-	/** Called for side to side input */
-	void MoveRight(float Value);
+	enum class CharacterState
+	{
+		Stand,
+		Sit,
+		Lie,
+	};
 
-	/** 
-	 * Called via input to turn at a given rate. 
-	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
-	 */
-	void TurnAtRate(float Rate);
+	CharacterState CurrentCharacterState = CharacterState::Stand;
 
-	/**
-	 * Called via input to turn look up/down at a given rate. 
-	 * @param Rate	This is a normalized rate, i.e. 1.0 means 100% of desired turn rate
-	 */
-	void LookUpAtRate(float Rate);
-
-	/** Handler for when a touch input begins. */
-	void TouchStarted(ETouchIndex::Type FingerIndex, FVector Location);
-
-	/** Handler for when a touch input stops. */
-	void TouchStopped(ETouchIndex::Type FingerIndex, FVector Location);
-
-	/* 플레이어가 줌 했을 때 실행되는 함수 */
-	void Zoom();
-
-	/* 사격할 때 실행되는 함수 */
-	void Fire();
-
-
-protected:
-	// APawn interface
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	// End of APawn interface
-
-public:
+public:	
+	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	/** Returns CameraBoom subobject **/
-	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
-	/** Returns FollowCamera subobject **/
-	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
-};
+	// Called to bind functionality to input
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	UPROPERTY(VisibleAnywhere, Category=Camera)
+	USpringArmComponent *SpringArm;
+
+	UPROPERTY(VisibleAnywhere, Category=Camera)
+	UCameraComponent *Camera;
+
+private:
+	void MovementSetting();
+	void CameraSetting();
+	//void WeaponSetting();
+	void Fire();
+	void Sitting();
+	void Lying();
+	void Jump();
+	void EquipMain1();
+	void EquipMain2();
+	void EquipSub();
+	void EquipATW();
+
+	void UpDown(float NewAxisValue);
+	void LeftRight(float NewAxisValue);
+	void LookUp(float NewAxisValue);
+	void Turn(float NewAxisValue);
+};

@@ -1,234 +1,246 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Fill out your copyright notice in the Description page of Project Settings.
+
 
 #include "Pro4Character.h"
-#include "HeadMountedDisplayFunctionLibrary.h"
-#include "Camera/CameraComponent.h"
-#include "Components/CapsuleComponent.h"
-#include "Components/InputComponent.h"
-#include "GameFramework/CharacterMovementComponent.h"
-#include "GameFramework/Controller.h"
-#include "GameFramework/SpringArmComponent.h"
-#include "Components/StaticMeshComponent.h"
-#include "Projectile.h"
 
-//////////////////////////////////////////////////////////////////////////
-// APro4Character
-
+// Sets default values
 APro4Character::APro4Character()
 {
+ 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	// Set size for collision capsule
-	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
+	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
+	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("CAMERA"));
 
-	// set our turn rates for input
-	BaseTurnRate = 45.f;
-	BaseLookUpRate = 45.f;
+	SpringArm->SetupAttachment(GetCapsuleComponent());
+	Camera->SetupAttachment(SpringArm);
 
-	// Don't rotate when the controller rotates. Let that just affect the camera.
-	bUseControllerRotationPitch = false;
-	bUseControllerRotationYaw = false;
-	bUseControllerRotationRoll = false;
+	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f));
 
-	// Configure character movement
-	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 540.0f, 0.0f); // ...at this rotation rate
-	GetCharacterMovement()->JumpZVelocity = 950.f;
-	GetCharacterMovement()->AirControl = 0.2f;
-	GetCharacterMovement()->GravityScale = 3.5f;
 
-	// Create a camera boom (pulls in towards the player if there is a collision)
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 300.0f; // The camera follows at this distance behind the character	
-	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
-	CameraBoom->ProbeSize = 12.0f;
+	CameraSetting();
+	MovementSetting();
+	//WeaponSetting();
 
-	// Create a follow camera
-	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
-	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
-
-	// SkeletalmeshComponent
-	GetMesh()->SetOwnerNoSee(false);
-
-	// Gun StaticMeshComponent
-	GunMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Gun"));
-	GunMesh->SetupAttachment(GetMesh());
-	GunMesh->SetRelativeLocation(FVector(-10.0f, 50.0f, 140.0f));
-	GunMesh->SetRelativeRotation(FRotator(0.0f, -90.0f, 0.0f));
-	GunMesh->SetRelativeScale3D(FVector(50.0f, 50.0f, 50.0f));
-
-	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
-	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
-
-	isZoom = 1;
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh>SK_Mannequin(TEXT("/Game/Mannequin/Character/Mesh/SK_Mannequin.SK_Mannequin"));
+	if (SK_Mannequin.Succeeded())
+	{
+		GetMesh()->SetSkeletalMesh(SK_Mannequin.Object);
+	}
 }
 
-void APro4Character::Tick(float DeltaTime) {
+// Called when the game starts or when spawned
+void APro4Character::BeginPlay()
+{
+	Super::BeginPlay();
+	
+}
+
+void APro4Character::CameraSetting()
+{
+	SpringArm->TargetArmLength = 450.0f;
+	SpringArm->SetRelativeRotation(FRotator::ZeroRotator);
+	SpringArm->bUsePawnControlRotation = true;
+	SpringArm->bInheritPitch = true;
+	SpringArm->bInheritRoll = true;
+	SpringArm->bInheritYaw = true;
+	SpringArm->bDoCollisionTest = true;
+	bUseControllerRotationYaw = false;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
+}
+
+void APro4Character::MovementSetting()
+{
+	GetCharacterMovement()->JumpZVelocity = 400.0f;
+	CurrentCharacterState = CharacterState::Stand;
+}
+
+//void APro4Character::WeaponSetting()
+//{
+	//SetWeaponMode(WeaponMode::Disarming);
+//}
+
+// Called every frame
+void APro4Character::Tick(float DeltaTime)
+{
 	Super::Tick(DeltaTime);
 
-	if (isZoom == 0) {
-		if (CameraBoom->TargetArmLength > 1.0f)
-		{
-			CameraBoom->TargetArmLength -= 20.0f;
-		}
-		else {
-			CameraBoom->TargetArmLength = 0.0f;
-		}
-	}else if (isZoom == 1) {
-		if (CameraBoom->TargetArmLength < 300.0f)
-		{
-			CameraBoom->TargetArmLength += 20.0f;
-		}
-		else {
-			CameraBoom->TargetArmLength = 300.0f;
-		}
-	}
-
 }
 
-//////////////////////////////////////////////////////////////////////////
-// Input
-
-void APro4Character::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
+// Called to bind functionality to input
+void APro4Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	// Set up gameplay key bindings
-	check(PlayerInputComponent);
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	PlayerInputComponent->BindAxis("MoveForward", this, &APro4Character::MoveForward);
-	PlayerInputComponent->BindAxis("MoveRight", this, &APro4Character::MoveRight);
+	PlayerInputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Pressed, this, &APro4Character::Jump);
+	PlayerInputComponent->BindAction(TEXT("Fire"), EInputEvent::IE_Pressed, this, &APro4Character::Fire);
+	PlayerInputComponent->BindAction(TEXT("Sit"), EInputEvent::IE_Pressed, this, &APro4Character::Sitting);
+	PlayerInputComponent->BindAction(TEXT("Lie"), EInputEvent::IE_Pressed, this, &APro4Character::Lying);
+	PlayerInputComponent->BindAction(TEXT("Key1"), EInputEvent::IE_Pressed, this, &APro4Character::EquipMain1);
+	PlayerInputComponent->BindAction(TEXT("Key2"), EInputEvent::IE_Pressed, this, &APro4Character::EquipMain2);
+	PlayerInputComponent->BindAction(TEXT("Key3"), EInputEvent::IE_Pressed, this, &APro4Character::EquipSub);
+	PlayerInputComponent->BindAction(TEXT("Key4"), EInputEvent::IE_Pressed, this, &APro4Character::EquipATW);
 
-	PlayerInputComponent->BindAction("Fire", IE_Pressed, this, &APro4Character::Fire);
-
-	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
-	// "turn" handles devices that provide an absolute delta, such as a mouse.
-	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
-	PlayerInputComponent->BindAxis("Turn", this, &APawn::AddControllerYawInput);
-	PlayerInputComponent->BindAxis("TurnRate", this, &APro4Character::TurnAtRate);
-	PlayerInputComponent->BindAxis("LookUp", this, &APawn::AddControllerPitchInput);
-	PlayerInputComponent->BindAxis("LookUpRate", this, &APro4Character::LookUpAtRate);
-
-	// handle touch devices
-	PlayerInputComponent->BindTouch(IE_Pressed, this, &APro4Character::TouchStarted);
-	PlayerInputComponent->BindTouch(IE_Released, this, &APro4Character::TouchStopped);
-
-	// VR headset functionality
-	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &APro4Character::OnResetVR);
-
-	PlayerInputComponent->BindAction("Zoom", IE_Pressed, this, &APro4Character::Zoom);
+	PlayerInputComponent->BindAxis(TEXT("MoveForward"), this, &APro4Character::UpDown);
+	PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &APro4Character::LeftRight);
+	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &APro4Character::LookUp);
+	PlayerInputComponent->BindAxis(TEXT("Turn"), this, &APro4Character::Turn);
 }
 
-
-void APro4Character::OnResetVR()
+void APro4Character::UpDown(float NewAxisValue)
 {
-	// If Pro4 is added to a project via 'Add Feature' in the Unreal Editor the dependency on HeadMountedDisplay in Pro4.Build.cs is not automatically propagated
-	// and a linker error will result.
-	// You will need to either:
-	//		Add "HeadMountedDisplay" to [YourProject].Build.cs PublicDependencyModuleNames in order to build successfully (appropriate if supporting VR).
-	// or:
-	//		Comment or delete the call to ResetOrientationAndPosition below (appropriate if not supporting VR)
-	UHeadMountedDisplayFunctionLibrary::ResetOrientationAndPosition();
+	AddMovementInput(FRotationMatrix(FRotator(0.0f, GetControlRotation().Yaw, 0.0f)).GetUnitAxis(EAxis::X), NewAxisValue);
 }
 
-void APro4Character::TouchStarted(ETouchIndex::Type FingerIndex, FVector Location)
+void APro4Character::LeftRight(float NewAxisValue)
 {
-		Jump();
+	AddMovementInput(FRotationMatrix(FRotator(0.0f, GetControlRotation().Yaw, 0.0f)).GetUnitAxis(EAxis::Y), NewAxisValue);
 }
 
-void APro4Character::TouchStopped(ETouchIndex::Type FingerIndex, FVector Location)
+void APro4Character::LookUp(float NewAxisValue)
 {
-		StopJumping();
+	AddControllerPitchInput(NewAxisValue);
 }
 
-void APro4Character::TurnAtRate(float Rate)
+void APro4Character::Turn(float NewAxisValue)
 {
-	// calculate delta for this frame from the rate information
-	AddControllerYawInput(Rate * BaseTurnRate * GetWorld()->GetDeltaSeconds());
+	AddControllerYawInput(NewAxisValue);
 }
 
-void APro4Character::LookUpAtRate(float Rate)
+void APro4Character::Jump()
 {
-	// calculate delta for this frame from the rate information
-	AddControllerPitchInput(Rate * BaseLookUpRate * GetWorld()->GetDeltaSeconds());
-}
-
-void APro4Character::MoveForward(float Value)
-{
-	if ((Controller != nullptr) && (Value != 0.0f))
+	switch (CurrentCharacterState)
 	{
-		// find out which way is forward
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-		// get forward vector
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-		AddMovementInput(Direction, Value);
+	case CharacterState::Stand:
+		Super::Jump();
+		break;
+	case CharacterState::Sit:
+		UE_LOG(Pro4, Log, TEXT("Stand."));
+		CurrentCharacterState = CharacterState::Stand;
+		break;
+	case CharacterState::Lie:
+		UE_LOG(Pro4, Log, TEXT("Stand."));
+		CurrentCharacterState = CharacterState::Stand;
+		break;
 	}
-}
-
-void APro4Character::MoveRight(float Value)
-{
-	if ( (Controller != nullptr) && (Value != 0.0f) )
-	{
-		// find out which way is right
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
 	
-		// get right vector 
-		const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-		// add movement in that direction
-		AddMovementInput(Direction, Value);
-	}
+
 }
 
-void APro4Character::Zoom() 
+void APro4Character::Fire()
 {
-	if (isZoom == 0) {
-		isZoom = 1;
-		GetMesh()->SetOwnerNoSee(false);
+	switch (CurrentWeaponMode)
+	{
+	case WeaponMode::Main1:
+		UE_LOG(Pro4, Log, TEXT("Fire1."));
+		break;
+	case WeaponMode::Main2:
+		UE_LOG(Pro4, Log, TEXT("Fire2."));
+		break;
+	case WeaponMode::Sub:
+		UE_LOG(Pro4, Log, TEXT("FireSub."));
+		break;
+	case WeaponMode::ATW:
+		UE_LOG(Pro4, Log, TEXT("Throw."));
+		break;
+	case WeaponMode::Disarming:
+		UE_LOG(Pro4, Log, TEXT("Fist."));
+		break;
 	}
-	else {
-		isZoom = 0;
-		GetMesh()->SetOwnerNoSee(true);
+	UE_LOG(Pro4, Log, TEXT("Attack"));
+}
+
+void APro4Character::Sitting()
+{
+	switch (CurrentCharacterState)
+	{
+	case CharacterState::Stand:
+		UE_LOG(Pro4, Log, TEXT("Sit."));
+		CurrentCharacterState = CharacterState::Sit;
+		break;
+	case CharacterState::Sit:
+		UE_LOG(Pro4, Log, TEXT("Stand."));
+		CurrentCharacterState = CharacterState::Stand;
+		break;
+	case CharacterState::Lie:
+		UE_LOG(Pro4, Log, TEXT("Sit."));
+		CurrentCharacterState = CharacterState::Sit;
+		break;
 	}
 }
 
-void APro4Character::Fire() {
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Mouse Left Button is Pressed"));
-	// Projectile이 있을 때에만 시도
-	if (Projectile) {
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Projectile is not NULL"));
-		FVector MuzzleLocation;
-		FRotator MuzzleRotation;
-
-
-
-		MuzzleLocation = GunMesh->GetComponentLocation() + FVector(0.0f, 0.0f, 5.0f);
-		MuzzleRotation = GunMesh->GetComponentRotation() + FRotator(0.0f, 180.0f, 0.0f);
-
-		UWorld* World = GetWorld();
-		if (World)
-		{
-			// SpawnActor 함수에 전달된 선택적 매개변수의 구조체!
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.Owner = this;
-			SpawnParams.Instigator = GetInstigator();
-
-			// 위치에 발사체를 스폰
-			AProjectile* InstanceProjectile = World->SpawnActor<AProjectile>(Projectile, MuzzleLocation, MuzzleRotation, SpawnParams);
-
-			if (InstanceProjectile)
-			{
-				// 발사 방향
-				FVector LaunchDirection = MuzzleRotation.Vector();
-				InstanceProjectile->FireDirection(LaunchDirection);
-			}
-		}
+void APro4Character::Lying()
+{
+	switch (CurrentCharacterState)
+	{
+	case CharacterState::Stand:
+		UE_LOG(Pro4, Log, TEXT("Lie."));
+		CurrentCharacterState = CharacterState::Lie;
+		break;
+	case CharacterState::Sit:
+		UE_LOG(Pro4, Log, TEXT("Lie."));
+		CurrentCharacterState = CharacterState::Lie;
+		break;
+	case CharacterState::Lie:
+		UE_LOG(Pro4, Log, TEXT("Stand."));
+		CurrentCharacterState = CharacterState::Stand;
+		break;
 	}
-	else {
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Projectile is NULL"));
+}
+
+void APro4Character::EquipMain1()
+{
+	if (CurrentWeaponMode == WeaponMode::Main1)
+	{
+		UE_LOG(Pro4, Log, TEXT("Disarming."));
+		CurrentWeaponMode = WeaponMode::Disarming;
+	}
+	else
+	{
+		UE_LOG(Pro4, Log, TEXT("EquipMain1."));
+		CurrentWeaponMode = WeaponMode::Main1;
+	}
+}
+
+void APro4Character::EquipMain2()
+{
+	if (CurrentWeaponMode == WeaponMode::Main2)
+	{
+		UE_LOG(Pro4, Log, TEXT("Disarming."));
+		CurrentWeaponMode = WeaponMode::Disarming;
+	}
+	else
+	{
+		UE_LOG(Pro4, Log, TEXT("EquipMain2."));
+		CurrentWeaponMode = WeaponMode::Main2;
+	}
+}
+
+void APro4Character::EquipSub()
+{
+	if (CurrentWeaponMode == WeaponMode::Sub)
+	{
+		UE_LOG(Pro4, Log, TEXT("Disarming."));
+		CurrentWeaponMode = WeaponMode::Disarming;
+	}
+	else
+	{
+		UE_LOG(Pro4, Log, TEXT("EquipSub."));
+		CurrentWeaponMode = WeaponMode::Sub;
+	}
+}
+
+void APro4Character::EquipATW()
+{
+	if (CurrentWeaponMode == WeaponMode::ATW)
+	{
+		UE_LOG(Pro4, Log, TEXT("Disarming."));
+		CurrentWeaponMode = WeaponMode::Disarming;
+	}
+	else
+	{
+		UE_LOG(Pro4, Log, TEXT("ATW."));
+		CurrentWeaponMode = WeaponMode::ATW;
 	}
 }
