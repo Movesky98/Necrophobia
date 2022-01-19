@@ -2,17 +2,18 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+#include "Pro4.h"
 #include "GameFramework/GameModeBase.h"
 #include "Pro4GameMode.generated.h"
 
-UCLASS(minimalapi)
+UCLASS()
 class APro4GameMode : public AGameModeBase
 {
 	GENERATED_BODY()
 
 public:
 	APro4GameMode();
+
 };
 
 
