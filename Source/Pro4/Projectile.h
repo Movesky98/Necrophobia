@@ -26,7 +26,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	// 구체 콜리젼 컴포넌트
-	UPROPERTY(VisibleDefaultsOnly, Category = Projectile)
+	UPROPERTY(EditDefaultsOnly, Category = Projectile)
 	USphereComponent* CollisionComponent;
 
 	// 프로젝타일 무브먼트 컴포넌트

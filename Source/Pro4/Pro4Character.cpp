@@ -2,6 +2,7 @@
 
 
 #include "Pro4Character.h"
+#include "DrawDebugHelpers.h"
 
 // Sets default values
 APro4Character::APro4Character()
@@ -16,7 +17,7 @@ APro4Character::APro4Character()
 	Camera->SetupAttachment(SpringArm);
 
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f));
-
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("PCharacter"));
 
 	CameraSetting();
 	MovementSetting();
@@ -48,6 +49,8 @@ void APro4Character::CameraSetting()
 	bUseControllerRotationYaw = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
+
+	SpringArm->SocketOffset = FVector(0.0f, 100.0f, 50.0f);
 }
 
 void APro4Character::MovementSetting()
@@ -61,31 +64,12 @@ void APro4Character::MovementSetting()
 	//SetWeaponMode(WeaponMode::Disarming);
 //}
 
+
 // Called every frame
 void APro4Character::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-}
-
-// Called to bind functionality to input
-void APro4Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-	PlayerInputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Pressed, this, &APro4Character::Jump);
-	PlayerInputComponent->BindAction(TEXT("Fire"), EInputEvent::IE_Pressed, this, &APro4Character::Fire);
-	PlayerInputComponent->BindAction(TEXT("Sit"), EInputEvent::IE_Pressed, this, &APro4Character::Sitting);
-	PlayerInputComponent->BindAction(TEXT("Lie"), EInputEvent::IE_Pressed, this, &APro4Character::Lying);
-	PlayerInputComponent->BindAction(TEXT("Key1"), EInputEvent::IE_Pressed, this, &APro4Character::EquipMain1);
-	PlayerInputComponent->BindAction(TEXT("Key2"), EInputEvent::IE_Pressed, this, &APro4Character::EquipMain2);
-	PlayerInputComponent->BindAction(TEXT("Key3"), EInputEvent::IE_Pressed, this, &APro4Character::EquipSub);
-	PlayerInputComponent->BindAction(TEXT("Key4"), EInputEvent::IE_Pressed, this, &APro4Character::EquipATW);
-
-	PlayerInputComponent->BindAxis(TEXT("MoveForward"), this, &APro4Character::UpDown);
-	PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &APro4Character::LeftRight);
-	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &APro4Character::LookUp);
-	PlayerInputComponent->BindAxis(TEXT("Turn"), this, &APro4Character::Turn);
 }
 
 void APro4Character::UpDown(float NewAxisValue)
@@ -242,5 +226,46 @@ void APro4Character::EquipATW()
 	{
 		UE_LOG(Pro4, Log, TEXT("ATW."));
 		CurrentWeaponMode = WeaponMode::ATW;
+	}
+}
+
+/// <summary>
+/// F 버튼을 눌렀을 때 아이템, 문 등 상호작용을 하기위한 함수
+/// </summary>
+void APro4Character::InteractPressed()
+{
+	UE_LOG(Pro4, Log, TEXT("Interact Pressed."));
+	
+	FVector CharacterLoc;
+	FRotator CharacterRot;
+	FHitResult Hit;
+	
+	GetController()->GetPlayerViewPoint(CharacterLoc, CharacterRot);
+
+	FVector Start = CharacterLoc;
+	FVector End = CharacterLoc + (CharacterRot.Vector() * 1000);
+	
+	FCollisionQueryParams TraceParams;
+	UWorld* World = GetWorld();
+
+	bHit = World->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, TraceParams);
+
+	if (bHit)
+	{
+		if (Hit.GetActor()) {
+			DrawDebugSolidBox(World, Hit.ImpactPoint, FVector(5.0f), FColor::Blue, false, 2.0f);
+			DrawDebugLine(World, Start, Hit.ImpactPoint, FColor::Red, false, 2.0f);
+
+			UE_LOG(Pro4, Log, TEXT("HitActor : %s"), *Hit.GetActor()->GetName());
+
+			AActor* Interactable = Hit.GetActor();
+
+			if (Interactable->ActorHasTag(TEXT("Item")))
+			{
+				UE_LOG(Pro4, Log, TEXT("Get %s"), *Interactable->GetName());
+				
+				Interactable->Destroy();
+			}
+		}
 	}
 }
