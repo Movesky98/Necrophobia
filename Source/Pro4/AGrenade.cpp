@@ -26,7 +26,7 @@ void AAGrenade::RandomSpawn()
 	case AAGrenade::GrenadeType::Grenade:
 	{
 		UE_LOG(Pro4, Log, TEXT("Grenade is spawned."));
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Grenade(TEXT("/Game/Test/Cube_3.Cube_3"));
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Grenade(TEXT("/Game/FPS_Weapon_Bundle/Weapons/Meshes/G67_Grenade/SM_G67_Grenade.SM_G67_Grenade"));
 		if (SM_Grenade.Succeeded())
 		{
 			BoxMesh->SetStaticMesh(SM_Grenade.Object);
@@ -36,7 +36,7 @@ void AAGrenade::RandomSpawn()
 	case AAGrenade::GrenadeType::Flash:
 	{
 		UE_LOG(Pro4, Log, TEXT("Flash is spawned."));
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Flash(TEXT("/Game/Test/Cube_2.Cube_2"));
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Flash(TEXT("/Game/FPS_Weapon_Bundle/Weapons/Meshes/G67_Grenade/SM_G67_Grenade.SM_G67_Grenade"));
 		if (SM_Flash.Succeeded())
 		{
 			BoxMesh->SetStaticMesh(SM_Flash.Object);
@@ -46,7 +46,7 @@ void AAGrenade::RandomSpawn()
 	case AAGrenade::GrenadeType::Smoke:
 	{
 		UE_LOG(Pro4, Log, TEXT("Smoke is spawned."));
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Smoke(TEXT("/Game/Test/Cube.Cube"));
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Smoke(TEXT("/Game/FPS_Weapon_Bundle/Weapons/Meshes/G67_Grenade/SM_G67_Grenade.SM_G67_Grenade"));
 		if (SM_Smoke.Succeeded())
 		{
 			BoxMesh->SetStaticMesh(SM_Smoke.Object);

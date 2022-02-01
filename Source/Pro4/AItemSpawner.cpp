@@ -44,7 +44,7 @@ void AAItemSpawner::SpawnItem()
 
 		SpawnLocation.X += FMath::RandRange(500, 1000);
 		SpawnLocation.Y += FMath::RandRange(500, 1000);
-		Random = 3;
+		
 		switch (Random) {
 		case 1:
 		{
