@@ -32,12 +32,12 @@ protected:
 
 	enum class CharacterState
 	{
-		Stand,
-		Sit,
-		Lie,
+		Standing,
+		Crouching,
+		Proning,
 	};
 
-	CharacterState CurrentCharacterState = CharacterState::Stand;
+	CharacterState CurrentCharacterState = CharacterState::Standing;
 
 public:	
 	// Called every frame
@@ -46,27 +46,57 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	
+
 	UPROPERTY(VisibleAnywhere, Category=Camera)
 	USpringArmComponent *SpringArm;
 
 	UPROPERTY(VisibleAnywhere, Category=Camera)
 	UCameraComponent *Camera;
 
+	UPROPERTY(VisibleAnywhere, Category=Weapon)
+	UStaticMeshComponent* Weapon;
+
+	bool IsProning()
+	{
+		if (CurrentCharacterState == CharacterState::Proning)
+			return true;
+		else
+			return false;
+	}
+
+	bool IsRunning()
+	{
+		if (IsRun)
+			return true;
+		else
+			return false;
+	}
+
 private:
 	void MovementSetting();
 	void CameraSetting();
 	//void WeaponSetting();
+	void Run();
 	void Fire();
-	void Sitting();
-	void Lying();
+	void Crouch();
+	void Prone();
 	void Jump();
 	void EquipMain1();
 	void EquipMain2();
 	void EquipSub();
 	void EquipATW();
+	void InteractPressed();
 
 	void UpDown(float NewAxisValue);
 	void LeftRight(float NewAxisValue);
 	void LookUp(float NewAxisValue);
 	void Turn(float NewAxisValue);
+
+	bool IsRun;
+	bool IsHold;
+	bool bHit;
+
+	float HoldTime;
+	int32 HoldFlag;
 };
