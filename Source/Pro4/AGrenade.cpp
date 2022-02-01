@@ -56,7 +56,11 @@ void AAGrenade::RandomSpawn()
 	case AAGrenade::GrenadeType::Molotov:
 	{
 		UE_LOG(Pro4, Log, TEXT("Molotov is spawned."));
-
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Smoke(TEXT("/Game/FPS_Weapon_Bundle/Weapons/Meshes/G67_Grenade/SM_G67_Grenade.SM_G67_Grenade"));
+		if (SM_Smoke.Succeeded())
+		{
+			BoxMesh->SetStaticMesh(SM_Smoke.Object);
+		}
 	}
 		break;
 	}
