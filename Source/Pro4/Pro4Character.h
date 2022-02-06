@@ -73,10 +73,28 @@ public:
 			return false;
 	}
 
+#pragma region PlayerState
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=State)
+	float MaxHP;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=State)
+	float CurrentHP;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=State)
+	float MaxAP;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=State)
+	float CurrentAP;
+
+#pragma endregion
+
+
 private:
 	void MovementSetting();
 	void CameraSetting();
 	//void WeaponSetting();
+	void StateSetting();
 	void Run();
 	void Fire();
 	void Crouch();

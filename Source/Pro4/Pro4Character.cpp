@@ -28,6 +28,7 @@ APro4Character::APro4Character()
 	CameraSetting();
 	MovementSetting();
 	//WeaponSetting();
+	StateSetting();
 
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh>SK_Mannequin(TEXT("/Game/Character_Animation/Mannequin/Character/Mesh/SK_Mannequin.SK_Mannequin"));
 	if (SK_Mannequin.Succeeded())
@@ -121,6 +122,13 @@ void APro4Character::Tick(float DeltaTime)
 			break;
 		}
 	}
+
+
+	CurrentHP += 1.0f;
+	if (CurrentHP >= 90.0f) 
+	{
+		CurrentHP = 10.0f;
+	}
 }
 
 // Called to bind functionality to input
@@ -177,6 +185,14 @@ void APro4Character::LookUp(float NewAxisValue)
 void APro4Character::Turn(float NewAxisValue)
 {
 	AddControllerYawInput(NewAxisValue);
+}
+
+void APro4Character::StateSetting()
+{
+	MaxHP = 100.0f;
+	CurrentHP = 100.0f;
+	MaxAP = 100.0f;
+	CurrentAP = 20.0f;
 }
 
 void APro4Character::Run()

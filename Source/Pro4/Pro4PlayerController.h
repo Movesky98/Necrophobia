@@ -14,4 +14,7 @@ class PRO4_API APro4PlayerController : public APlayerController
 {
 	GENERATED_BODY()
 	
+protected:
+	void BeginPlay() override;
+
 };
