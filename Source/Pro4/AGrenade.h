@@ -28,6 +28,9 @@ public:
 	GrenadeType CurrentGrenade;
 
 protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
 	void NotifyActorBeginOverlap(AActor* OtherActor) override;
 	void RandomSpawn();
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 };
