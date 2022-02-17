@@ -32,7 +32,6 @@ APro4Character::APro4Character()
 	MovementSetting();
 	WeaponSetting();
 	StateSetting();
-	SetRandomBodyColor();
 
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh>SK_Mannequin(TEXT("/Game/Character_Animation/Mannequin/Character/Mesh/SK_Mannequin.SK_Mannequin"));
 	if (SK_Mannequin.Succeeded())
@@ -65,13 +64,6 @@ APro4Character::APro4Character()
 void APro4Character::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Character_Animation/Mannequin/Character/Materials/M_Male_Body.M_Male_Body"));
-	UMaterialInstanceDynamic* MaterialInstance = GetMesh()->CreateDynamicMaterialInstance(0, Material, TEXT("BodyColor"));
-	if (nullptr != MaterialInstance)
-	{
-		MaterialInstance->SetVectorParameterValue(TEXT("BodyColor"), BodyColor);
-	}
 }
 
 void APro4Character::CameraSetting()
@@ -346,7 +338,8 @@ void APro4Character::Fire()
 			
 			if (World)
 			{
-				FActorSpawnParameters SpawnParams;
+				ReportSpawnProjectile(World, MuzzleLocation, MuzzleRotation);
+				/*FActorSpawnParameters SpawnParams;
 				SpawnParams.Owner = this;
 				SpawnParams.Instigator = GetInstigator();
 
@@ -355,7 +348,7 @@ void APro4Character::Fire()
 				{
 					FVector LaunchDirection = MuzzleRotation.Vector();
 					Projectile->FireInDirection(LaunchDirection);
-				}
+				}*/
 			}
 			
 			break;
@@ -633,17 +626,23 @@ void APro4Character::InteractPressed()
 	}
 }
 
-void APro4Character::SetRandomBodyColor()
+#pragma region Networking
+void APro4Character::ReportSpawnProjectile_Implementation(UWorld* World, FVector MuzzleLocation, FRotator MuzzleRotation)
 {
-	BodyColor.R = FMath::FRandRange(0, 1);
-	BodyColor.G = FMath::FRandRange(0, 1);
-	BodyColor.B = FMath::FRandRange(0, 1);
-	BodyColor.A = 1.0f;
+	RPCSpawnProjectile(World, MuzzleLocation, MuzzleRotation);
 }
 
-void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+void APro4Character::RPCSpawnProjectile_Implementation(UWorld* World, FVector MuzzleLocation, FRotator MuzzleRotation)
 {
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+	SpawnParams.Instigator = GetInstigator();
 
-	DOREPLIFETIME(APro4Character, BodyColor);
+	APro4Projectile* Projectile = World->SpawnActor<APro4Projectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
+	if (Projectile)
+	{
+		FVector LaunchDirection = MuzzleRotation.Vector();
+		Projectile->FireInDirection(LaunchDirection);
+	}
 }
+#pragma endregion

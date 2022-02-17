@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "ABaseItem.h"
 #include "AGrenade.generated.h"
 
@@ -31,6 +30,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	void NotifyActorBeginOverlap(AActor* OtherActor) override;
-	void RandomSpawn();
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
+
+private:
+	UFUNCTION(NetMulticast, Reliable)
+	void RandomSpawn(int32 Random);
 };

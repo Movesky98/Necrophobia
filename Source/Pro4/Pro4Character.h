@@ -146,19 +146,6 @@ public:
 	float CurrentAP;
 #pragma endregion
 
-
-#pragma region PlayerNetworking
-protected:
-	UPROPERTY(VisibleInstanceOnly, Replicated, Category = Body)
-	FLinearColor BodyColor;
-
-	void SetRandomBodyColor();
-
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
-	
-#pragma endregion
-
-
 private:
 	void MovementSetting();
 	void CameraSetting();
@@ -210,5 +197,14 @@ private:
 	bool IsEquipping;
 
 	UPROPERTY()
-	class UPro4AnimInstance* Pro4Anim;
+		class UPro4AnimInstance* Pro4Anim;
+
+#pragma region Networking
+private:
+	UFUNCTION(Server, Reliable)
+	void ReportSpawnProjectile(UWorld* World, FVector MuzzleLocation, FRotator MuzzleRotation);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void RPCSpawnProjectile(UWorld* World, FVector MuzzleLocation, FRotator MuzzleRotation);
+#pragma endregion
 };

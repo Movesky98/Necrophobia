@@ -2,12 +2,19 @@
 
 
 #include "AWeapon.h"
+#include "Net/UnrealNetwork.h"
 
 AAWeapon::AAWeapon() 
 {
 	ItemType = BaseItemType::Weapon;
+	bReplicates = true;
 
-	RandomSpawn();
+	// 서버만 아이템을 스폰하도록 설정
+	if (HasAuthority()) 
+	{
+		int32 Random = FMath::RandRange(0, 3);
+		RandomSpawn(Random);
+	}
 }
 
 void AAWeapon::NotifyActorBeginOverlap(AActor* OtherActor)
@@ -15,9 +22,8 @@ void AAWeapon::NotifyActorBeginOverlap(AActor* OtherActor)
 	UE_LOG(Pro4, Log, TEXT("Weapon is overlapping."));
 }
 
-void AAWeapon::RandomSpawn()
+void AAWeapon::RandomSpawn_Implementation(int32 Random)
 {
-	int32 Random = FMath::RandRange(0, 3);
 	CurrentWeapon = static_cast<WeaponType>(Random);
 
 	switch (CurrentWeapon)
