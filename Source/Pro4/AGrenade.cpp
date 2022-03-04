@@ -4,12 +4,14 @@
 #include "Net/UnrealNetwork.h"
 
 
+#include "AGrenade.h"
+
 AAGrenade::AAGrenade()
 {
 	ItemType = BaseItemType::Grenade;
 	bReplicates = true;
 
-	// ¼­¹ö¸¸ ¾ÆÀÌÅÛÀ» ½ºÆùÇÏµµ·Ï ¼³Á¤
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½
 	if (HasAuthority())
 	{
 		int32 Random = FMath::RandRange(0, 3);
@@ -21,6 +23,7 @@ void AAGrenade::BeginPlay()
 {
 	Super::BeginPlay();
 
+	RandomSpawn();
 }
 
 void AAGrenade::NotifyActorBeginOverlap(AActor* OtherActor)
@@ -37,29 +40,41 @@ void AAGrenade::RandomSpawn_Implementation(int32 Random)
 	case AAGrenade::GrenadeType::Grenade:
 	{
 		UE_LOG(Pro4, Log, TEXT("Grenade is spawned."));
-		UStaticMesh* StaticMeshInstance = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/FPS_Weapon_Bundle/Weapons/Meshes/G67_Grenade/SM_G67_Grenade.SM_G67_Grenade"));
-		BoxMesh->SetStaticMesh(StaticMeshInstance);
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Grenade(TEXT("/Game/FPS_Weapon_Bundle/Weapons/Meshes/G67_Grenade/SM_G67_Grenade.SM_G67_Grenade"));
+		if (SM_Grenade.Succeeded())
+		{
+			BoxMesh->SetStaticMesh(SM_Grenade.Object);
+		}
 	}
 		break;
 	case AAGrenade::GrenadeType::Flash:
 	{
 		UE_LOG(Pro4, Log, TEXT("Flash is spawned."));
-		UStaticMesh* StaticMeshInstance = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/FPS_Weapon_Bundle/Weapons/Meshes/G67_Grenade/SM_G67_Grenade.SM_G67_Grenade"));
-		BoxMesh->SetStaticMesh(StaticMeshInstance);
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Flash(TEXT("/Game/FPS_Weapon_Bundle/Weapons/Meshes/G67_Grenade/SM_G67_Grenade.SM_G67_Grenade"));
+		if (SM_Flash.Succeeded())
+		{
+			BoxMesh->SetStaticMesh(SM_Flash.Object);
+		}
 	}
 		break;
 	case AAGrenade::GrenadeType::Smoke:
 	{
 		UE_LOG(Pro4, Log, TEXT("Smoke is spawned."));
-		UStaticMesh* StaticMeshInstance = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/FPS_Weapon_Bundle/Weapons/Meshes/G67_Grenade/SM_G67_Grenade.SM_G67_Grenade"));
-		BoxMesh->SetStaticMesh(StaticMeshInstance);
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Smoke(TEXT("/Game/FPS_Weapon_Bundle/Weapons/Meshes/G67_Grenade/SM_G67_Grenade.SM_G67_Grenade"));
+		if (SM_Smoke.Succeeded())
+		{
+			BoxMesh->SetStaticMesh(SM_Smoke.Object);
+		}
 	}
 		break;
 	case AAGrenade::GrenadeType::Molotov:
 	{
 		UE_LOG(Pro4, Log, TEXT("Molotov is spawned."));
-		UStaticMesh* StaticMeshInstance = LoadObject<UStaticMesh>(nullptr, TEXT("/Game/FPS_Weapon_Bundle/Weapons/Meshes/G67_Grenade/SM_G67_Grenade.SM_G67_Grenade"));
-		BoxMesh->SetStaticMesh(StaticMeshInstance);
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Smoke(TEXT("/Game/FPS_Weapon_Bundle/Weapons/Meshes/G67_Grenade/SM_G67_Grenade.SM_G67_Grenade"));
+		if (SM_Smoke.Succeeded())
+		{
+			BoxMesh->SetStaticMesh(SM_Smoke.Object);
+		}
 	}
 		break;
 	}

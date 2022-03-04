@@ -4,16 +4,14 @@
 #include "Pro4Character.h"
 #include "Pro4AnimInstance.h"
 #include "DrawDebugHelpers.h"
-#include "Net/UnrealNetwork.h"
 
 // Sets default values
 APro4Character::APro4Character()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	
+
 	FName WeaponSocket(TEXT("Hand_rSocket"));
-	SetReplicates(true);
 
 	HoldTime = 0.0f;
 	HoldFlag = 0;
@@ -586,7 +584,7 @@ void APro4Character::Reload()
 }
 
 /// <summary>
-/// F ¹öÆ°À» ´­·¶À» ¶§ ¾ÆÀÌÅÛ, ¹® µî »óÈ£ÀÛ¿ëÀ» ÇÏ±âÀ§ÇÑ ÇÔ¼ö
+/// F ï¿½ï¿½Æ°ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½, ï¿½ï¿½ ï¿½ï¿½ ï¿½ï¿½È£ï¿½Û¿ï¿½ï¿½ï¿½ ï¿½Ï±ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ô¼ï¿½
 /// </summary>
 void APro4Character::InteractPressed()
 {

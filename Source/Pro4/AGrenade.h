@@ -18,17 +18,15 @@ public:
 
 	enum class GrenadeType : uint8
 	{
-		Grenade,	// ¼ö·ùÅº
-		Flash,		// ¼¶±¤Åº
-		Smoke,		// ¿¬¸·Åº
-		Molotov		// È­¿°º´
+		Grenade,	// ï¿½ï¿½ï¿½ï¿½Åº
+		Flash,		// ï¿½ï¿½ï¿½ï¿½Åº
+		Smoke,		// ï¿½ï¿½ï¿½ï¿½Åº
+		Molotov		// È­ï¿½ï¿½ï¿½ï¿½
 	};
 	
 	GrenadeType CurrentGrenade;
 
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
 	void NotifyActorBeginOverlap(AActor* OtherActor) override;
 
 private:
