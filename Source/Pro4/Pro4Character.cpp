@@ -4,16 +4,14 @@
 #include "Pro4Character.h"
 #include "Pro4AnimInstance.h"
 #include "DrawDebugHelpers.h"
-#include "Net/UnrealNetwork.h"
 
 // Sets default values
 APro4Character::APro4Character()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	
+
 	FName WeaponSocket(TEXT("Hand_rSocket"));
-	SetReplicates(true);
 
 	HoldTime = 0.0f;
 	HoldFlag = 0;
@@ -32,7 +30,6 @@ APro4Character::APro4Character()
 	MovementSetting();
 	WeaponSetting();
 	StateSetting();
-	SetRandomBodyColor();
 
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh>SK_Mannequin(TEXT("/Game/Character_Animation/Mannequin/Character/Mesh/SK_Mannequin.SK_Mannequin"));
 	if (SK_Mannequin.Succeeded())
@@ -66,12 +63,6 @@ void APro4Character::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	UMaterialInterface* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Character_Animation/Mannequin/Character/Materials/M_Male_Body.M_Male_Body"));
-	UMaterialInstanceDynamic* MaterialInstance = GetMesh()->CreateDynamicMaterialInstance(0, Material, TEXT("BodyColor"));
-	if (nullptr != MaterialInstance)
-	{
-		MaterialInstance->SetVectorParameterValue(TEXT("BodyColor"), BodyColor);
-	}
 }
 
 void APro4Character::CameraSetting()
@@ -631,19 +622,4 @@ void APro4Character::InteractPressed()
 			}
 		}
 	}
-}
-
-void APro4Character::SetRandomBodyColor()
-{
-	BodyColor.R = FMath::FRandRange(0, 1);
-	BodyColor.G = FMath::FRandRange(0, 1);
-	BodyColor.B = FMath::FRandRange(0, 1);
-	BodyColor.A = 1.0f;
-}
-
-void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(APro4Character, BodyColor);
 }

@@ -58,11 +58,11 @@ public:
 	UCameraComponent *Camera;
 
 	UPROPERTY(EditAnywhere, Category = "GamePlay")
-	FVector MuzzleOffset;
+		FVector MuzzleOffset;
 
 	
 	UPROPERTY(EditAnywhere, Category = "Projectile")
-	TSubclassOf<APro4Projectile> ProjectileClass;
+		TSubclassOf<APro4Projectile> ProjectileClass;
 		
 
 	UPROPERTY(VisibleAnywhere, Category=Weapon)
@@ -144,18 +144,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=State)
 	float CurrentAP;
-#pragma endregion
 
-
-#pragma region PlayerNetworking
-protected:
-	UPROPERTY(VisibleInstanceOnly, Replicated, Category = Body)
-	FLinearColor BodyColor;
-
-	void SetRandomBodyColor();
-
-	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
-	
 #pragma endregion
 
 
@@ -201,14 +190,14 @@ private:
 	int32 Moveflag;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Equip, Meta = (AllowPrivateAccess = true))
-	int32 Equipflag;
+		int32 Equipflag;
 
 	UFUNCTION()
-	void OnEquipMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+		void OnEquipMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Equip, Meta = (AllowPrivateAccess = true))
-	bool IsEquipping;
+		bool IsEquipping;
 
 	UPROPERTY()
-	class UPro4AnimInstance* Pro4Anim;
+		class UPro4AnimInstance* Pro4Anim;
 };

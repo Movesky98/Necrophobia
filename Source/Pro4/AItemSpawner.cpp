@@ -32,7 +32,7 @@ void AAItemSpawner::SpawnItem()
 	UE_LOG(Pro4, Log, TEXT("Spawn Item"));
 
 	int32 Random = FMath::RandRange(1, 3);
-	Random = 3;
+
 	UWorld* World = GetWorld();
 	if (World)
 	{
