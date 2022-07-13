@@ -4,6 +4,7 @@
 #include "Pro4Character.h"
 #include "Pro4AnimInstance.h"
 #include "DrawDebugHelpers.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 APro4Character::APro4Character()
@@ -12,6 +13,7 @@ APro4Character::APro4Character()
 	PrimaryActorTick.bCanEverTick = true;
 
 	FName WeaponSocket(TEXT("Hand_rSocket"));
+	bReplicates = true;
 
 	HoldTime = 0.0f;
 	HoldFlag = 0;
@@ -20,8 +22,15 @@ APro4Character::APro4Character()
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("CAMERA"));
 	Weapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WEAPON"));
 
+	MapSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("MAPSPRINGARM"));
+	MapCapture = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("MAPCAPTURE"));
+
 	SpringArm->SetupAttachment(GetCapsuleComponent());
 	Camera->SetupAttachment(SpringArm);
+
+	MapSpringArm->SetupAttachment(GetCapsuleComponent());
+	MapCapture->SetupAttachment(MapSpringArm);
+	MapSpringArm->SetRelativeRotation(FRotator(-90.0f, 0.0f, 0.0f));
 
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f));
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("PCharacter"));
@@ -30,7 +39,7 @@ APro4Character::APro4Character()
 	MovementSetting();
 	WeaponSetting();
 	StateSetting();
-
+	
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh>SK_Mannequin(TEXT("/Game/Character_Animation/Mannequin/Character/Mesh/SK_Mannequin.SK_Mannequin"));
 	if (SK_Mannequin.Succeeded())
 	{
@@ -65,6 +74,10 @@ void APro4Character::BeginPlay()
 	
 }
 
+/// <summary>
+////////////////////////////////////////////////////// 초기세팅 ////////////////////////////////////////////////////////////
+/// </summary>
+
 void APro4Character::CameraSetting()
 {
 	SpringArm->TargetArmLength = 450.0f;
@@ -79,6 +92,13 @@ void APro4Character::CameraSetting()
 	//GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
 
 	SpringArm->SocketOffset = FVector(0.0f, 100.0f, 50.0f);
+
+	MapSpringArm->bInheritPitch = true;
+	MapSpringArm->bInheritRoll = true;
+	MapSpringArm->bInheritYaw = true;
+
+	MapCapture->ProjectionType = ECameraProjectionMode::Perspective;
+	MapCapture->OrthoWidth = 1000.0f;
 }
 
 void APro4Character::MovementSetting()
@@ -100,8 +120,22 @@ void APro4Character::WeaponSetting()
 	ProjectileClass = APro4Projectile::StaticClass();
 	Equipflag = 0;
 	IsEquipping = false;
+	IsReloading = false;
 	FireMod = false;
 }
+
+
+void APro4Character::StateSetting()
+{
+	MaxHP = 100.0f;
+	CurrentHP = 100.0f;
+	MaxAP = 100.0f;
+	CurrentAP = 20.0f;
+}
+
+/// <summary>
+////////////////////////////////////////////////////// 초기세팅 ////////////////////////////////////////////////////////////
+/// </summary>
 
 // Called every frame
 void APro4Character::Tick(float DeltaTime)
@@ -157,11 +191,19 @@ void APro4Character::PostInitializeComponents()
 	Pro4Anim = Cast<UPro4AnimInstance>(GetMesh()->GetAnimInstance());
 
 	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnEquipMontageEnded);
+	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnReloadMontageEnded);
 }
 
 void APro4Character::OnEquipMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
+	IsMontagePlay = false;
 	IsEquipping = false;
+}
+
+void APro4Character::OnReloadMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	IsMontagePlay = false;
+	IsReloading = false;
 }
 
 // Called to bind functionality to input
@@ -169,9 +211,12 @@ void APro4Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	PlayerInputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Pressed, this, &APro4Character::Jump);
-	PlayerInputComponent->BindAction(TEXT("Fire"), EInputEvent::IE_Pressed, this, &APro4Character::Fire);
+	PlayerInputComponent->BindAction(TEXT("Fire"), EInputEvent::IE_Released, this, &APro4Character::StopFire); // ��� ����
+	PlayerInputComponent->BindAction(TEXT("Fire"), EInputEvent::IE_Pressed, this, &APro4Character::StartFire); // ����
 	PlayerInputComponent->BindAction(TEXT("Zoom"), EInputEvent::IE_Pressed, this, &APro4Character::Zoom);
+	PlayerInputComponent->BindAction(TEXT("FireMod"), EInputEvent::IE_Pressed, this, &APro4Character::Fire_Mod);
+
+	PlayerInputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Pressed, this, &APro4Character::Jump);
 	PlayerInputComponent->BindAction(TEXT("Crouch"), EInputEvent::IE_Pressed, this, &APro4Character::beCrouch);
 	PlayerInputComponent->BindAction(TEXT("Prone"), EInputEvent::IE_Pressed, this, &APro4Character::Prone);
 	PlayerInputComponent->BindAction(TEXT("Key1"), EInputEvent::IE_Pressed, this, &APro4Character::EquipMain1);
@@ -187,6 +232,116 @@ void APro4Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	PlayerInputComponent->BindAxis(TEXT("MoveForward"), this, &APro4Character::UpDown);
 	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &APro4Character::LookUp);
 	PlayerInputComponent->BindAxis(TEXT("Turn"), this, &APro4Character::Turn);
+}
+
+/// <summary>
+////////////////////////////////////////////////////// 캐릭터 움직임 코드 ////////////////////////////////////////////////////////////
+/// </summary>
+
+float APro4Character::UpdownSpeed()
+{
+	switch (CurrentCharacterState)
+	{
+	case CharacterState::Standing:
+		if (IsRun)
+		{
+			if (Updownflag == 1)
+			{
+				return 1.0f;
+			}
+			else
+			{
+				return 0.5f;
+			}
+		}
+		else
+		{
+			if (Updownflag == 1)
+			{
+				return 0.5f;
+			}
+			else
+			{
+				return 0.3f;
+			}
+		}
+		break;
+	case CharacterState::Crouching:
+		if (Updownflag == 1)
+		{
+			return 0.3f;
+		}
+		else
+		{
+			return 0.3f;
+		}
+		break;
+	case CharacterState::Proning:
+		if (Updownflag == 1)
+		{
+			return 0.3f;
+		}
+		else
+		{
+			return 0.3f;
+		}
+		break;
+	default:
+		return 0.0f;
+	}
+}
+
+float APro4Character::LeftRightSpeed()
+{
+	switch (CurrentCharacterState)
+	{
+	case CharacterState::Standing:
+		if (IsRun)
+		{
+			if (LeftRightflag == 1)
+			{
+				return 0.5f;
+			}
+			else
+			{
+				return 0.5f;
+			}
+		}
+		else
+		{
+			if (LeftRightflag == 1)
+			{
+				return 0.3f;
+			}
+			else
+			{
+				return 0.3f;
+			}
+		}
+		break;
+	case CharacterState::Crouching:
+		if (Updownflag == 1)
+		{
+			return 0.3f;
+		}
+		else
+		{
+			return 0.3f;
+		}
+		break;
+	case CharacterState::Proning:
+		if (Updownflag == 1)
+		{
+			return 0.3f;
+		}
+		else
+		{
+			return 0.3f;
+		}
+		break;
+	default:
+		return 0.0f;
+	}
 }
 
 void APro4Character::UpDown(float NewAxisValue)
@@ -212,11 +367,9 @@ void APro4Character::UpDown(float NewAxisValue)
 			IsForward = false;
 			Updownflag = 0;
 		}
-		if (CurrentCharacterState == CharacterState::Crouching || Updownflag==-1)
-			NewAxisValue *= 0.3;
-		else if (CurrentCharacterState == CharacterState::Standing && !IsRun)
-			NewAxisValue *= 0.4;
-		AddMovementInput(FRotationMatrix(FRotator(0.0f, GetControlRotation().Yaw, 0.0f)).GetUnitAxis(EAxis::X), NewAxisValue);
+
+		MoveRate = NewAxisValue * UpdownSpeed();
+		AddMovementInput(FRotationMatrix(FRotator(0.0f, GetControlRotation().Yaw, 0.0f)).GetUnitAxis(EAxis::X), MoveRate);
 	}
 }
 
@@ -242,11 +395,8 @@ void APro4Character::LeftRight(float NewAxisValue)
 		{
 			LeftRightflag = 0;
 		}
-		if (CurrentCharacterState == CharacterState::Crouching || Updownflag==-1)
-			NewAxisValue *= 0.3;
-		else if (CurrentCharacterState == CharacterState::Standing && !IsRun)
-			NewAxisValue *= 0.4;
-		AddMovementInput(FRotationMatrix(FRotator(0.0f, GetControlRotation().Yaw, 0.0f)).GetUnitAxis(EAxis::Y), NewAxisValue);
+		MoveRate = NewAxisValue * LeftRightSpeed();
+		AddMovementInput(FRotationMatrix(FRotator(0.0f, GetControlRotation().Yaw, 0.0f)).GetUnitAxis(EAxis::Y), MoveRate);
 	}
 }
 
@@ -258,14 +408,6 @@ void APro4Character::LookUp(float NewAxisValue)
 void APro4Character::Turn(float NewAxisValue)
 {
 	AddControllerYawInput(NewAxisValue);
-}
-
-void APro4Character::StateSetting()
-{
-	MaxHP = 100.0f;
-	CurrentHP = 100.0f;
-	MaxAP = 100.0f;
-	CurrentAP = 20.0f;
 }
 
 void APro4Character::Run()
@@ -296,107 +438,6 @@ void APro4Character::Jump()
 		}
 	}
 
-}
-
-void APro4Character::Zoom()
-{
-	if (CurrentWeaponMode == WeaponMode::Main1 || CurrentWeaponMode == WeaponMode::Main2 || CurrentWeaponMode == WeaponMode::Sub)
-	{
-		IsZoom = !IsZoom;
-	}
-}
-
-void APro4Character::Fire()
-{
-	if (!FireMod)
-	{
-		FVector CameraLocation;
-		FRotator CameraRotation;
-		GetActorEyesViewPoint(CameraLocation, CameraRotation);
-
-		FVector MuzzleLocation = Weapon->GetComponentLocation();
-		FRotator MuzzleRotation = CameraRotation;
-		MuzzleRotation.Pitch += 10.0f;
-
-		UWorld* World = GetWorld();
-		switch (CurrentWeaponMode)
-		{
-		case WeaponMode::Main1:
-			if (IsZoom)
-			{
-				Pro4Anim->PlayAttackMontage();
-				Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->AttackMontage);
-				UE_LOG(Pro4, Log, TEXT("2."));
-			}
-			else
-			{
-				Pro4Anim->PlayAttackMontage();
-				Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->AttackMontage);
-				UE_LOG(Pro4, Log, TEXT("1."));
-			}
-			
-			if (World)
-			{
-				FActorSpawnParameters SpawnParams;
-				SpawnParams.Owner = this;
-				SpawnParams.Instigator = GetInstigator();
-
-				APro4Projectile* Projectile = World->SpawnActor<APro4Projectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
-				if (Projectile)
-				{
-					FVector LaunchDirection = MuzzleRotation.Vector();
-					Projectile->FireInDirection(LaunchDirection);
-				}
-			}
-			
-			break;
-		case WeaponMode::Main2:
-			UE_LOG(Pro4, Log, TEXT("Fire2."));
-			break;
-		case WeaponMode::Sub:
-			UE_LOG(Pro4, Log, TEXT("FireSub."));
-			break;
-		case WeaponMode::ATW:
-			UE_LOG(Pro4, Log, TEXT("Throw."));
-			break;
-		case WeaponMode::Disarming:
-			UE_LOG(Pro4, Log, TEXT("Fist."));
-			break;
-		}
-	}
-}
-
-void APro4Character::Continuous_Fire(float NewAxisValue)
-{
-	if (FireMod)
-	{
-		switch (CurrentWeaponMode)
-		{
-		case WeaponMode::Main1:
-			Pro4Anim->PlayAttackMontage();
-			Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->AttackMontage);
-			UE_LOG(Pro4, Log, TEXT("Attack22"));
-			break;
-		case WeaponMode::Main2:
-			UE_LOG(Pro4, Log, TEXT("Fire2."));
-			break;
-		case WeaponMode::Sub:
-			UE_LOG(Pro4, Log, TEXT("FireSub."));
-			break;
-		case WeaponMode::ATW:
-			UE_LOG(Pro4, Log, TEXT("Throw."));
-			break;
-		case WeaponMode::Disarming:
-			UE_LOG(Pro4, Log, TEXT("Fist."));
-			break;
-		}
-	}
-}
-
-void APro4Character::Fire_Mod()
-{
-	if (CurrentWeaponMode == WeaponMode::Main1 || CurrentWeaponMode == WeaponMode::Main2)
-		FireMod = !FireMod;
 }
 
 void APro4Character::beCrouch()
@@ -453,6 +494,13 @@ void APro4Character::Prone()
 		}
 	}
 }
+/// <summary>
+////////////////////////////////////////////////////// 캐릭터 움직임 코드 ////////////////////////////////////////////////////////////
+/// </summary>
+
+/// <summary>
+////////////////////////////////////////////////////// 캐릭터 무기장착, 장전 코드 ////////////////////////////////////////////////////////////
+/// </summary>
 
 void APro4Character::EquipMain1()
 {
@@ -468,6 +516,7 @@ void APro4Character::EquipMain1()
 		Equipflag = 1;
 		Pro4Anim->PlayEquipMontage();
 		Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->EquipMontage);
+		IsMontagePlay = true;
 		IsEquipping = true;
 		CurrentWeaponMode = WeaponMode::Main1;
 	}
@@ -528,63 +577,209 @@ void APro4Character::EquipATW()
 
 void APro4Character::Reload()
 {
-	switch (CurrentWeaponMode)
+	if (IsReloading)
+		return;
+	if (!IsMontagePlay)
 	{
-	case WeaponMode::Main1:
-		if (CurrentCharacterState == CharacterState::Standing)
+		switch (CurrentWeaponMode)
 		{
-			Pro4Anim->PlayReloadMontage();
-			Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->ReloadMontage);
-		}
-		else if (CurrentCharacterState == CharacterState::Crouching)
-		{
+		case WeaponMode::Main1:
+			if (CurrentCharacterState == CharacterState::Standing)
+			{
+				Pro4Anim->PlayReloadMontage();
+				Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->ReloadMontage);
+				IsReloading = true;
+			}
+			else if (CurrentCharacterState == CharacterState::Crouching)
+			{
+				UE_LOG(Pro4, Log, TEXT("Reload."));
+			}
+			else if (CurrentCharacterState == CharacterState::Proning)
+			{
+				UE_LOG(Pro4, Log, TEXT("Reload."));
+			}
+			break;
+		case WeaponMode::Main2:
+			if (CurrentCharacterState == CharacterState::Standing)
+			{
+				Pro4Anim->PlayReloadMontage();
+				Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->ReloadMontage);
+				IsReloading = true;
+			}
+			else if (CurrentCharacterState == CharacterState::Crouching)
+			{
+				UE_LOG(Pro4, Log, TEXT("Reload."));
+			}
+			else if (CurrentCharacterState == CharacterState::Proning)
+			{
+				UE_LOG(Pro4, Log, TEXT("Reload."));
+			}
+			break;
+		case WeaponMode::Sub:
+			if (CurrentCharacterState == CharacterState::Standing)
+			{
+				Pro4Anim->PlayReloadMontage();
+				Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->ReloadMontage);
+				IsReloading = true;
+			}
+			else if (CurrentCharacterState == CharacterState::Crouching)
+			{
+				UE_LOG(Pro4, Log, TEXT("Reload."));
+			}
+			else if (CurrentCharacterState == CharacterState::Proning)
+			{
+				UE_LOG(Pro4, Log, TEXT("Reload."));
+			}
+			break;
+		case WeaponMode::ATW:
 			UE_LOG(Pro4, Log, TEXT("Reload."));
-		}
-		else if (CurrentCharacterState == CharacterState::Proning)
-		{
+			break;
+		case WeaponMode::Disarming:
 			UE_LOG(Pro4, Log, TEXT("Reload."));
+			break;
 		}
-		break;
-	case WeaponMode::Main2:
-		if (CurrentCharacterState == CharacterState::Standing)
+	}
+}
+/// <summary>
+////////////////////////////////////////////////////// 캐릭터 무기장착, 장전 코드 ////////////////////////////////////////////////////////////
+/// </summary>
+
+/// <summary>
+////////////////////////////////////////////////////// 캐릭터 공격 코드 ////////////////////////////////////////////////////////////
+/// </summary>
+
+void APro4Character::Attack()
+{
+	if (!IsEquipping)
+	{
+		switch (CurrentWeaponMode)
 		{
-			UE_LOG(Pro4, Log, TEXT("Reload."));
+		case WeaponMode::Main1:
+			Fire();
+			break;
+		case WeaponMode::Main2:
+			Fire();
+			break;
+		case WeaponMode::Sub:
+			// if(���Ⱑ �����̸�)
+			// Swing();
+			// else(���Ⱑ �����̸�)
+			Fire();
+			break;
+		case WeaponMode::ATW:
+			Throw();
+			break;
+		case WeaponMode::Disarming:
+			Punch();
+			break;
 		}
-		else if (CurrentCharacterState == CharacterState::Crouching)
-		{
-			UE_LOG(Pro4, Log, TEXT("Reload."));
-		}
-		else if (CurrentCharacterState == CharacterState::Proning)
-		{
-			UE_LOG(Pro4, Log, TEXT("Reload."));
-		}
-		break;
-	case WeaponMode::Sub:
-		if (CurrentCharacterState == CharacterState::Standing)
-		{
-			Pro4Anim->PlayReloadMontage();
-			Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->ReloadMontage);
-		}
-		else if (CurrentCharacterState == CharacterState::Crouching)
-		{
-			UE_LOG(Pro4, Log, TEXT("Reload."));
-		}
-		else if (CurrentCharacterState == CharacterState::Proning)
-		{
-			UE_LOG(Pro4, Log, TEXT("Reload."));
-		}
-		break;
-	case WeaponMode::ATW:
-		UE_LOG(Pro4, Log, TEXT("Reload."));
-		break;
-	case WeaponMode::Disarming:
-		UE_LOG(Pro4, Log, TEXT("Reload."));
-		break;
 	}
 }
 
+void APro4Character::Zoom() // �� ��, �� �ƿ�(�ѵ����������)
+{
+	if (CurrentWeaponMode == WeaponMode::Main1 || CurrentWeaponMode == WeaponMode::Main2 || CurrentWeaponMode == WeaponMode::Sub)
+	{
+		IsZoom = !IsZoom;
+	}
+}
+
+void APro4Character::Fire_Mod() // ������, �ܹ߸�� ����
+{
+	if (CurrentWeaponMode == WeaponMode::Main1 || CurrentWeaponMode == WeaponMode::Main2)
+		FireMod = !FireMod;
+}
+
+void APro4Character::StartFire() // ���콺 Ŭ���� �� �ݵǼ� ��� ���·�
+{
+	IsFire = true;
+	Attack();
+}
+
+void APro4Character::StopFire() // ���콺 �� �� �ݵǼ� ��� ���� ���·�
+{
+	IsFire = false;
+}
+
+void APro4Character::Fire()
+{
+	if (IsFire)
+	{
+		FVector CameraLocation;
+		FRotator CameraRotation;
+		GetActorEyesViewPoint(CameraLocation, CameraRotation);
+
+		FVector MuzzleLocation = Weapon->GetComponentLocation();
+		FRotator MuzzleRotation = CameraRotation;
+		MuzzleRotation.Pitch += 10.0f;
+
+		UWorld* World = GetWorld();
+
+		if (CurrentWeaponMode == WeaponMode::Main1 || CurrentWeaponMode == WeaponMode::Main2) // 주무기일 때의 총알 발사 (탄창 상태 반영 안함)
+		{
+			if (IsZoom)
+			{
+				Pro4Anim->PlayAttackMontage();
+				Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->AttackMontage);
+				UE_LOG(Pro4, Log, TEXT("2."));
+			}
+			else
+			{
+				Pro4Anim->PlayAttackMontage();
+				Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->AttackMontage);
+				UE_LOG(Pro4, Log, TEXT("1."));
+			}
+
+			if (World)
+			{
+				FActorSpawnParameters SpawnParams;
+				SpawnParams.Owner = this;
+				SpawnParams.Instigator = GetInstigator();
+
+				APro4Projectile* Projectile = World->SpawnActor<APro4Projectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
+				if (Projectile)
+				{
+					FVector LaunchDirection = MuzzleRotation.Vector();
+					Projectile->FireInDirection(LaunchDirection);
+				}
+			}
+			if (FireMod) // 연사 상태이면 함수 딜레이 후 다시 콜 (주무기 종류에 따라서 연사속도 변경)
+			{
+				GetWorld()->GetTimerManager().SetTimer(FireDelay, this, &APro4Character::Fire, .075f, false);
+			}
+		}
+		else // 권총 발사 (권총용 애니메이션, 탄속, 권총 오브젝트 크기에 따라 총 발사 위치 조정해야 함)
+		{
+			UE_LOG(Pro4, Log, TEXT("Pistol Fire"));
+		}
+	}
+}
+	
+
+void APro4Character::Throw() // 투척무기 던지기
+{
+	/*
+	* 던지는 애니메이션
+	*/
+	UE_LOG(Pro4, Log, TEXT("ATW Throw"));
+}
+
+void APro4Character::Punch() // 주먹질
+{
+	/*
+	* 주먹질 애니메이션 꾹 눌렀을 때 주먹질 계속하도록
+	*/
+	UE_LOG(Pro4, Log, TEXT("Punch"));
+}
+
 /// <summary>
-/// F ��ư�� ������ �� ������, �� �� ��ȣ�ۿ��� �ϱ����� �Լ�
+////////////////////////////////////////////////////// 캐릭터 공격 코드 ////////////////////////////////////////////////////////////
+/// </summary>
+
+
+
+/// <summary>
+/// F 버튼을 눌렀을 때 아이템, 문 등 상호작용을 하기위한 함수
 /// </summary>
 void APro4Character::InteractPressed()
 {

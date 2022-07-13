@@ -40,4 +40,10 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+private:
+	UFUNCTION(NetMulticast, Reliable)
+	void RPCSpawnItem();
+
+	UFUNCTION(Server, Reliable)
+	void ReportSpawnItem();
 };

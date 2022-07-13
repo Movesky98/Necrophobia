@@ -3,7 +3,11 @@
 #include "Pro4GameMode.h"
 #include "Pro4PlayerController.h"
 #include "Pro4Character.h"
-#include <Blueprint/UserWidget.h>
+#include <Steamworks/Steamv153/sdk/public/steam/steam_api.h>
+// ìŠ¤íŒ€ ë¼ì´ë¸ŒëŸ¬ë¦¬ë¥¼ ëª…ì‹œì ìœ¼ë¡œ ì—°ê²°í•¨
+#pragma comment(lib, "ThirdParty/Steamworks/Steamv153/sdk/redistributable_bin/win64/steam_api64.lib")
+
+
 
 APro4GameMode::APro4GameMode()
 {
@@ -11,35 +15,22 @@ APro4GameMode::APro4GameMode()
 	DefaultPawnClass = APro4Character::StaticClass();
 	PlayerControllerClass = APro4PlayerController::StaticClass();
 }
-
 void APro4GameMode::BeginPlay()
+
 {
 	Super::BeginPlay();
+	//if (!SteamAPI_RestartAppIfNecessary(480)) // ì•± IDë¡œ ëŒ€ì²´ 
+	//{
+		// falseê°€ ë‚˜ì˜¬ ê²½ìš°, Steam í´ë¼ì´ì–¸íŠ¸ì—ì„œ ê²Œì„ì„ ì‹¤í–‰í•œ ê²ƒìœ¼ë¡œ ì¸ì‹í•¨ 
+	//	UE_LOG(Pro4, Error, TEXT("SteamAPI_RestartAppIfNecessary Successed"));
+	//}
 
-	// °ÔÀÓÀÌ ½ÃÀÛµÉ ¶§ UI¸¦ Ç¥½ÃÇÏµµ·Ï ¸¸µé¾îÁÜ.
-	ChangeMenuWidget(StartingWidgetClass);
-}
-
-void APro4GameMode::ChangeMenuWidget(TSubclassOf<UUserWidget> NewWidgetClass)
-{
-	// ¸ÕÀú CurrentWidgetÀÌ ºñ¾îÀÖ´ÂÁö È®ÀÎ
-	if (CurrentWidget != nullptr)
+	if(!SteamAPI_Init())
 	{
-		// ºñ¾îÀÖÁö ¾Ê´Ù¸é È­¸é¿¡¼­ UI¸¦ Á¦°ÅÇÑ ÈÄ CurrentWidget¸¦ ºñ¿öÁÜ
-		CurrentWidget->RemoveFromViewport();
-		CurrentWidget = nullptr;
+		UE_LOG(Pro4, Error, TEXT("SteamAPI_Init failed"));
 	}
-
-	// ÀÌÈÄ ¸Å°³ º¯¼ö·Î ¹ŞÀº NewWidgetClass°¡ À¯È¿ÇÑÁö °Ë»ç
-	if (NewWidgetClass != nullptr)
+	else
 	{
-		// CreateWidget ÇÔ¼ö·Î »õ À§Á¬À» ¸¸µé¾î CurrentWidget¿¡ ÀúÀå
-		CurrentWidget = CreateWidget(GetWorld(), NewWidgetClass);
-
-		// ÀÌÈÄ ºäÆ÷Æ®¿¡ Ç¥½ÃÇÏµµ·Ï ¸¸µé¾îÁØ´Ù.
-		if (CurrentWidget != nullptr)
-		{
-			CurrentWidget->AddToViewport();
-		}
+		UE_LOG(Pro4, Error, TEXT("SteamAPI_Init Successed"));
 	}
 }

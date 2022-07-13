@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
 #include "ABaseItem.h"
 #include "AGrenade.generated.h"
 
@@ -19,15 +18,18 @@ public:
 
 	enum class GrenadeType : uint8
 	{
-		Grenade,	// ¼ö·ùÅº
-		Flash,		// ¼¶±¤Åº
-		Smoke,		// ¿¬¸·Åº
-		Molotov		// È­¿°º´
+		Grenade,	// ìˆ˜ë¥˜íƒ„
+		Flash,		// ì„¬ê´‘íƒ„
+		Smoke,		// ì—°ë§‰íƒ„
+		Molotov		// í™”ì—¼ë³‘
 	};
 	
 	GrenadeType CurrentGrenade;
 
 protected:
 	void NotifyActorBeginOverlap(AActor* OtherActor) override;
-	void RandomSpawn();
+
+private:
+	UFUNCTION(NetMulticast, Reliable)
+	void RandomSpawn(int32 Random);
 };

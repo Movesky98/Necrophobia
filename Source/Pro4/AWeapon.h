@@ -30,5 +30,7 @@ public:
 protected:
 	void NotifyActorBeginOverlap(AActor* OtherActor) override;
 
-	void RandomSpawn();
+private:
+	UFUNCTION(NetMulticast, Reliable)
+	void RandomSpawn(int32 Random);
 };

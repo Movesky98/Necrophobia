@@ -1,13 +1,19 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-
 #include "AArmor.h"
+#include "Net/UnrealNetwork.h"
 
 AAArmor::AAArmor()
 {
 	ItemType = BaseItemType::Armor;
+	bReplicates = true;
 
-	RandomSpawn();
+	// 서버일 경우 실행
+	if (HasAuthority())
+	{
+		int32 Random = FMath::RandRange(0, 3);
+		RandomSpawn(Random);
+	}
 }
 
 void AAArmor::NotifyActorBeginOverlap(AActor* OtherActor)
@@ -15,10 +21,8 @@ void AAArmor::NotifyActorBeginOverlap(AActor* OtherActor)
 	UE_LOG(Pro4, Log, TEXT("Armor is overlapping."));
 }
 
-void AAArmor::RandomSpawn()
+void AAArmor::RandomSpawn_Implementation(int32 Random)
 {
-	int32 Random = FMath::RandRange(0, 1);
-
 	CurrentArmor = static_cast<ArmorType>(Random);
 
 	switch (CurrentArmor)

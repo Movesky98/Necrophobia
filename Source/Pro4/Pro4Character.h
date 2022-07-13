@@ -5,6 +5,8 @@
 #include "Pro4.h"
 #include "GameFramework/Character.h"
 #include "Pro4Projectile.h"
+#include "Components/SceneCaptureComponent2D.h"
+#include "Engine/TextureRenderTarget2D.h"
 #include "Pro4Character.generated.h"
 
 UCLASS()
@@ -57,10 +59,15 @@ public:
 	UPROPERTY(VisibleAnywhere, Category=Camera)
 	UCameraComponent *Camera;
 
+	UPROPERTY(VisibleAnywhere, Category = MapCam)
+		USpringArmComponent* MapSpringArm;
+
+	UPROPERTY(VisibleAnywhere, Category = MapCam)
+		USceneCaptureComponent2D* MapCapture;
+
 	UPROPERTY(EditAnywhere, Category = "GamePlay")
 		FVector MuzzleOffset;
 
-	
 	UPROPERTY(EditAnywhere, Category = "Projectile")
 		TSubclassOf<APro4Projectile> ProjectileClass;
 		
@@ -149,18 +156,35 @@ public:
 
 
 private:
+	// 초기 세팅
 	void MovementSetting();
 	void CameraSetting();
 	void WeaponSetting();
 	void StateSetting();
 
-	void Fire_Mod();
+	//  움직임 관련 함수
+	void UpDown(float NewAxisValue);
+	void LeftRight(float NewAxisValue);
+	void LookUp(float NewAxisValue);
+	void Turn(float NewAxisValue);
 	void Run();
-	void Zoom();
-	void Fire();
 	void beCrouch();
 	void Prone();
 	void Jump();
+	float UpdownSpeed();
+	float LeftRightSpeed();
+
+	// 공격 관련 함수
+	void Zoom();
+	void Attack();
+	void StartFire();
+	void StopFire();
+	void Fire();
+	void Fire_Mod();
+	void Throw();
+	void Punch();
+
+	// 장착 함수
 	void EquipMain1();
 	void EquipMain2();
 	void EquipSub();
@@ -168,12 +192,7 @@ private:
 	void Reload();
 	void InteractPressed();
 
-	void UpDown(float NewAxisValue);
-	void LeftRight(float NewAxisValue);
-	void LookUp(float NewAxisValue);
-	void Turn(float NewAxisValue);
-	void Continuous_Fire(float NewAxisValue);
-
+	// 상태플래그
 	bool IsRun;
 	bool IsHold;
 	bool EquipAnim;
@@ -181,22 +200,35 @@ private:
 	bool IsZoom;
 	bool bHit;
 	bool IsForward;
+	bool IsFire;
+	bool IsMontagePlay;
 
 	int32 Updownflag;
 	int32 LeftRightflag;
 
 	float HoldTime;
+	float MoveRate; // 이동속도 조절 변수
 	int32 HoldFlag;
 	int32 Moveflag;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Equip, Meta = (AllowPrivateAccess = true))
-		int32 Equipflag;
+	FTimerHandle FireDelay;
+
+	
 
 	UFUNCTION()
 		void OnEquipMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
+	UFUNCTION()
+		void OnReloadMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Equip, Meta = (AllowPrivateAccess = true))
 		bool IsEquipping;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Equip, Meta = (AllowPrivateAccess = true))
+		int32 Equipflag;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Reload, Meta = (AllowPrivateAccess = true))
+		bool IsReloading;
 
 	UPROPERTY()
 		class UPro4AnimInstance* Pro4Anim;

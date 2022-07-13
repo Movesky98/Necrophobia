@@ -1,13 +1,22 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+#include "AGrenade.h"
+#include "Net/UnrealNetwork.h"
+
 
 #include "AGrenade.h"
 
 AAGrenade::AAGrenade()
 {
 	ItemType = BaseItemType::Grenade;
+	bReplicates = true;
 
-	RandomSpawn();
+	// 서버일 경우 실행
+	if (HasAuthority())
+	{
+		int32 Random = FMath::RandRange(0, 3);
+		RandomSpawn(Random);
+	}
 }
 
 void AAGrenade::NotifyActorBeginOverlap(AActor* OtherActor)
@@ -15,10 +24,8 @@ void AAGrenade::NotifyActorBeginOverlap(AActor* OtherActor)
 	UE_LOG(Pro4, Log, TEXT("Grenade is overlapping."));
 }
 
-void AAGrenade::RandomSpawn()
+void AAGrenade::RandomSpawn_Implementation(int32 Random)
 {
-	int32 Random = FMath::RandRange(0, 3);
-	
 	CurrentGrenade = static_cast<GrenadeType>(Random);
 
 	switch (CurrentGrenade)
