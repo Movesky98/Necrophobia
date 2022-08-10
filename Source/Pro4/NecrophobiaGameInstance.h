@@ -21,9 +21,9 @@ public:
 	virtual void Init();
 
 	/* 
-	* 지금 매치메이킹을 구현하기엔 실력이 부족하므로 우선 리슨서버 형식으로 구현하여
-	* 멀티플레이 테스트를 해주시길 바랍니다.
-	* 나중에 매치메이킹이 되는대로 함수를 수정해서 올리겠습니다.
+	* I'm not good enough to implement matchmaking now, so I'll implement it as a listen server first
+	* Please do a multi-play test.
+	* I will revise the function and upload it as soon as the matchmaking is done.
 	*/
 	UFUNCTION()
 	void Host() override;
