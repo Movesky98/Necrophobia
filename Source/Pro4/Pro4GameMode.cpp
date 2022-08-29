@@ -19,7 +19,6 @@ APro4GameMode::APro4GameMode()
 void APro4GameMode::BeginPlay()
 
 {
-<<<<<<< HEAD
    Super::BeginPlay();
    /*
    if (!SteamAPI_RestartAppIfNecessary(480)) // 앱 ID로 대체 
@@ -38,23 +37,3 @@ void APro4GameMode::BeginPlay()
    }
    */
 }
-=======
-	Super::BeginPlay();
-	/*
-	if (!SteamAPI_RestartAppIfNecessary(480)) // 앱 ID로 대체 
-	{
-		false가 나올 경우, Steam 클라이언트에서 게임을 실행한 것으로 인식함 
-		UE_LOG(Pro4, Error, TEXT("SteamAPI_RestartAppIfNecessary Successed"));
-	}
-
-	if(!SteamAPI_Init())
-	{
-		UE_LOG(Pro4, Error, TEXT("SteamAPI_Init failed"));
-	}
-	else
-	{
-		UE_LOG(Pro4, Error, TEXT("SteamAPI_Init Successed"));
-	}
-	*/
-}
->>>>>>> develop
