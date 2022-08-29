@@ -40,7 +40,7 @@ void AAArmor::RandomSpawn_Implementation(int32 Random)
 		break;
 	}
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Armor(TEXT("/Game/FPS_Weapon_Bundle/Weapons/Meshes/Accessories/SM_Scope_25x56_Y.SM_Scope_25x56_Y"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Armor(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/Accessories/SM_Scope_25x56_Y.SM_Scope_25x56_Y"));
 	if (SM_Armor.Succeeded())
 	{
 		BoxMesh->SetStaticMesh(SM_Armor.Object);

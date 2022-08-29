@@ -58,7 +58,7 @@ APro4Character::APro4Character()
 
 		UE_LOG(Pro4, Log, TEXT("WeaponSocket has exist"))
 
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/FPS_Weapon_Bundle/Weapons/Meshes/AR4/SM_AR4_X.SM_AR4_X"));
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/AR4/SM_AR4_X.SM_AR4_X"));
 		if (SM_Weapon.Succeeded())
 		{
 			Weapon->SetStaticMesh(SM_Weapon.Object);

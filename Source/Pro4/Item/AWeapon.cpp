@@ -33,7 +33,7 @@ void AAWeapon::RandomSpawn_Implementation(int32 Random)
 	{
 		UE_LOG(Pro4, Log, TEXT("AR is spawned."));
 
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/FPS_Weapon_Bundle/Weapons/Meshes/AR4/SM_AR4_X.SM_AR4_X"));
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/AR4/SM_AR4_X.SM_AR4_X"));
 		if (SM_Weapon.Succeeded())
 		{
 			BoxMesh->SetStaticMesh(SM_Weapon.Object);
@@ -44,7 +44,7 @@ void AAWeapon::RandomSpawn_Implementation(int32 Random)
 	{
 		UE_LOG(Pro4, Log, TEXT("SR is spawned."));
 
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/FPS_Weapon_Bundle/Weapons/Meshes/KA_Val/SM_KA_Val.SM_KA_Val"));
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/KA_Val/SM_KA_Val.SM_KA_Val"));
 		if (SM_Weapon.Succeeded())
 		{
 			BoxMesh->SetStaticMesh(SM_Weapon.Object);
@@ -55,7 +55,7 @@ void AAWeapon::RandomSpawn_Implementation(int32 Random)
 	{
 		UE_LOG(Pro4, Log, TEXT("Pistol is spawned."));
 
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/FPS_Weapon_Bundle/Weapons/Meshes/SMG11/SM_SMG11.SM_SMG11"));
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/SMG11/SM_SMG11.SM_SMG11"));
 		if (SM_Weapon.Succeeded())
 		{
 			BoxMesh->SetStaticMesh(SM_Weapon.Object);
@@ -66,7 +66,7 @@ void AAWeapon::RandomSpawn_Implementation(int32 Random)
 	{
 		UE_LOG(Pro4, Log, TEXT("Knife is spawned."));
 
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/FPS_Weapon_Bundle/Weapons/Meshes/M9_Knife/SM_M9_Knife.SM_M9_Knife"));
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/M9_Knife/SM_M9_Knife.SM_M9_Knife"));
 		if (SM_Weapon.Succeeded())
 		{
 			BoxMesh->SetStaticMesh(SM_Weapon.Object);
