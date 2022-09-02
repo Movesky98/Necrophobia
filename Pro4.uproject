@@ -16,10 +16,6 @@
 	],
 	"Plugins": [
 		{
-			"Name": "OnlineSubsystemNull",
-			"Enabled": false
-		},
-		{
 			"Name": "OnlineSubsystemUtils",
 			"Enabled": false
 		},

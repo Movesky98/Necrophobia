@@ -8,8 +8,21 @@ public class Pro4 : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "HeadMountedDisplay", "UMG", "OnlineSubSystemSteam" });
+        PublicDependencyModuleNames.AddRange(new string[] { 
+			"Core", 
+			"CoreUObject", 
+			"Engine", 
+			"InputCore", 
+			"HeadMountedDisplay", 
+			"UMG",
+			"OnlineSubsystem",
+			"OnlineSubsystemNULL",
+			"OnlineSubSystemSteam" 
+		});
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
+		PrivateDependencyModuleNames.AddRange(new string[] { 
+			"Slate", 
+			"SlateCore" 
+		});
 	}
 }
