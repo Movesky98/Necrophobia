@@ -35,5 +35,7 @@ void APro4GameMode::BeginPlay()
    {
       UE_LOG(Pro4, Error, TEXT("SteamAPI_Init Successed"));
    }
+
+   Encoding 형식 UTF-8로 변경 테스트
    */
 }
