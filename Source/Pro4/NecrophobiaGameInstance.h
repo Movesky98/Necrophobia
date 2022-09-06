@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Pro4.h"
+
 #include "Engine/GameInstance.h"
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
@@ -46,6 +47,8 @@ public:
 
 	void LoadMainMenu() override;
 
+	void StartSession();
+
 private:
 	TSubclassOf<class UUserWidget> MainClass;
 	TSubclassOf<class UUserWidget> PlayerClass;
@@ -61,6 +64,7 @@ private:
 	void OnDestroySessionComplete(FName SessionName, bool Success);
 	void OnFindSessionComplete(bool Success);
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+	void OnNetworkFailureComplete(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
 
 	void CreateSession();
 	bool CheckSession(TArray<FSessionData> ServerInfo);

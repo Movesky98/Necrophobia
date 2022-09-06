@@ -1,12 +1,13 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "NecrophobiaGameInstance.h"
+#include "UserInterface/PlayerMenu.h"
+
 #include "Engine/Engine.h"
 
 #include "UObject/ConstructorHelpers.h"
 #include "OnlineSessionSettings.h"
 
-#include "UserInterface/PlayerMenu.h"
 
 const static FName SESSION_NAME = TEXT("Necrophobia");
 
@@ -58,6 +59,12 @@ void UNecrophobiaGameInstance::Init()
 	{
 		UE_LOG(Pro4, Warning, TEXT("Subsystem not found."));
 	}
+
+	if (GEngine != nullptr) 
+	{
+		GEngine->OnNetworkFailure().AddUObject(this, &UNecrophobiaGameInstance::OnNetworkFailureComplete);
+	}
+	
 }
 
 #pragma region OnlineSubsystem
@@ -99,7 +106,7 @@ void UNecrophobiaGameInstance::CreateSession()
 		// 온라인 서브시스템이 'NULL'로 실행될 경우, 랜서버로만 멀티플레이를 테스트할 수 있음.
 		SessionSettings.bIsLANMatch = (IOnlineSubsystem::Get()->GetSubsystemName() == "NULL") ? true : false;
 
-		SessionSettings.NumPublicConnections = 4;	// 세션에서 연결될 수 있는 인원 수.
+		SessionSettings.NumPublicConnections = 5;	// 세션에서 연결될 수 있는 인원 수.
 		SessionSettings.bShouldAdvertise = true;	// 온라인에서 해당 세션이 보이도록 함.
 
 		// 이미 실행중인 세션에 참가 가능한지 여부
@@ -158,6 +165,16 @@ bool UNecrophobiaGameInstance::CheckSession(TArray<FSessionData> ServerInfo)
 	// 입장 가능한 세션이 선택되지 않은 경우
 	return false;
 }
+
+/* 게임이 시작되고 새로운 유저의 참가를 막기위해 실행되는 함수 */
+void UNecrophobiaGameInstance::StartSession()
+{
+	if (SessionInterface.IsValid())
+	{
+		SessionInterface->StartSession(SESSION_NAME);
+	}
+}
+
 #pragma endregion
 
 #pragma region LoadMenu
@@ -301,4 +318,9 @@ void UNecrophobiaGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinS
 	PlayerController->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
 }
 
+/* 생성된 세션에서 호스트가 퇴장하였을 때, 클라이언트들의 멈춤 현상 방지를 위한 함수 */
+void UNecrophobiaGameInstance::OnNetworkFailureComplete(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString)
+{
+	LoadMainMenu();
+}
 #pragma endregion
