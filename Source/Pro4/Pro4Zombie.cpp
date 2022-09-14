@@ -43,8 +43,15 @@ void APro4Zombie::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
 	ZombieAnim = Cast<UZombieAnimInstance>(GetMesh()->GetAnimInstance());
-
-	ZombieAnim->OnMontageEnded.AddDynamic(this, &APro4Zombie::OnAttackMontageEnded);
+	if (ZombieAnim != nullptr) 
+	{
+		UE_LOG(Pro4, Warning, TEXT("ZombieAnimInstance is not null."));
+		ZombieAnim->OnMontageEnded.AddDynamic(this, &APro4Zombie::OnAttackMontageEnded);
+	}
+	else
+	{
+		UE_LOG(Pro4, Warning, TEXT("ZombieAnimInstance is empty."));
+	}
 }
 
 void APro4Zombie::MovementSetting()

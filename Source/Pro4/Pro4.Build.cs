@@ -17,7 +17,10 @@ public class Pro4 : ModuleRules
 			"UMG",
 			"OnlineSubsystem",
 			"OnlineSubsystemNULL",
-			"OnlineSubSystemSteam" 
+			"OnlineSubSystemSteam",
+			"AIModule",
+			"NavigationSystem",
+			"GameplayTasks"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { 

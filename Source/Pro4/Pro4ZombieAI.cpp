@@ -36,7 +36,7 @@ void APro4ZombieAI::OnPossess(APawn* InPawn)
 		Blackboard->SetValueAsVector(FName(TEXT("PrevPos")), InPawn->GetActorLocation());
 		if (RunBehaviorTree(BehaviorTree))
 		{
-
+			;
 		}
 	}
 }
