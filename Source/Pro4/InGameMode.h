@@ -7,7 +7,7 @@
 #include "InGameMode.generated.h"
 
 /**
- * 
+ * 인게임에서 실행되는 게임모드
  */
 UCLASS()
 class PRO4_API AInGameMode : public AGameMode
