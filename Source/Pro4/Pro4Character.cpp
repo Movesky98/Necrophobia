@@ -184,6 +184,32 @@ void APro4Character::Tick(float DeltaTime)
 	{
 		CurrentHP = 10.0f;
 	}
+
+	// Character Role Test.
+	DrawDebugString(GetWorld(), FVector(0, 0, 150), GetEnumRole(GetLocalRole()), this, FColor::Green, DeltaTime);
+}
+
+// Character Role Test.
+FString APro4Character::GetEnumRole(ENetRole CharacterRole)
+{
+	switch (CharacterRole)
+	{
+	case ROLE_None:
+		return "None";
+		break;
+	case ROLE_SimulatedProxy:
+		return "SimulatedProxy";
+		break;
+	case ROLE_AutonomousProxy:
+		return "AutonomousProxy";
+		break;
+	case ROLE_Authority:
+		return "Authority";
+		break;
+	default:
+		return "ERROR";
+		break;
+	}
 }
 
 void APro4Character::PostInitializeComponents()

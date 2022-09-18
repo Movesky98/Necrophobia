@@ -232,4 +232,7 @@ private:
 
 	UPROPERTY()
 		class UPro4AnimInstance* Pro4Anim;
+
+	// Character Role Test.
+	FString GetEnumRole(ENetRole CharacterRole);
 };
