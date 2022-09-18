@@ -196,7 +196,7 @@ void UNecrophobiaGameInstance::LoadPlayerMenu()
 {
 	if (!ensure(PlayerClass != nullptr)) return;
 
-	UPlayerMenu* PlayerMenu = CreateWidget<UPlayerMenu>(this, PlayerClass);
+	PlayerMenu = CreateWidget<UPlayerMenu>(this, PlayerClass);
 	if (!ensure(PlayerMenu != nullptr)) return;
 
 	PlayerMenu->SetUp();

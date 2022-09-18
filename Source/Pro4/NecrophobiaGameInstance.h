@@ -49,6 +49,8 @@ public:
 
 	void StartSession();
 
+	class UPlayerMenu* PlayerMenu;
+
 private:
 	TSubclassOf<class UUserWidget> MainClass;
 	TSubclassOf<class UUserWidget> PlayerClass;
