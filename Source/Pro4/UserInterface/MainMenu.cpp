@@ -35,16 +35,7 @@ void UMainMenu::GameStart()
 
 void UMainMenu::LoadPreference()
 {
-	// Join (As Client) with Address
-	if (MenuInterface != nullptr)
-	{
-		if (!ensure(NicknameField != nullptr)) return;
-
-		const FString& Address = NicknameField->GetText().ToString();
-		// 여기서 세션 개수만큼 랜덤하게 생성하여 참여하는 알고리즘 필요
-		// 환경설정을 로드해오는 함수므로 Host할 때 하는게 맞는 듯.
-		MenuInterface->Join(0);
-	}
+	
 
 }
 

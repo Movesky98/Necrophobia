@@ -37,9 +37,6 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	class UButton* ExitButton;
-	
-	UPROPERTY(meta = (BindWidget))
-	class UEditableTextBox* NicknameField;
 
 	UFUNCTION()
 	void GameStart();

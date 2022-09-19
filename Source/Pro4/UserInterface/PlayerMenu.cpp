@@ -23,8 +23,8 @@ bool UPlayerMenu::Initialize()
 void UPlayerMenu::SetUp()
 {
 	// 뷰포트에 해당 메뉴를 보이도록 함.
-	this->AddToViewport();
-	UISwitcher->ActiveWidgetIndex = 0;
+	this->AddToViewport(); 
+	UISwitcher->SetActiveWidgetIndex(0);
 
 	FInputModeGameOnly InputModeData;
 
