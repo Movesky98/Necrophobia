@@ -23,6 +23,8 @@ public:
 
 	void SetTimeText(uint16 min, uint16 sec);
 
+	void ChangePlayerWidget();
+
 private:
 	UPROPERTY(meta = (BindWidget))
 	class UEditableText* InGameTimeText;
@@ -35,4 +37,7 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	class UProgressBar* Armor_ProgressBar;
+
+	UPROPERTY(meta = (BindWidget))
+	class UWidgetSwitcher* UISwitcher;
 };
