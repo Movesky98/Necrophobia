@@ -3,7 +3,9 @@
 #pragma once
 
 #include "../Pro4.h"
+
 #include "WidgetMenu.h"
+
 #include "PlayerMenu.generated.h"
 
 /**
@@ -17,6 +19,25 @@ class PRO4_API UPlayerMenu : public UWidgetMenu
 public:
 	void SetUp();
 
-private:
+	virtual bool Initialize();
 
+	void SetTimeText(uint16 min, uint16 sec);
+
+	void ChangePlayerWidget();
+
+private:
+	UPROPERTY(meta = (BindWidget))
+	class UEditableText* InGameTimeText;
+
+	UPROPERTY(meta = (BindWidget))
+	class UProgressBar* Time_ProgressBar;
+
+	UPROPERTY(meta = (BindWidget))
+	class UProgressBar* HP_ProgressBar;
+
+	UPROPERTY(meta = (BindWidget))
+	class UProgressBar* Armor_ProgressBar;
+
+	UPROPERTY(meta = (BindWidget))
+	class UWidgetSwitcher* UISwitcher;
 };

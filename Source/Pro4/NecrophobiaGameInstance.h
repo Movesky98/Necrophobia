@@ -3,7 +3,12 @@
 #pragma once
 
 #include "Pro4.h"
+
 #include "Engine/GameInstance.h"
+#include "OnlineSubsystem.h"
+#include "Interfaces/OnlineSessionInterface.h"
+
+#include "UserInterface/MainMenu.h"
 #include "UserInterface/MenuInterface.h"
 #include "NecrophobiaGameInstance.generated.h"
 
@@ -29,7 +34,10 @@ public:
 	void Host() override;
 
 	UFUNCTION()
-	void Join(const FString& Address) override;
+	void Join(uint32 Index) override;
+
+	UFUNCTION()
+	void FindSessionList() override;
 
 	UFUNCTION(BlueprintCallable)
 	void LoadMenu();
@@ -37,10 +45,29 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void LoadPlayerMenu();
 
+	void LoadMainMenu() override;
+
+	void StartSession();
+
+	class UPlayerMenu* PlayerMenu;
+
 private:
 	TSubclassOf<class UUserWidget> MainClass;
 	TSubclassOf<class UUserWidget> PlayerClass;
 
 	class UMainMenu* Menu;
 	
+	TSharedPtr<class FOnlineSessionSearch> SessionSearch;
+	IOnlineSessionPtr SessionInterface;
+
+	uint32 SessionIndex = -1;
+
+	void OnCreateSessionComplete(FName SessionName, bool Success);
+	void OnDestroySessionComplete(FName SessionName, bool Success);
+	void OnFindSessionComplete(bool Success);
+	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+	void OnNetworkFailureComplete(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
+
+	void CreateSession();
+	bool CheckSession(TArray<FSessionData> ServerInfo);
 };

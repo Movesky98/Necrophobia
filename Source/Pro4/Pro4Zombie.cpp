@@ -1,0 +1,99 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+
+#include "Pro4Zombie.h"
+#include "Pro4ZombieAI.h"
+#include "ZombieAnimInstance.h"
+
+// Sets default values
+APro4Zombie::APro4Zombie()
+{
+ 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
+
+	
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh>SK_Zombie(TEXT("/Game/Character_Animation/Zombie/NormalMaleZombie/attack.attack"));
+	if (SK_Zombie.Succeeded())
+	{
+		GetMesh()->SetSkeletalMesh(SK_Zombie.Object);
+	}
+
+	AIControllerClass = APro4ZombieAI::StaticClass();
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+
+	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+	static ConstructorHelpers::FClassFinder<UAnimInstance>SK_ZombieAnim(TEXT("/Game/Character_Animation/Zombie/NormalMaleZombie/ZombieAnimBlueprint.ZombieAnimBlueprint_C"));
+	if (SK_ZombieAnim.Succeeded())
+	{
+		GetMesh()->SetAnimInstanceClass(SK_ZombieAnim.Class);
+	}
+	
+	MovementSetting();
+	IsAttacking = false;
+}
+
+// Called when the game starts or when spawned
+void APro4Zombie::BeginPlay()
+{
+	Super::BeginPlay();
+	
+}
+
+void APro4Zombie::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	ZombieAnim = Cast<UZombieAnimInstance>(GetMesh()->GetAnimInstance());
+	if (ZombieAnim != nullptr) 
+	{
+		UE_LOG(Pro4, Warning, TEXT("ZombieAnimInstance is not null."));
+		ZombieAnim->OnMontageEnded.AddDynamic(this, &APro4Zombie::OnAttackMontageEnded);
+	}
+	else
+	{
+		UE_LOG(Pro4, Warning, TEXT("ZombieAnimInstance is empty."));
+	}
+}
+
+void APro4Zombie::MovementSetting()
+{
+	bUseControllerRotationYaw = false;
+	GetCharacterMovement()->bUseControllerDesiredRotation = true;
+	GetCharacterMovement()->bOrientRotationToMovement = true;
+	//GetCharacterMovement()->RotationRate = FRotator(0.0f, 480.0f, 90.0f);
+	GetCharacterMovement()->MaxWalkSpeed = 1000.0f;
+}
+
+// Called every frame
+void APro4Zombie::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	if (ZombieRunning())
+	{
+		GetCharacterMovement()->MaxWalkSpeed = 1000.0f;
+	}
+	else
+	{
+		GetCharacterMovement()->MaxWalkSpeed = 300.0f;
+	}
+}
+
+// Called to bind functionality to input
+void APro4Zombie::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+
+}
+
+void APro4Zombie::Attack()
+{
+	if (IsAttacking) return;
+
+	ZombieAnim->PlayAttackMontage();
+	IsAttacking = true;
+}
+
+void APro4Zombie::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	IsAttacking = false;
+	OnAttackEnd.Broadcast();
+}

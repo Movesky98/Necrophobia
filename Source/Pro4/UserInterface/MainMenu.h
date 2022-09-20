@@ -6,9 +6,17 @@
 #include "WidgetMenu.h"
 #include "MainMenu.generated.h"
 
-/**
- * 
- */
+USTRUCT()
+struct FSessionData {
+	GENERATED_BODY()
+
+	uint32 Index;
+	FString SessionName;
+	uint16 CurrentPlayers;
+	uint16 MaxPlayers;
+	bool isFull;
+};
+
 UCLASS()
 class PRO4_API UMainMenu : public UWidgetMenu
 {
@@ -29,9 +37,6 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	class UButton* ExitButton;
-	
-	UPROPERTY(meta = (BindWidget))
-	class UEditableTextBox* NicknameField;
 
 	UFUNCTION()
 	void GameStart();

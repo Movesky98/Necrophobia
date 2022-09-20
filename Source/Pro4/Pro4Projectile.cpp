@@ -27,7 +27,7 @@ APro4Projectile::APro4Projectile()
 	ProjectileMovementComponent->bShouldBounce = false;
 	//ProjectileMovementComponent->Bounciness = 0.3f;
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh>SK_PROJECTILE(TEXT("/Game/Tree/Tree_1/Tree_1-1.Tree_1-1"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh>SK_PROJECTILE(TEXT("/Game/Environment/Props/Tree/Tree_1/Tree_1-1.Tree_1-1"));
 	if (SK_PROJECTILE.Succeeded())
 	{
 		Mesh->SetStaticMesh(SK_PROJECTILE.Object);

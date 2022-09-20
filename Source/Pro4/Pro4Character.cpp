@@ -3,6 +3,8 @@
 
 #include "Pro4Character.h"
 #include "Pro4AnimInstance.h"
+#include "NecrophobiaGameInstance.h"
+#include "UserInterface/PlayerMenu.h"
 
 #include "DrawDebugHelpers.h"
 #include "Net/UnrealNetwork.h"
@@ -58,7 +60,7 @@ APro4Character::APro4Character()
 
 		UE_LOG(Pro4, Log, TEXT("WeaponSocket has exist"))
 
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/FPS_Weapon_Bundle/Weapons/Meshes/AR4/SM_AR4_X.SM_AR4_X"));
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/AR4/SM_AR4_X.SM_AR4_X"));
 		if (SM_Weapon.Succeeded())
 		{
 			Weapon->SetStaticMesh(SM_Weapon.Object);
@@ -184,6 +186,32 @@ void APro4Character::Tick(float DeltaTime)
 	{
 		CurrentHP = 10.0f;
 	}
+
+	// Character Role Test.
+	DrawDebugString(GetWorld(), FVector(0, 0, 150), GetEnumRole(GetLocalRole()), this, FColor::Green, DeltaTime);
+}
+
+// Character Role Test.
+FString APro4Character::GetEnumRole(ENetRole CharacterRole)
+{
+	switch (CharacterRole)
+	{
+	case ROLE_None:
+		return "None";
+		break;
+	case ROLE_SimulatedProxy:
+		return "SimulatedProxy";
+		break;
+	case ROLE_AutonomousProxy:
+		return "AutonomousProxy";
+		break;
+	case ROLE_Authority:
+		return "Authority";
+		break;
+	default:
+		return "ERROR";
+		break;
+	}
 }
 
 void APro4Character::PostInitializeComponents()
@@ -227,7 +255,7 @@ void APro4Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	PlayerInputComponent->BindAction(TEXT("Run"), EInputEvent::IE_Pressed, this, &APro4Character::Run);
 	PlayerInputComponent->BindAction(TEXT("Reload"), EInputEvent::IE_Pressed, this, &APro4Character::Reload);
 	PlayerInputComponent->BindAction(TEXT("Interaction"), EInputEvent::IE_Pressed, this, &APro4Character::InteractPressed);
-
+	PlayerInputComponent->BindAction(TEXT("ChangeWidget"), EInputEvent::IE_Pressed, this, &APro4Character::ChangePlayerWidget);
 	
 	PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &APro4Character::LeftRight);
 	PlayerInputComponent->BindAxis(TEXT("MoveForward"), this, &APro4Character::UpDown);
@@ -818,4 +846,14 @@ void APro4Character::InteractPressed()
 			}
 		}
 	}
+}
+
+void APro4Character::ChangePlayerWidget()
+{
+	UNecrophobiaGameInstance* Instance = Cast<UNecrophobiaGameInstance>(GetGameInstance());
+
+	UE_LOG(Pro4, Warning, TEXT("Change PlayerWidget."));
+
+	Instance->PlayerMenu->ChangePlayerWidget();
+
 }

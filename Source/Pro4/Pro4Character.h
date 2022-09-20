@@ -192,6 +192,9 @@ private:
 	void Reload();
 	void InteractPressed();
 
+	// 플레이어 UI 교체
+	void ChangePlayerWidget();
+
 	// 상태플래그
 	bool IsRun;
 	bool IsHold;
@@ -232,4 +235,7 @@ private:
 
 	UPROPERTY()
 		class UPro4AnimInstance* Pro4Anim;
+
+	// Character Role Test.
+	FString GetEnumRole(ENetRole CharacterRole);
 };

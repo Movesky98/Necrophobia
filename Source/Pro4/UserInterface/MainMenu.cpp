@@ -29,22 +29,13 @@ void UMainMenu::GameStart()
 	// Host
 	if (MenuInterface != nullptr)
 	{
-		MenuInterface->Host();
+		MenuInterface->FindSessionList();
 	}
-
-	UE_LOG(Pro4, Warning, TEXT("Host the Server."));
 }
 
 void UMainMenu::LoadPreference()
 {
-	// Join (As Client) with Address
-	if (MenuInterface != nullptr)
-	{
-		if (!ensure(NicknameField != nullptr)) return;
-
-		const FString& Address = NicknameField->GetText().ToString();
-		MenuInterface->Join(Address);
-	}
+	
 
 }
 
