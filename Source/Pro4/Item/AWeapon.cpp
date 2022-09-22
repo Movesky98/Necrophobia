@@ -5,16 +5,16 @@
 
 #include "Net/UnrealNetwork.h"
 
-AAWeapon::AAWeapon() 
+AAWeapon::AAWeapon()
 {
 	ItemType = BaseItemType::Weapon;
 	bReplicates = true;
 
-	// 서버만 아이템을 스폰하도록 설정
-	if (HasAuthority()) 
+	if (HasAuthority())
 	{
-		int32 Random = FMath::RandRange(0, 3);
-		RandomSpawn(Random);
+		RandomItemNum = static_cast<int32>(WeaponType::MAX) - 1;
+		FMath::RandRange(0, RandomItemNum);
+		RandomSpawn(RandomItemNum);
 	}
 }
 
@@ -23,7 +23,7 @@ void AAWeapon::NotifyActorBeginOverlap(AActor* OtherActor)
 	UE_LOG(Pro4, Log, TEXT("Weapon is overlapping."));
 }
 
-void AAWeapon::RandomSpawn_Implementation(int32 Random)
+void AAWeapon::RandomSpawn(int32 Random)
 {
 	CurrentWeapon = static_cast<WeaponType>(Random);
 
@@ -74,4 +74,11 @@ void AAWeapon::RandomSpawn_Implementation(int32 Random)
 	}
 		break;
 	}
+}
+
+void AAWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AAWeapon, RandomItemNum);
 }

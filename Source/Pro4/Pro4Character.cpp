@@ -838,10 +838,13 @@ void APro4Character::InteractPressed()
 
 			AActor* Interactable = Hit.GetActor();
 
+			// Actor가 가지고 있는 Tag가 Item이라면.
 			if (Interactable->ActorHasTag(TEXT("Item")))
 			{
+				UNecrophobiaGameInstance* Instance = Cast<UNecrophobiaGameInstance>(GetGameInstance());
 				UE_LOG(Pro4, Log, TEXT("Get %s"), *Interactable->GetName());
-
+				
+				Instance->PlayerMenu->AddItemToInventory(Interactable->GetName(), 1);
 				Interactable->Destroy();
 			}
 		}

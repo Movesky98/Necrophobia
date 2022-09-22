@@ -14,13 +14,13 @@ class PRO4_API AAArmor : public AABaseItem
 	GENERATED_BODY()
 	
 public:
-
 	AAArmor();
 
-	enum class ArmorType : uint8
+	enum class ArmorType : int32
 	{
-		Helmet,		// «Ô∏‰
-		Flak_Jacket	// πÊ≈∫¡∂≥¢
+		Helmet,			// «Ô∏‰
+		Flak_Jacket,	// πÊ≈∫¡∂≥¢
+		MAX
 	};
 
 	ArmorType CurrentArmor;
@@ -29,6 +29,8 @@ protected:
 	void NotifyActorBeginOverlap(AActor* OtherActor) override;
 
 private:
-	UFUNCTION(NetMulticast, Reliable)
+	UPROPERTY(Replicated)
+	int32 RandomItemNum = 0;
+
 	void RandomSpawn(int32 Random);
 };

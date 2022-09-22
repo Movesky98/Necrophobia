@@ -42,24 +42,20 @@ void AAItemSpawner::Tick(float DeltaTime)
 		if (5.0f < Seconds)
 		{
 			Seconds = 0.0f;
-			ReportSpawnItem();
+			Server_SpawnItem();
 		}
 
 		Seconds += DeltaTime;
 	}
 }
 
-void AAItemSpawner::ReportSpawnItem_Implementation()
-{
-	RPCSpawnItem();
-}
-
-void AAItemSpawner::RPCSpawnItem_Implementation()
+void AAItemSpawner::Server_SpawnItem_Implementation()
 {
 	UE_LOG(Pro4, Log, TEXT("Spawn Item"));
 
-	int32 Random = FMath::RandRange(1, 3);
+	RandomSpawnNum = FMath::RandRange(1, 3);
 	UWorld* World = GetWorld();
+
 	if (World)
 	{
 		FActorSpawnParameters SpawnParams;
@@ -70,8 +66,7 @@ void AAItemSpawner::RPCSpawnItem_Implementation()
 
 		SpawnLocation.X += FMath::RandRange(500, 1000);
 		SpawnLocation.Y += FMath::RandRange(500, 1000);
-
-		switch (Random) {
+		switch (RandomSpawnNum) {
 		case 1:
 		{
 			AAWeapon* InstanceItem = World->SpawnActor<AAWeapon>(Weapon, SpawnLocation, Rot, SpawnParams);
@@ -97,7 +92,16 @@ void AAItemSpawner::RPCSpawnItem_Implementation()
 			// InstanceItem->ItemType = AABaseItem::BaseItemType::Parts;
 			break;
 		default:
+			UE_LOG(Pro4, Warning, TEXT("Spawn Item ERROR."));
+			return;
 			break;
 		}
 	}
+}
+
+void AAItemSpawner::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AAItemSpawner, RandomSpawnNum);
 }

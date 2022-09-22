@@ -17,12 +17,13 @@ public:
 
 	AAWeapon();
 
-	enum class WeaponType : uint8
+	enum class WeaponType : int32
 	{
 		AR,
 		SR,
 		Pistol,
-		Knife
+		Knife,
+		MAX
 	};
 	
 	WeaponType CurrentWeapon;
@@ -31,6 +32,8 @@ protected:
 	void NotifyActorBeginOverlap(AActor* OtherActor) override;
 
 private:
-	UFUNCTION(NetMulticast, Reliable)
+	UPROPERTY(Replicated)
+	int32 RandomItemNum = 0;
+
 	void RandomSpawn(int32 Random);
 };

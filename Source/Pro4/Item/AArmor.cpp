@@ -7,13 +7,13 @@
 AAArmor::AAArmor()
 {
 	ItemType = BaseItemType::Armor;
-	bReplicates = true;
+	SetReplicates(true);
 
-	// 서버일 경우 실행
 	if (HasAuthority())
 	{
-		int32 Random = FMath::RandRange(0, 3);
-		RandomSpawn(Random);
+		RandomItemNum = static_cast<int32>(ArmorType::MAX) - 1;
+		FMath::RandRange(0, RandomItemNum);
+		RandomSpawn(RandomItemNum);
 	}
 }
 
@@ -22,7 +22,7 @@ void AAArmor::NotifyActorBeginOverlap(AActor* OtherActor)
 	UE_LOG(Pro4, Log, TEXT("Armor is overlapping."));
 }
 
-void AAArmor::RandomSpawn_Implementation(int32 Random)
+void AAArmor::RandomSpawn(int32 Random)
 {
 	CurrentArmor = static_cast<ArmorType>(Random);
 
@@ -45,4 +45,11 @@ void AAArmor::RandomSpawn_Implementation(int32 Random)
 	{
 		BoxMesh->SetStaticMesh(SM_Armor.Object);
 	}
+}
+
+void AAArmor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AAArmor, RandomItemNum);
 }

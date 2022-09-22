@@ -2,10 +2,22 @@
 
 
 #include "PlayerMenu.h"
+#include "InventorySlot.h"
+
+#include "UObject/ConstructorHelpers.h"
 
 #include "Components/ProgressBar.h"
 #include "Components/EditableText.h"
 #include "Components/WidgetSwitcher.h"
+#include "Components/WrapBox.h"
+
+UPlayerMenu::UPlayerMenu(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+{
+	ConstructorHelpers::FClassFinder<UInventorySlot> InventorySlotClass(TEXT("/Game/UI/Player/WBP_InventorySlot"));
+	if (!ensure(InventorySlotClass.Class != nullptr)) return;
+
+	InventorySlot = InventorySlotClass.Class;
+}
 
 bool UPlayerMenu::Initialize()
 {
@@ -59,4 +71,11 @@ void UPlayerMenu::ChangePlayerWidget()
 		UISwitcher->SetActiveWidgetIndex(0);
 	}
 	UE_LOG(Pro4, Warning, TEXT("ActiveWidgetIndex = %d."), UISwitcher->ActiveWidgetIndex);
+}
+
+void UPlayerMenu::AddItemToInventory(FString Name, uint16 Num)
+{
+	UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
+	InventoryItem->SetUp(Name, Num);
+	InventoryBox->AddChildToWrapBox(InventoryItem);
 }

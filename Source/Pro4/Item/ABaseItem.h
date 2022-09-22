@@ -17,7 +17,7 @@ public:
 
 public:
 #pragma region ItemTypeDeclaration
-	enum class BaseItemType : uint8
+	enum class BaseItemType : int32
 	{
 		Weapon,		// 무기
 		Armor,		// 방어구
@@ -25,15 +25,17 @@ public:
 		Recovery,	// 회복 아이템
 		Ammo,		// 탄창
 		Parts,		// 파츠, 부품
+		MAX
 	};
 	
 	BaseItemType ItemType;
 
-	enum class RecoveryType : uint8 
+	enum class RecoveryType : int32
 	{
 		Antidote,	// 해독제
 		Bandage,	// 붕대
 		Kit,		// 회복키트
+		MAX
 	};
 
 #pragma endregion

@@ -10,11 +10,11 @@ AAGrenade::AAGrenade()
 	ItemType = BaseItemType::Grenade;
 	bReplicates = true;
 
-	// 서버일 경우 실행
 	if (HasAuthority())
 	{
-		int32 Random = FMath::RandRange(0, 3);
-		RandomSpawn(Random);
+		RandomItemNum = static_cast<int32>(GrenadeType::MAX) - 1;
+		FMath::RandRange(0, RandomItemNum);
+		RandomSpawn(RandomItemNum);
 	}
 }
 
@@ -23,7 +23,7 @@ void AAGrenade::NotifyActorBeginOverlap(AActor* OtherActor)
 	UE_LOG(Pro4, Log, TEXT("Grenade is overlapping."));
 }
 
-void AAGrenade::RandomSpawn_Implementation(int32 Random)
+void AAGrenade::RandomSpawn(int32 Random)
 {
 	CurrentGrenade = static_cast<GrenadeType>(Random);
 
@@ -70,4 +70,11 @@ void AAGrenade::RandomSpawn_Implementation(int32 Random)
 	}
 		break;
 	}
+}
+
+void AAGrenade::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AAGrenade, RandomItemNum);
 }

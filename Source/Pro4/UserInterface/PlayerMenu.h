@@ -17,6 +17,8 @@ class PRO4_API UPlayerMenu : public UWidgetMenu
 	GENERATED_BODY()
 	
 public:
+	UPlayerMenu(const FObjectInitializer& ObjectInitializer);
+
 	void SetUp();
 
 	virtual bool Initialize();
@@ -25,7 +27,11 @@ public:
 
 	void ChangePlayerWidget();
 
+	void AddItemToInventory(FString Name, uint16 Num);
+
 private:
+	TSubclassOf<class UInventorySlot> InventorySlot;
+
 	UPROPERTY(meta = (BindWidget))
 	class UEditableText* InGameTimeText;
 
@@ -37,6 +43,9 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	class UProgressBar* Armor_ProgressBar;
+
+	UPROPERTY(meta = (BindWidget))
+	class UWrapBox* InventoryBox;
 
 	UPROPERTY(meta = (BindWidget))
 	class UWidgetSwitcher* UISwitcher;
