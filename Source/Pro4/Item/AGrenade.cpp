@@ -13,7 +13,7 @@ AAGrenade::AAGrenade()
 	if (HasAuthority())
 	{
 		RandomItemNum = static_cast<int32>(GrenadeType::MAX) - 1;
-		FMath::RandRange(0, RandomItemNum);
+		RandomItemNum = FMath::RandRange(0, RandomItemNum);
 		RandomSpawn(RandomItemNum);
 	}
 }
@@ -37,6 +37,9 @@ void AAGrenade::RandomSpawn(int32 Random)
 		{
 			BoxMesh->SetStaticMesh(SM_Grenade.Object);
 		}
+		
+		ItemName = "Grenade";
+		ItemNum = 1;
 	}
 		break;
 	case AAGrenade::GrenadeType::Flash:
@@ -47,6 +50,9 @@ void AAGrenade::RandomSpawn(int32 Random)
 		{
 			BoxMesh->SetStaticMesh(SM_Flash.Object);
 		}
+
+		ItemName = "Flash";
+		ItemNum = 1;
 	}
 		break;
 	case AAGrenade::GrenadeType::Smoke:
@@ -57,6 +63,9 @@ void AAGrenade::RandomSpawn(int32 Random)
 		{
 			BoxMesh->SetStaticMesh(SM_Smoke.Object);
 		}
+
+		ItemName = "Smoke";
+		ItemNum = 1;
 	}
 		break;
 	case AAGrenade::GrenadeType::Molotov:
@@ -67,6 +76,9 @@ void AAGrenade::RandomSpawn(int32 Random)
 		{
 			BoxMesh->SetStaticMesh(SM_Smoke.Object);
 		}
+
+		ItemName = "Molotov";
+		ItemNum = 1;
 	}
 		break;
 	}

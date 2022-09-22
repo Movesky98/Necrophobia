@@ -13,7 +13,7 @@ AAWeapon::AAWeapon()
 	if (HasAuthority())
 	{
 		RandomItemNum = static_cast<int32>(WeaponType::MAX) - 1;
-		FMath::RandRange(0, RandomItemNum);
+		RandomItemNum = FMath::RandRange(0, RandomItemNum);
 		RandomSpawn(RandomItemNum);
 	}
 }
@@ -38,6 +38,9 @@ void AAWeapon::RandomSpawn(int32 Random)
 		{
 			BoxMesh->SetStaticMesh(SM_Weapon.Object);
 		}
+
+		ItemName = "AR";
+		ItemNum = 1;
 	}
 		break;
 	case AAWeapon::WeaponType::SR:
@@ -49,6 +52,9 @@ void AAWeapon::RandomSpawn(int32 Random)
 		{
 			BoxMesh->SetStaticMesh(SM_Weapon.Object);
 		}
+
+		ItemName = "SR";
+		ItemNum = 1;
 	}
 		break;
 	case AAWeapon::WeaponType::Pistol:
@@ -60,6 +66,9 @@ void AAWeapon::RandomSpawn(int32 Random)
 		{
 			BoxMesh->SetStaticMesh(SM_Weapon.Object);
 		}
+
+		ItemName = "Pistol";
+		ItemNum = 1;
 	}
 		break;
 	case AAWeapon::WeaponType::Knife:
@@ -71,6 +80,9 @@ void AAWeapon::RandomSpawn(int32 Random)
 		{
 			BoxMesh->SetStaticMesh(SM_Weapon.Object);
 		}
+
+		ItemName = "Knife";
+		ItemNum = 1;
 	}
 		break;
 	}

@@ -192,8 +192,12 @@ private:
 	void Reload();
 	void InteractPressed();
 
-	// 플레이어 UI 교체
+	/* 플레이어 UI 교체 함수 */
 	void ChangePlayerWidget();
+
+	/* 아이템 획득 시, 해당 아이템을 공통적으로 제거하는 함수 */
+	UFUNCTION(Server, Reliable)
+	void Server_DestroyItem(AActor* DestroyActor);
 
 	// 상태플래그
 	bool IsRun;

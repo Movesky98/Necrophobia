@@ -27,7 +27,7 @@ public:
 
 	void ChangePlayerWidget();
 
-	void AddItemToInventory(FString Name, uint16 Num);
+	void AddItemToInventory(AActor* ItemActor, uint16 Num);
 
 private:
 	TSubclassOf<class UInventorySlot> InventorySlot;

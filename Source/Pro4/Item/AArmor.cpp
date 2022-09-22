@@ -12,7 +12,7 @@ AAArmor::AAArmor()
 	if (HasAuthority())
 	{
 		RandomItemNum = static_cast<int32>(ArmorType::MAX) - 1;
-		FMath::RandRange(0, RandomItemNum);
+		RandomItemNum = FMath::RandRange(0, RandomItemNum);
 		RandomSpawn(RandomItemNum);
 	}
 }
@@ -31,12 +31,19 @@ void AAArmor::RandomSpawn(int32 Random)
 	case AAArmor::ArmorType::Helmet:
 	{
 		UE_LOG(Pro4, Log, TEXT("Helmet(Armor) is spawned."));
+		ItemName = "Helmet";
+		ItemNum = 1;
 	}
 		break;
 	case AAArmor::ArmorType::Flak_Jacket:
 	{
 		UE_LOG(Pro4, Log, TEXT("Flak_Jacket(Armor) is spawned."));
+		ItemName = "Flak_Jacket";
+		ItemNum = 1;
 	}
+		break;
+	default:
+		UE_LOG(Pro4, Log, TEXT("Armor Spawn ERROR"));
 		break;
 	}
 

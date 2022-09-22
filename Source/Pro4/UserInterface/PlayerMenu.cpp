@@ -3,6 +3,10 @@
 
 #include "PlayerMenu.h"
 #include "InventorySlot.h"
+#include "../Item/ABaseItem.h"
+#include "../Item/AGrenade.h"
+#include "../Item/AArmor.h"
+#include "../Item/AWeapon.h"
 
 #include "UObject/ConstructorHelpers.h"
 
@@ -73,9 +77,49 @@ void UPlayerMenu::ChangePlayerWidget()
 	UE_LOG(Pro4, Warning, TEXT("ActiveWidgetIndex = %d."), UISwitcher->ActiveWidgetIndex);
 }
 
-void UPlayerMenu::AddItemToInventory(FString Name, uint16 Num)
+void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 {
 	UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
-	InventoryItem->SetUp(Name, Num);
-	InventoryBox->AddChildToWrapBox(InventoryItem);
+	AABaseItem* BaseItem = Cast<AABaseItem>(ItemActor);
+	
+	switch (BaseItem->ItemType)
+	{
+	case AABaseItem::BaseItemType::Weapon:
+	{
+		AAWeapon* Weapon = Cast<AAWeapon>(BaseItem);
+		if (!ensure(Weapon != nullptr)) return;
+		InventoryItem->SetUp(Weapon->ItemName, Weapon->ItemNum);
+		InventoryBox->AddChildToWrapBox(InventoryItem);
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
+	}
+		break;
+	case AABaseItem::BaseItemType::Armor:
+	{
+		AAArmor* Armor = Cast<AAArmor>(BaseItem);
+		InventoryItem->SetUp(Armor->ItemName, Armor->ItemNum);
+		InventoryBox->AddChildToWrapBox(InventoryItem);
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
+	}
+		break;
+	case AABaseItem::BaseItemType::Grenade:
+	{
+		AAGrenade* Grenade = Cast<AAGrenade>(BaseItem);
+		InventoryItem->SetUp(Grenade->ItemName, Grenade->ItemNum);
+		InventoryBox->AddChildToWrapBox(InventoryItem);
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
+	}
+		break;
+	case AABaseItem::BaseItemType::Recovery:
+		// TO DO : Implement Item of Recovery
+		break;
+	case AABaseItem::BaseItemType::Ammo:
+		// TO DO : Implement Item of Ammo
+		break;
+	case AABaseItem::BaseItemType::Parts:
+		// TO DO : Implement Item of Parts
+		break;
+	default:
+		UE_LOG(Pro4, Warning, TEXT("Add item to Inventory ERROR"));
+		break;
+	}
 }

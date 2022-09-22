@@ -52,7 +52,6 @@ void AAItemSpawner::Tick(float DeltaTime)
 void AAItemSpawner::Server_SpawnItem_Implementation()
 {
 	UE_LOG(Pro4, Log, TEXT("Spawn Item"));
-
 	RandomSpawnNum = FMath::RandRange(1, 3);
 	UWorld* World = GetWorld();
 

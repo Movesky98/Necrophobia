@@ -15,7 +15,6 @@ public:
 	// Sets default values for this actor's properties
 	AABaseItem();
 
-public:
 #pragma region ItemTypeDeclaration
 	enum class BaseItemType : int32
 	{
@@ -40,7 +39,6 @@ public:
 
 #pragma endregion
 
-public:	
 	// Called every frame
 	// virtual void Tick(float DeltaTime) override;
 
@@ -49,4 +47,7 @@ public:
 
 	UPROPERTY(VisibleDefaultsOnly, Category = SphereCollision)
 	USphereComponent* SphereCollision;
+
+	FString ItemName;
+	uint16 ItemNum;
 };
