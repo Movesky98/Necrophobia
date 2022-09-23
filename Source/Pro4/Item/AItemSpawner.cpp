@@ -37,7 +37,7 @@ void AAItemSpawner::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (HasAuthority())
+	if (GetLocalRole() == ROLE_Authority)
 	{
 		if (5.0f < Seconds)
 		{
@@ -49,10 +49,11 @@ void AAItemSpawner::Tick(float DeltaTime)
 	}
 }
 
-void AAItemSpawner::Server_SpawnItem_Implementation()
+void AAItemSpawner::Server_SpawnItem()
 {
 	UE_LOG(Pro4, Log, TEXT("Spawn Item"));
-	RandomSpawnNum = FMath::RandRange(1, 3);
+	//RandomSpawnNum = FMath::RandRange(1, 3);
+	RandomSpawnNum = 1;
 	UWorld* World = GetWorld();
 
 	if (World)
@@ -68,17 +69,17 @@ void AAItemSpawner::Server_SpawnItem_Implementation()
 		switch (RandomSpawnNum) {
 		case 1:
 		{
-			AAWeapon* InstanceItem = World->SpawnActor<AAWeapon>(Weapon, SpawnLocation, Rot, SpawnParams);
+			AAWeapon* InstanceItem = World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), SpawnLocation, Rot, SpawnParams);
 		}
 		break;
 		case 2:
 		{
-			AAArmor* InstanceItem = World->SpawnActor<AAArmor>(Armor, SpawnLocation, Rot, SpawnParams);
+			AAArmor* InstanceItem = World->SpawnActor<AAArmor>(AAArmor::StaticClass(), SpawnLocation, Rot, SpawnParams);
 		}
 		break;
 		case 3:
 		{
-			AAGrenade* InstanceItem = World->SpawnActor<AAGrenade>(Grenade, SpawnLocation, Rot, SpawnParams);
+			AAGrenade* InstanceItem = World->SpawnActor<AAGrenade>(AAGrenade::StaticClass(), SpawnLocation, Rot, SpawnParams);
 		}
 		break;
 		case 4:

@@ -17,11 +17,11 @@ AABaseItem::AABaseItem()
 
 	BoxMesh->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f));
 	BoxMesh->SetCollisionProfileName(TEXT("BaseItem"));
+	BoxMesh->SetIsReplicated(true);
+
 	SphereCollision->InitSphereRadius(200.0f);
 	SphereCollision->SetCollisionProfileName(TEXT("BaseItem"));
 
-	ItemName = "BaseItem";
-	ItemNum = 0;
 	Tags.Add("Item");
 }
 

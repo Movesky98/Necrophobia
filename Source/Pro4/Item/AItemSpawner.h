@@ -41,7 +41,6 @@ protected:
 private:
 	UPROPERTY(Replicated)
 	int32 RandomSpawnNum = 0;
-	
-	UFUNCTION(Client, Reliable)
+
 	void Server_SpawnItem();
 };

@@ -24,13 +24,24 @@ public:
 	};
 
 	ArmorType CurrentArmor;
+	FString TemporaryName;
+
+	UPROPERTY(Replicated)
+	FString ItemName;
+
+	UPROPERTY(Replicated)
+	uint16 ItemNum;
+
+	virtual void BeginPlay();
+
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
 
 protected:
 	void NotifyActorBeginOverlap(AActor* OtherActor) override;
 
 private:
-	UPROPERTY(Replicated)
-	int32 RandomItemNum = 0;
-
 	void RandomSpawn(int32 Random);
+
+	UStaticMesh* SM_ArmorItem;
 };

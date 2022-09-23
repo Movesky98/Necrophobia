@@ -47,7 +47,4 @@ public:
 
 	UPROPERTY(VisibleDefaultsOnly, Category = SphereCollision)
 	USphereComponent* SphereCollision;
-
-	FString ItemName;
-	uint16 ItemNum;
 };
