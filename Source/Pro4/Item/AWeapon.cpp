@@ -24,8 +24,6 @@ void AAWeapon::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	//Actor Role Draw
-	DrawDebugString(GetWorld(), FVector(0, 0, 100), GetEnumRole(GetLocalRole()), this, FColor::Red, DeltaTime);
 	// ItemName Draw
 	DrawDebugString(GetWorld(), FVector(0, 0, 50), ItemName, this, FColor::Green, DeltaTime);
 }
