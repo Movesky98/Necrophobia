@@ -16,20 +16,34 @@ class PRO4_API AAGrenade : public AABaseItem
 public:
 	AAGrenade();
 
-	enum class GrenadeType : uint8
+	enum class GrenadeType : int32
 	{
 		Grenade,	// 수류탄
 		Flash,		// 섬광탄
 		Smoke,		// 연막탄
-		Molotov		// 화염병
+		Molotov,	// 화염병
+		MAX
 	};
 	
 	GrenadeType CurrentGrenade;
+	FString TemporaryName;
+
+	UPROPERTY(Replicated)
+	FString ItemName;
+
+	UPROPERTY(Replicated)
+	uint16 ItemNum;
+
+	virtual void BeginPlay();
+
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
 
 protected:
 	void NotifyActorBeginOverlap(AActor* OtherActor) override;
 
 private:
-	UFUNCTION(NetMulticast, Reliable)
 	void RandomSpawn(int32 Random);
+
+	UStaticMesh* SM_GrenadeItem;
 };

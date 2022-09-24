@@ -20,6 +20,9 @@ public:
 
 	UPROPERTY(VisibleDefaultsOnly, Category = ItemSpawner)
 	USphereComponent* ItemSpawnerComponent;
+	
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
 
 
 protected:
@@ -35,15 +38,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Item, meta = (AllowPrivateAccess = true))
 	TSubclassOf<class AAGrenade> Grenade;
 
-	void SpawnItem();
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
 private:
-	UFUNCTION(NetMulticast, Reliable)
-	void RPCSpawnItem();
+	UPROPERTY(Replicated)
+	int32 RandomSpawnNum = 0;
 
-	UFUNCTION(Server, Reliable)
-	void ReportSpawnItem();
+	void Server_SpawnItem();
 };

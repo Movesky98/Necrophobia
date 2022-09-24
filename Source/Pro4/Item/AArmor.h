@@ -14,21 +14,34 @@ class PRO4_API AAArmor : public AABaseItem
 	GENERATED_BODY()
 	
 public:
-
 	AAArmor();
 
-	enum class ArmorType : uint8
+	enum class ArmorType : int32
 	{
-		Helmet,		// «Ô∏‰
-		Flak_Jacket	// πÊ≈∫¡∂≥¢
+		Helmet,			// «Ô∏‰
+		Flak_Jacket,	// πÊ≈∫¡∂≥¢
+		MAX
 	};
 
 	ArmorType CurrentArmor;
+	FString TemporaryName;
+
+	UPROPERTY(Replicated)
+	FString ItemName;
+
+	UPROPERTY(Replicated)
+	uint16 ItemNum;
+
+	virtual void BeginPlay();
+
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
 
 protected:
 	void NotifyActorBeginOverlap(AActor* OtherActor) override;
 
 private:
-	UFUNCTION(NetMulticast, Reliable)
 	void RandomSpawn(int32 Random);
+
+	UStaticMesh* SM_ArmorItem;
 };
