@@ -54,7 +54,6 @@ void AInGameMode::Tick(float DeltaTime)
     {
         Time--;
         InGameState->AddInGameSeconds();
-        InGameInstance->PlayerMenu->SetTimeText(InGameState->GetInGameMinutes(), InGameState->GetInGameSeconds());
     }
 }
 

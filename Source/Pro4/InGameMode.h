@@ -44,4 +44,6 @@ private:
 	FTimerHandle GameStartTimer;
 
 	void CountingTheSeconds();
+
+	void UpdatePlayerTimeStete();
 };

@@ -7,6 +7,7 @@
 #include "../Item/AGrenade.h"
 #include "../Item/AArmor.h"
 #include "../Item/AWeapon.h"
+#include "../Pro4PlayerController.h"
 
 #include "UObject/ConstructorHelpers.h"
 
@@ -14,6 +15,7 @@
 #include "Components/EditableText.h"
 #include "Components/WidgetSwitcher.h"
 #include "Components/WrapBox.h"
+#include "Components/Image.h"
 
 UPlayerMenu::UPlayerMenu(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -21,6 +23,16 @@ UPlayerMenu::UPlayerMenu(const FObjectInitializer& ObjectInitializer) : Super(Ob
 	if (!ensure(InventorySlotClass.Class != nullptr)) return;
 
 	InventorySlot = InventorySlotClass.Class;
+
+	ConstructorHelpers::FObjectFinder<UTexture2D> DayObject(TEXT("/Game/UI/Sprites/Player_UI/Time_change/Time_Daytime"));
+	if (!ensure(DayObject.Object != nullptr)) return;
+
+	Day = DayObject.Object;
+
+	ConstructorHelpers::FObjectFinder<UTexture2D> NightObject(TEXT("/Game/UI/Sprites/Player_UI/Time_change/Time_Night"));
+	if (!ensure(NightObject.Object != nullptr)) return;
+
+	Night = NightObject.Object;
 }
 
 bool UPlayerMenu::Initialize()
@@ -54,11 +66,17 @@ void UPlayerMenu::SetUp()
 	PlayerController->SetShowMouseCursor(false);
 }
 
-void UPlayerMenu::SetTimeText(uint16 min, uint16 sec)
+/* 인게임 내 플레이 시간을 표기하는 함수 */
+void UPlayerMenu::SetTimeText(uint16 min_, uint16 sec_)
 {
-	FString TimeString = FString::FromInt(min);
+	Client_SetTimeText(min_, sec_);
+}
+
+void UPlayerMenu::Client_SetTimeText_Implementation(uint16 min_, uint16 sec_)
+{
+	FString TimeString = FString::FromInt(min_);
 	TimeString.Append(" : ");
-	TimeString.Append(FString::FromInt(sec));
+	TimeString.Append(FString::FromInt(sec_));
 	FText TimeText = FText::FromString(TimeString);
 
 	InGameTimeText->SetText(TimeText);
@@ -122,4 +140,9 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		UE_LOG(Pro4, Warning, TEXT("Add item to Inventory ERROR"));
 		break;
 	}
+}
+
+void UPlayerMenu::SetImage(UTexture2D* InTexture)
+{
+	TimeImage->SetBrushFromTexture(InTexture);
 }

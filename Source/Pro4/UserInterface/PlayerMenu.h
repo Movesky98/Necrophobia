@@ -23,14 +23,25 @@ public:
 
 	virtual bool Initialize();
 
-	void SetTimeText(uint16 min, uint16 sec);
+	void SetTimeText(uint16 min_, uint16 sec_);
+	void SetImage(UTexture2D* InTexture);
 
 	void ChangePlayerWidget();
 
 	void AddItemToInventory(AActor* ItemActor, uint16 Num);
 
+	class UTexture2D* Day;
+	class UTexture2D* Night;
+
 private:
+
+	UFUNCTION(Client, Reliable)
+	void Client_SetTimeText(uint16 min_, uint16 sec_);
+
 	TSubclassOf<class UInventorySlot> InventorySlot;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* TimeImage;
 
 	UPROPERTY(meta = (BindWidget))
 	class UEditableText* InGameTimeText;

@@ -16,7 +16,18 @@ class PRO4_API APro4PlayerController : public APlayerController
 	
 public:
 	APro4PlayerController();
-	
+
 protected:
 	void BeginPlay() override;
+
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
+
+private:
+	void UpdatePlayerTimeState();
+
+	float Time = 0.0f;
+
+	class AInGameState* InGameState;
+	class UPlayerMenu* PlayerMenu;
 };
