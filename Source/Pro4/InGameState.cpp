@@ -3,11 +3,18 @@
 
 #include "InGameState.h"
 
-uint16 AInGameState::GetInGameMinutes() {
+#include "Net/UnrealNetwork.h"
+
+AInGameState::AInGameState()
+{
+	bReplicates = true;
+}
+
+uint8 AInGameState::GetInGameMinutes() {
 	return InGameMin;
 }
 
-void AInGameState::SetInGameMinutes(uint16 min) {
+void AInGameState::SetInGameMinutes(uint8 min) {
 	if (min < 0 || min > 2)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("InGameMin Preprocessing Error"));
@@ -26,11 +33,11 @@ void AInGameState::AddInGameMinutes() {
 	}
 }
 
-uint16 AInGameState::GetInGameDay() {
+uint8 AInGameState::GetInGameDay() {
 	return InGameDay;
 }
 
-void AInGameState::SetInGameDay(uint16 day) {
+void AInGameState::SetInGameDay(uint8 day) {
 	if (day < 0)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("InGameDay Preprocessing Error"));
@@ -46,11 +53,11 @@ void AInGameState::AddInGameDay()
 	InGameDay++;
 }
 
-uint16 AInGameState::GetInGameSeconds() {
+uint8 AInGameState::GetInGameSeconds() {
 	return InGameSec;
 }
 
-void AInGameState::SetInGameSeconds(uint16 sec) {
+void AInGameState::SetInGameSeconds(uint8 sec) {
 	if (sec < 0 || sec > 60)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("InGameSec Preprocessing Error"));
@@ -89,6 +96,8 @@ void AInGameState::AddInGameSeconds() {
 		AddInGameMinutes();
 		UE_LOG(Pro4, Warning, TEXT("Minutes : %d"), GetInGameMinutes());
 	}
+
+	isStateChanged = true;
 }
 
 bool AInGameState::GetIsNight()
@@ -99,4 +108,25 @@ bool AInGameState::GetIsNight()
 void AInGameState::SetIsNight(bool TimeState)
 {
 	isNight = TimeState;
+}
+
+bool AInGameState::GetIsStateChanged()
+{
+	return isStateChanged;
+}
+
+void AInGameState::SetIsStateChanged(bool StateChanged_)
+{
+	isStateChanged = StateChanged_;
+}
+
+void AInGameState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AInGameState, isNight);
+	DOREPLIFETIME(AInGameState, InGameSec);
+	DOREPLIFETIME(AInGameState, InGameMin);
+	DOREPLIFETIME(AInGameState, InGameDay);
+	DOREPLIFETIME(AInGameState, isStateChanged);
 }

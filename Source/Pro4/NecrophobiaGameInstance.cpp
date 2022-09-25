@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "NecrophobiaGameInstance.h"
+#include "Pro4PlayerController.h"
 #include "UserInterface/PlayerMenu.h"
 
 #include "Engine/Engine.h"

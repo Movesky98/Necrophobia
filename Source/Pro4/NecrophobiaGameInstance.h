@@ -49,6 +49,8 @@ public:
 
 	void StartSession();
 
+	void NoticeToPlayerControllerTimeChanged();
+
 	class UPlayerMenu* PlayerMenu;
 
 private:

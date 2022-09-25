@@ -14,25 +14,40 @@ class PRO4_API AInGameState : public AGameState
 {
 	GENERATED_BODY()
 public:
-	uint16 GetInGameMinutes();
+	AInGameState();
 
-	void SetInGameMinutes(uint16 min);
+	UFUNCTION(BlueprintCallable)
+	uint8 GetInGameMinutes();
+
+	void SetInGameMinutes(uint8 min);
 	void AddInGameMinutes();
 
-	uint16 GetInGameDay();
-	void SetInGameDay(uint16 day);
+	UFUNCTION(BlueprintCallable)
+	uint8 GetInGameDay();
+	void SetInGameDay(uint8 day);
 	void AddInGameDay();
 
-	uint16 GetInGameSeconds();
-	void SetInGameSeconds(uint16 sec);
+	UFUNCTION(BlueprintCallable)
+	uint8 GetInGameSeconds();
+	void SetInGameSeconds(uint8 sec);
 	void AddInGameSeconds();
 
+	UFUNCTION(BlueprintCallable)
 	bool GetIsNight();
 	void SetIsNight(bool TimeState);
 
+	bool GetIsStateChanged();
+	void SetIsStateChanged(bool StateChanged_);
+
 private:
-	uint16 InGameDay = 0;
-	uint16 InGameMin = 0;
-	uint16 InGameSec = 0;
+	UPROPERTY(Replicated)
+	uint8 InGameDay = 0;
+	UPROPERTY(Replicated)
+	uint8 InGameMin = 0;
+	UPROPERTY(Replicated)
+	uint8 InGameSec = 0;
+	UPROPERTY(Replicated)
 	bool isNight = false;
+	UPROPERTY(Replicated)
+	bool isStateChanged = false;
 };
