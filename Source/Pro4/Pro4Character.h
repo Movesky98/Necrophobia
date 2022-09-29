@@ -138,6 +138,16 @@ public:
 		}
 	}
 
+	void Encroached()
+	{
+		IsEncroach = true;
+	}
+
+	void UnEncroached()
+	{
+		IsEncroach = false;
+	}
+
 #pragma region PlayerState
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=State)
@@ -156,6 +166,8 @@ public:
 
 
 private:
+	void NotifyActorBeginOverlap(AActor* Act) override;
+	void NotifyActorEndOverlap(AActor* Act) override;
 	// 초기 세팅
 	void MovementSetting();
 	void CameraSetting();
@@ -217,6 +229,13 @@ private:
 	float MoveRate; // 이동속도 조절 변수
 	int32 HoldFlag;
 	int32 Moveflag;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = State, Meta = (AllowPrivateAccess = true))
+		float EncroachTime;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = State, Meta = (AllowPrivateAccess = true))
+		int32 EncroachLevel;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = State, Meta = (AllowPrivateAccess = true))
+		bool IsEncroach;
 
 	FTimerHandle FireDelay;
 

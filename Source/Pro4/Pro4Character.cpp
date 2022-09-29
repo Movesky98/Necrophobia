@@ -18,9 +18,6 @@ APro4Character::APro4Character()
 	FName WeaponSocket(TEXT("Hand_rSocket"));
 	bReplicates = true;
 
-	HoldTime = 0.0f;
-	HoldFlag = 0;
-
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("CAMERA"));
 	Weapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WEAPON"));
@@ -134,6 +131,13 @@ void APro4Character::StateSetting()
 	CurrentHP = 100.0f;
 	MaxAP = 100.0f;
 	CurrentAP = 20.0f;
+
+	HoldTime = 0.0f;
+	HoldFlag = 0;
+
+	EncroachLevel = 0;
+	IsEncroach = false;
+	EncroachTime = 0.0f;
 }
 
 /// <summary>
@@ -185,6 +189,35 @@ void APro4Character::Tick(float DeltaTime)
 	if (CurrentHP >= 90.0f) 
 	{
 		CurrentHP = 10.0f;
+	}
+
+	if (IsEncroach)
+	{
+		EncroachTime += DeltaTime;
+		if (EncroachTime > 5.0f)
+		{
+			EncroachLevel++;
+			switch (EncroachLevel)
+			{
+			case 1:
+				MaxHP = 90;
+				if (CurrentHP > 90)
+				{
+					CurrentHP = 90;
+				}
+				break;
+			case 2:
+				MaxHP = 80;
+				if (CurrentHP > 80)
+				{
+					CurrentHP = 80;
+				}
+				break;
+			default:
+				break;
+			}
+			EncroachTime = 0.0f;
+		}
 	}
 
 	// Character Role Test.
@@ -864,4 +897,24 @@ void APro4Character::ChangePlayerWidget()
 void APro4Character::Server_DestroyItem_Implementation(AActor* DestroyActor)
 {
 	DestroyActor->Destroy();
+}
+
+/// <summary>
+////////////////////////////////////////////////////// 잠식 상호작용 코드 ////////////////////////////////////////////////////////////
+/// </summary>
+
+void APro4Character::NotifyActorBeginOverlap(AActor* Act)
+{
+	if (Act->ActorHasTag(TEXT("Encroach")))
+	{
+		Encroached();
+	}
+}
+
+void APro4Character::NotifyActorEndOverlap(AActor* Act)
+{
+	if (Act->ActorHasTag(TEXT("Encroach")))
+	{
+		UnEncroached();
+	}
 }
