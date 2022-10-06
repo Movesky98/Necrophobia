@@ -36,7 +36,7 @@ void UZombie_BTService_SearchTarget::TickNode(UBehaviorTreeComponent& OwnerComp,
 		OverlapResults,
 		Center,
 		FQuat::Identity,
-		ECollisionChannel::ECC_GameTraceChannel4,
+		ECollisionChannel::ECC_GameTraceChannel1,
 		FCollisionShape::MakeSphere(SearchRadius),
 		QueryParams);
 

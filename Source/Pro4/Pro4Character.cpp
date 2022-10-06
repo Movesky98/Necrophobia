@@ -254,6 +254,7 @@ void APro4Character::PostInitializeComponents()
 
 	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnEquipMontageEnded);
 	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnReloadMontageEnded);
+	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnAttackMontageEnded);
 }
 
 void APro4Character::OnEquipMontageEnded(UAnimMontage* Montage, bool bInterrupted)
@@ -266,6 +267,12 @@ void APro4Character::OnReloadMontageEnded(UAnimMontage* Montage, bool bInterrupt
 {
 	IsMontagePlay = false;
 	IsReloading = false;
+}
+
+void APro4Character::OnAttackMontageEnded(UAnimMontage* Montagem, bool bInterrupted)
+{
+	IsMontagePlay = false;
+	IsAttacking = false;
 }
 
 // Called to bind functionality to input
@@ -599,6 +606,7 @@ void APro4Character::EquipMain2()
 		Equipflag = 1;
 		Pro4Anim->PlayEquipMontage();
 		Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->EquipMontage);
+		IsMontagePlay = true;
 		IsEquipping = true;
 		CurrentWeaponMode = WeaponMode::Main2;
 	}
@@ -618,6 +626,7 @@ void APro4Character::EquipSub()
 		Equipflag = 2;
 		Pro4Anim->PlayEquipMontage();
 		Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->EquipMontage);
+		IsMontagePlay = true;
 		IsEquipping = true;
 		CurrentWeaponMode = WeaponMode::Sub;
 	}
@@ -650,6 +659,7 @@ void APro4Character::Reload()
 			{
 				Pro4Anim->PlayReloadMontage();
 				Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->ReloadMontage);
+				IsMontagePlay = true;
 				IsReloading = true;
 			}
 			else if (CurrentCharacterState == CharacterState::Crouching)
@@ -666,6 +676,7 @@ void APro4Character::Reload()
 			{
 				Pro4Anim->PlayReloadMontage();
 				Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->ReloadMontage);
+				IsMontagePlay = true;
 				IsReloading = true;
 			}
 			else if (CurrentCharacterState == CharacterState::Crouching)
@@ -682,6 +693,7 @@ void APro4Character::Reload()
 			{
 				Pro4Anim->PlayReloadMontage();
 				Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->ReloadMontage);
+				IsMontagePlay = true;
 				IsReloading = true;
 			}
 			else if (CurrentCharacterState == CharacterState::Crouching)
@@ -783,12 +795,16 @@ void APro4Character::Fire()
 			{
 				Pro4Anim->PlayAttackMontage();
 				Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->AttackMontage);
+				IsMontagePlay = true;
+				IsAttacking = true;
 				UE_LOG(Pro4, Log, TEXT("2."));
 			}
 			else
 			{
 				Pro4Anim->PlayAttackMontage();
 				Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->AttackMontage);
+				IsMontagePlay = true;
+				IsAttacking = true;
 				UE_LOG(Pro4, Log, TEXT("1."));
 			}
 

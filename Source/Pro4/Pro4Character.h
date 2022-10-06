@@ -211,6 +211,8 @@ private:
 	UFUNCTION(Server, Reliable)
 	void Server_DestroyItem(AActor* DestroyActor);
 
+	float CameraRotationX;
+
 	// 상태플래그
 	bool IsRun;
 	bool IsHold;
@@ -230,12 +232,10 @@ private:
 	int32 HoldFlag;
 	int32 Moveflag;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = State, Meta = (AllowPrivateAccess = true))
-		float EncroachTime;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = State, Meta = (AllowPrivateAccess = true))
-		int32 EncroachLevel;
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = State, Meta = (AllowPrivateAccess = true))
-		bool IsEncroach;
+	
+	float EncroachTime;
+	int32 EncroachLevel;
+	bool IsEncroach;
 
 	FTimerHandle FireDelay;
 
@@ -247,6 +247,9 @@ private:
 	UFUNCTION()
 		void OnReloadMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
+	UFUNCTION()
+		void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Equip, Meta = (AllowPrivateAccess = true))
 		bool IsEquipping;
 
@@ -255,6 +258,12 @@ private:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Reload, Meta = (AllowPrivateAccess = true))
 		bool IsReloading;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
+		bool IsAttacking;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
+		float temp;
 
 	UPROPERTY()
 		class UPro4AnimInstance* Pro4Anim;
