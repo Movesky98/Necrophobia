@@ -18,9 +18,6 @@ APro4Character::APro4Character()
 	FName WeaponSocket(TEXT("Hand_rSocket"));
 	bReplicates = true;
 
-	HoldTime = 0.0f;
-	HoldFlag = 0;
-
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("CAMERA"));
 	Weapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WEAPON"));
@@ -134,6 +131,13 @@ void APro4Character::StateSetting()
 	CurrentHP = 100.0f;
 	MaxAP = 100.0f;
 	CurrentAP = 20.0f;
+
+	HoldTime = 0.0f;
+	HoldFlag = 0;
+
+	EncroachLevel = 0;
+	IsEncroach = false;
+	EncroachTime = 0.0f;
 }
 
 /// <summary>
@@ -187,6 +191,35 @@ void APro4Character::Tick(float DeltaTime)
 		CurrentHP = 10.0f;
 	}
 
+	if (IsEncroach)
+	{
+		EncroachTime += DeltaTime;
+		if (EncroachTime > 5.0f)
+		{
+			EncroachLevel++;
+			switch (EncroachLevel)
+			{
+			case 1:
+				MaxHP = 90;
+				if (CurrentHP > 90)
+				{
+					CurrentHP = 90;
+				}
+				break;
+			case 2:
+				MaxHP = 80;
+				if (CurrentHP > 80)
+				{
+					CurrentHP = 80;
+				}
+				break;
+			default:
+				break;
+			}
+			EncroachTime = 0.0f;
+		}
+	}
+
 	// Character Role Test.
 	DrawDebugString(GetWorld(), FVector(0, 0, 150), GetEnumRole(GetLocalRole()), this, FColor::Green, DeltaTime);
 }
@@ -221,6 +254,7 @@ void APro4Character::PostInitializeComponents()
 
 	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnEquipMontageEnded);
 	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnReloadMontageEnded);
+	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnAttackMontageEnded);
 }
 
 void APro4Character::OnEquipMontageEnded(UAnimMontage* Montage, bool bInterrupted)
@@ -233,6 +267,12 @@ void APro4Character::OnReloadMontageEnded(UAnimMontage* Montage, bool bInterrupt
 {
 	IsMontagePlay = false;
 	IsReloading = false;
+}
+
+void APro4Character::OnAttackMontageEnded(UAnimMontage* Montagem, bool bInterrupted)
+{
+	IsMontagePlay = false;
+	IsAttacking = false;
 }
 
 // Called to bind functionality to input
@@ -566,6 +606,7 @@ void APro4Character::EquipMain2()
 		Equipflag = 1;
 		Pro4Anim->PlayEquipMontage();
 		Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->EquipMontage);
+		IsMontagePlay = true;
 		IsEquipping = true;
 		CurrentWeaponMode = WeaponMode::Main2;
 	}
@@ -585,6 +626,7 @@ void APro4Character::EquipSub()
 		Equipflag = 2;
 		Pro4Anim->PlayEquipMontage();
 		Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->EquipMontage);
+		IsMontagePlay = true;
 		IsEquipping = true;
 		CurrentWeaponMode = WeaponMode::Sub;
 	}
@@ -617,6 +659,7 @@ void APro4Character::Reload()
 			{
 				Pro4Anim->PlayReloadMontage();
 				Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->ReloadMontage);
+				IsMontagePlay = true;
 				IsReloading = true;
 			}
 			else if (CurrentCharacterState == CharacterState::Crouching)
@@ -633,6 +676,7 @@ void APro4Character::Reload()
 			{
 				Pro4Anim->PlayReloadMontage();
 				Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->ReloadMontage);
+				IsMontagePlay = true;
 				IsReloading = true;
 			}
 			else if (CurrentCharacterState == CharacterState::Crouching)
@@ -649,6 +693,7 @@ void APro4Character::Reload()
 			{
 				Pro4Anim->PlayReloadMontage();
 				Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->ReloadMontage);
+				IsMontagePlay = true;
 				IsReloading = true;
 			}
 			else if (CurrentCharacterState == CharacterState::Crouching)
@@ -750,12 +795,16 @@ void APro4Character::Fire()
 			{
 				Pro4Anim->PlayAttackMontage();
 				Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->AttackMontage);
+				IsMontagePlay = true;
+				IsAttacking = true;
 				UE_LOG(Pro4, Log, TEXT("2."));
 			}
 			else
 			{
 				Pro4Anim->PlayAttackMontage();
 				Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->AttackMontage);
+				IsMontagePlay = true;
+				IsAttacking = true;
 				UE_LOG(Pro4, Log, TEXT("1."));
 			}
 
@@ -864,4 +913,24 @@ void APro4Character::ChangePlayerWidget()
 void APro4Character::Server_DestroyItem_Implementation(AActor* DestroyActor)
 {
 	DestroyActor->Destroy();
+}
+
+/// <summary>
+////////////////////////////////////////////////////// 잠식 상호작용 코드 ////////////////////////////////////////////////////////////
+/// </summary>
+
+void APro4Character::NotifyActorBeginOverlap(AActor* Act)
+{
+	if (Act->ActorHasTag(TEXT("Encroach")))
+	{
+		Encroached();
+	}
+}
+
+void APro4Character::NotifyActorEndOverlap(AActor* Act)
+{
+	if (Act->ActorHasTag(TEXT("Encroach")))
+	{
+		UnEncroached();
+	}
 }

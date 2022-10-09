@@ -138,6 +138,16 @@ public:
 		}
 	}
 
+	void Encroached()
+	{
+		IsEncroach = true;
+	}
+
+	void UnEncroached()
+	{
+		IsEncroach = false;
+	}
+
 #pragma region PlayerState
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=State)
@@ -156,6 +166,8 @@ public:
 
 
 private:
+	void NotifyActorBeginOverlap(AActor* Act) override;
+	void NotifyActorEndOverlap(AActor* Act) override;
 	// 초기 세팅
 	void MovementSetting();
 	void CameraSetting();
@@ -199,6 +211,8 @@ private:
 	UFUNCTION(Server, Reliable)
 	void Server_DestroyItem(AActor* DestroyActor);
 
+	float CameraRotationX;
+
 	// 상태플래그
 	bool IsRun;
 	bool IsHold;
@@ -218,6 +232,11 @@ private:
 	int32 HoldFlag;
 	int32 Moveflag;
 
+	
+	float EncroachTime;
+	int32 EncroachLevel;
+	bool IsEncroach;
+
 	FTimerHandle FireDelay;
 
 	
@@ -228,6 +247,9 @@ private:
 	UFUNCTION()
 		void OnReloadMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
+	UFUNCTION()
+		void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Equip, Meta = (AllowPrivateAccess = true))
 		bool IsEquipping;
 
@@ -236,6 +258,12 @@ private:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Reload, Meta = (AllowPrivateAccess = true))
 		bool IsReloading;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
+		bool IsAttacking;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
+		float temp;
 
 	UPROPERTY()
 		class UPro4AnimInstance* Pro4Anim;
