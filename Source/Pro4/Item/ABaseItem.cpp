@@ -22,6 +22,7 @@ AABaseItem::AABaseItem()
 	SphereCollision->InitSphereRadius(200.0f);
 	SphereCollision->SetCollisionProfileName(TEXT("BaseItem"));
 
+
 	Tags.Add("Item");
 }
 
