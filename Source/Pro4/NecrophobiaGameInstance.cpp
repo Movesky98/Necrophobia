@@ -143,7 +143,7 @@ void UNecrophobiaGameInstance::FindSessionList()
 	if (SessionSearch.IsValid())
 	{
 		SessionSearch->bIsLanQuery = false;
-		SessionSearch->MaxSearchResults = 1000;
+		SessionSearch->MaxSearchResults = 10000;
 		SessionSearch->QuerySettings.Set(SEARCH_PRESENCE, true, EOnlineComparisonOp::Equals);
 
 		UE_LOG(Pro4, Warning, TEXT("Starting Find Session."));
