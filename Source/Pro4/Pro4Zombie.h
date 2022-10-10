@@ -24,6 +24,8 @@ protected:
 private:
 	bool IsFind;
 
+	int32 AttackNum;
+
 	UPROPERTY()
 		class UZombieAnimInstance* ZombieAnim;
 

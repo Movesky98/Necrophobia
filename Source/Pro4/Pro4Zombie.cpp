@@ -87,8 +87,21 @@ void APro4Zombie::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 void APro4Zombie::Attack()
 {
 	if (IsAttacking) return;
-
+	AttackNum = FMath::RandRange(1, 2);
 	ZombieAnim->PlayAttackMontage();
+
+	switch (AttackNum)
+	{
+	case 1:
+		ZombieAnim->Montage_JumpToSection(FName("1"), ZombieAnim->AttackMontage);
+		break;
+	case 2:
+		ZombieAnim->Montage_JumpToSection(FName("2"), ZombieAnim->AttackMontage);
+		break;
+	default:
+		break;
+	}
+	
 	IsAttacking = true;
 }
 
