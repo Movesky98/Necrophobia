@@ -23,7 +23,17 @@ AInGameMode::AInGameMode()
 {
     PrimaryActorTick.bCanEverTick = true;
     // set default pawn class to our Blueprinted character
-    DefaultPawnClass = APro4Character::StaticClass();
+
+    static ConstructorHelpers::FClassFinder<APro4Character> BP_PlayerCharacter(TEXT("/Game/BLUEPRINT(JunJae)/BP_Pro4Character"));
+
+    if (BP_PlayerCharacter.Succeeded())
+    {
+        DefaultPawnClass = BP_PlayerCharacter.Class;
+    }
+    else
+    {
+        DefaultPawnClass = APro4Character::StaticClass();
+    }
     PlayerControllerClass = APro4PlayerController::StaticClass();
     GameStateClass = AInGameState::StaticClass();
 }

@@ -14,7 +14,7 @@ class PRO4_API UInventorySlot : public UUserWidget
 {
 	GENERATED_BODY()
 public:
-	void SetUp(FString& Name, uint16 Num);
+	void SetUp(FString& Name, uint16 Num, FString Path);
 
 	FString GetItemName();
 	void SetItemName(FString& Name);

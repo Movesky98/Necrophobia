@@ -8,10 +8,16 @@
 
 
 
-void UInventorySlot::SetUp(FString& Name, uint16 Num)
+void UInventorySlot::SetUp(FString& Name, uint16 Num, FString Path)
 {
 	SetItemName(Name);
 	SetItemNum(Num);
+	
+	UTexture2D* ItemImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *Path), NULL, LOAD_None, NULL);
+
+	InventorySlotImage->SetBrushFromTexture(ItemImage);
+
+	UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *InventorySlotImage->Brush.GetResourceName().ToString());
 }
 
 FString UInventorySlot::GetItemName()

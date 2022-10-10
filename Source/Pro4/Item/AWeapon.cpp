@@ -33,12 +33,16 @@ void AAWeapon::BeginPlay()
 	Super::BeginPlay();
 	if (GetWorld()->IsServer())
 	{ 
-		BoxMesh->SetStaticMesh(SM_WeaponItem);
-		ItemName = TemporaryName;
-		ItemNum = 1;
+		SetUp();
 	}
 }
 
+void AAWeapon::SetUp()
+{
+	BoxMesh->SetStaticMesh(SM_WeaponItem);
+	ItemName = TemporaryName;
+	ItemNum = 1;
+}
 
 void AAWeapon::NotifyActorBeginOverlap(AActor* OtherActor)
 {
@@ -61,6 +65,7 @@ void AAWeapon::RandomSpawn(int32 Random)
 			SM_WeaponItem = SM_Weapon.Object;
 		}
 
+		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/AR4_Icon_500x500";
 		TemporaryName = "AR";
 	}
 		break;
@@ -68,12 +73,13 @@ void AAWeapon::RandomSpawn(int32 Random)
 	{
 		UE_LOG(Pro4, Log, TEXT("SR is spawned."));
 
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/KA_Val/SM_KA_Val.SM_KA_Val"));
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/KA_Val/SM_KA_Val"));
 		if (SM_Weapon.Succeeded())
 		{
 			SM_WeaponItem = SM_Weapon.Object;
 		}
 
+		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/KA_val_Icon_500x500";
 		TemporaryName = "SR";
 	}
 		break;
@@ -81,12 +87,13 @@ void AAWeapon::RandomSpawn(int32 Random)
 	{
 		UE_LOG(Pro4, Log, TEXT("Pistol is spawned."));
 
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/SMG11/SM_SMG11.SM_SMG11"));
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/SMG11/SM_SMG11"));
 		if (SM_Weapon.Succeeded())
 		{
 			SM_WeaponItem = SM_Weapon.Object;
 		}
 
+		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/SMG11_Icon_500x500";
 		TemporaryName = "Pistol";
 	}
 		break;
@@ -94,12 +101,13 @@ void AAWeapon::RandomSpawn(int32 Random)
 	{
 		UE_LOG(Pro4, Log, TEXT("Knife is spawned."));
 
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/M9_Knife/SM_M9_Knife.SM_M9_Knife"));
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/M9_Knife/SM_M9_Knife"));
 		if (SM_Weapon.Succeeded())
 		{
 			SM_WeaponItem = SM_Weapon.Object;
 		}
 
+		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/M9_Knife_Icon_500x500";
 		TemporaryName = "Knife";
 	}
 		break;
@@ -110,6 +118,12 @@ void AAWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	DOREPLIFETIME(AAWeapon, ItemIconPath);
 	DOREPLIFETIME(AAWeapon, ItemNum);
 	DOREPLIFETIME(AAWeapon, ItemName);
+}
+
+FString AAWeapon::GetIconPath()
+{
+	return ItemIconPath;
 }

@@ -84,13 +84,30 @@ void UPlayerMenu::Client_SetTimeText_Implementation(uint16 min_, uint16 sec_)
 
 void UPlayerMenu::ChangePlayerWidget()
 {
+
+	UWorld* World = GetWorld();
+	if (!ensure(World != nullptr)) return;
+
+	APlayerController* PlayerController = World->GetFirstPlayerController();
+	if (!ensure(PlayerController != nullptr)) return;
+
 	if (UISwitcher->GetActiveWidgetIndex() == 0)
 	{
 		UISwitcher->SetActiveWidgetIndex(1);
+
+		FInputModeGameAndUI InputModeData;
+		InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+
+		PlayerController->SetInputMode(InputModeData);
+		PlayerController->SetShowMouseCursor(true);
 	}
 	else
 	{
 		UISwitcher->SetActiveWidgetIndex(0);
+
+		FInputModeGameOnly InputModeData;
+		PlayerController->SetInputMode(InputModeData);
+		PlayerController->SetShowMouseCursor(false);
 	}
 	UE_LOG(Pro4, Warning, TEXT("ActiveWidgetIndex = %d."), UISwitcher->ActiveWidgetIndex);
 }
@@ -106,7 +123,8 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 	{
 		AAWeapon* Weapon = Cast<AAWeapon>(BaseItem);
 		if (!ensure(Weapon != nullptr)) return;
-		InventoryItem->SetUp(Weapon->ItemName, Weapon->ItemNum);
+		InventoryItem->SetUp(Weapon->ItemName, Weapon->ItemNum, Weapon->GetIconPath());
+		UE_LOG(Pro4, Warning, TEXT("Icon Path : %s"), *Weapon->GetIconPath());
 		InventoryBox->AddChildToWrapBox(InventoryItem);
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
 	}
@@ -114,7 +132,7 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 	case AABaseItem::BaseItemType::Armor:
 	{
 		AAArmor* Armor = Cast<AAArmor>(BaseItem);
-		InventoryItem->SetUp(Armor->ItemName, Armor->ItemNum);
+		InventoryItem->SetUp(Armor->ItemName, Armor->ItemNum, "Hello");
 		InventoryBox->AddChildToWrapBox(InventoryItem);
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
 	}
@@ -122,7 +140,7 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 	case AABaseItem::BaseItemType::Grenade:
 	{
 		AAGrenade* Grenade = Cast<AAGrenade>(BaseItem);
-		InventoryItem->SetUp(Grenade->ItemName, Grenade->ItemNum);
+		InventoryItem->SetUp(Grenade->ItemName, Grenade->ItemNum, "Hello");
 		InventoryBox->AddChildToWrapBox(InventoryItem);
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
 	}

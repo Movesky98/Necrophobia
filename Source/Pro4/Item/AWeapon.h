@@ -25,6 +25,8 @@ public:
 		Knife,
 		MAX
 	};
+
+	FString GetIconPath();
 	
 	WeaponType CurrentWeapon;
 	FString TemporaryName;
@@ -45,6 +47,11 @@ protected:
 
 private:
 	void RandomSpawn(int32 Random);
+
+	void SetUp();
+
+	UPROPERTY(Replicated)
+	FString ItemIconPath;
 
 	UStaticMesh* SM_WeaponItem;
 };

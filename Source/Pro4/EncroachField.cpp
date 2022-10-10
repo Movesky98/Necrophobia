@@ -24,7 +24,7 @@ AEncroachField::AEncroachField()
 	EncroachPivotComponent->InitSphereRadius(500.0f);
 	EncroachPivotComponent->SetCollisionProfileName(TEXT("EncroachField"));
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh>SK_Encroach(TEXT("/Game/Environment/Dillena/Plane"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh>SK_Encroach(TEXT("/Game/Environment/Props/Display_Ground_TEST/PolluteTile"));
 	if (SK_Encroach.Succeeded())
 	{
 		EncroachMeshComponent->SetStaticMesh(SK_Encroach.Object);
