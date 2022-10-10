@@ -269,7 +269,7 @@ void APro4Character::OnReloadMontageEnded(UAnimMontage* Montage, bool bInterrupt
 	IsReloading = false;
 }
 
-void APro4Character::OnAttackMontageEnded(UAnimMontage* Montagem, bool bInterrupted)
+void APro4Character::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	IsMontagePlay = false;
 	IsAttacking = false;
@@ -791,21 +791,24 @@ void APro4Character::Fire()
 
 		if (CurrentWeaponMode == WeaponMode::Main1 || CurrentWeaponMode == WeaponMode::Main2) // 주무기일 때의 총알 발사 (탄창 상태 반영 안함)
 		{
-			if (IsZoom)
+			if (!IsMontagePlay)
 			{
-				Pro4Anim->PlayAttackMontage();
-				Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->AttackMontage);
-				IsMontagePlay = true;
-				IsAttacking = true;
-				UE_LOG(Pro4, Log, TEXT("2."));
-			}
-			else
-			{
-				Pro4Anim->PlayAttackMontage();
-				Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->AttackMontage);
-				IsMontagePlay = true;
-				IsAttacking = true;
-				UE_LOG(Pro4, Log, TEXT("1."));
+				if (IsZoom)
+				{
+					Pro4Anim->PlayAttackMontage();
+					Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->AttackMontage);
+					IsMontagePlay = true;
+					IsAttacking = true;
+					UE_LOG(Pro4, Log, TEXT("2"));
+				}
+				else
+				{
+					Pro4Anim->PlayAttackMontage();
+					Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->AttackMontage);
+					IsMontagePlay = true;
+					IsAttacking = true;
+					UE_LOG(Pro4, Log, TEXT("1"));
+				}
 			}
 
 			if (World)
