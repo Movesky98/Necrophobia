@@ -5,6 +5,7 @@
 #include "Pro4AnimInstance.h"
 #include "NecrophobiaGameInstance.h"
 #include "UserInterface/PlayerMenu.h"
+#include "Item/AWeapon.h"
 
 #include "DrawDebugHelpers.h"
 #include "Net/UnrealNetwork.h"
@@ -936,7 +937,37 @@ void APro4Character::NotifyActorEndOverlap(AActor* Act)
 	}
 }
 
-void APro4Character::SetPlayerWeapon(USkeletalMesh* PlayerWeapon)
+void APro4Character::SetPlayerWeapon(USkeletalMesh* PlayerWeapon, FString _ItemName)
 {
-	Weapon->SetSkeletalMesh(PlayerWeapon);
+	if (Weapon->SkeletalMesh != nullptr)
+	{
+		// 무기를 변경했을 때, 땅에 들고있던 무기를 내려놓음.
+		UWorld* World = GetWorld();
+
+		if (World)
+		{
+			FActorSpawnParameters SpawnParams;
+			FVector SpawnLocation = GetActorLocation();
+			FRotator Rotation;
+
+			AAWeapon* DropItem = World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), SpawnLocation, Rotation, SpawnParams);
+			DropItem->SetSKWeaponItem(Weapon->SkeletalMesh);
+			DropItem->SetItemName(CharacterWeaponInfo.MainWeaponName);
+			DropItem->SetItemNum(1);
+			UE_LOG(Pro4, Warning, TEXT("Spawn Weapon : %s"), *CharacterWeaponInfo.MainWeaponName);
+			Weapon->SetSkeletalMesh(PlayerWeapon);
+			CharacterWeaponInfo.MainWeaponName = _ItemName;
+			UE_LOG(Pro4, Warning, TEXT("PlayerWeapon : %s"), *CharacterWeaponInfo.MainWeaponName);
+		}
+		else
+		{
+			UE_LOG(Pro4, Error, TEXT("Drop Weapon Item ERROR."));
+		}
+	}
+	else
+	{
+		UE_LOG(Pro4, Warning, TEXT("First Player Weapon : %s"), *_ItemName);
+		Weapon->SetSkeletalMesh(PlayerWeapon);
+		CharacterWeaponInfo.MainWeaponName = _ItemName;
+	}
 }

@@ -123,8 +123,3 @@ void AAWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetime
 	DOREPLIFETIME(AAWeapon, ItemNum);
 	DOREPLIFETIME(AAWeapon, ItemName);
 }
-
-FString AAWeapon::GetIconPath()
-{
-	return ItemIconPath;
-}
