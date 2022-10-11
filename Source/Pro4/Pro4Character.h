@@ -51,6 +51,7 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	void SetPlayerWeapon(USkeletalMesh* PlayerWeapon);
 	
 
 	UPROPERTY(VisibleAnywhere, Category=Camera)
@@ -72,8 +73,8 @@ public:
 		TSubclassOf<APro4Projectile> ProjectileClass;
 		
 
-	UPROPERTY(VisibleAnywhere, Category=Weapon)
-	UStaticMeshComponent* Weapon;
+	UPROPERTY(VisibleAnywhere, Category= "Weapon")
+	USkeletalMeshComponent* Weapon;
 
 	bool IsProning()
 	{

@@ -53,5 +53,6 @@ private:
 	UPROPERTY(Replicated)
 	FString ItemIconPath;
 
+	USkeletalMesh* SK_WeaponItem;
 	UStaticMesh* SM_WeaponItem;
 };

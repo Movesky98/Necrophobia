@@ -20,7 +20,7 @@ APro4Character::APro4Character()
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("CAMERA"));
-	Weapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WEAPON"));
+	Weapon = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WEAPON"));
 
 	MapSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("MAPSPRINGARM"));
 	MapCapture = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("MAPCAPTURE"));
@@ -55,15 +55,13 @@ APro4Character::APro4Character()
 
 	if (GetMesh()->DoesSocketExist(WeaponSocket)) {
 
-		UE_LOG(Pro4, Log, TEXT("WeaponSocket has exist"))
-
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/AR4/SM_AR4_X.SM_AR4_X"));
-		if (SM_Weapon.Succeeded())
-		{
-			Weapon->SetStaticMesh(SM_Weapon.Object);
-		}
+		UE_LOG(Pro4, Warning, TEXT("WeaponSocket has exist."));
 
 		Weapon->SetupAttachment(GetMesh(), WeaponSocket);
+	}
+	else
+	{
+		UE_LOG(Pro4, Error, TEXT("WeaponSocket has not exist."));
 	}
 }
 
@@ -936,4 +934,9 @@ void APro4Character::NotifyActorEndOverlap(AActor* Act)
 	{
 		UnEncroached();
 	}
+}
+
+void APro4Character::SetPlayerWeapon(USkeletalMesh* PlayerWeapon)
+{
+	Weapon->SetSkeletalMesh(PlayerWeapon);
 }
