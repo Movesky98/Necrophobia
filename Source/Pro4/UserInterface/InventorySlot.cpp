@@ -13,6 +13,7 @@ void UInventorySlot::SetUp(FString& Name, uint16 Num, FString Path)
 	SetItemName(Name);
 	SetItemNum(Num);
 	
+	// Image¸¦ ±×¸²
 	UTexture2D* ItemImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *Path), NULL, LOAD_None, NULL);
 
 	InventorySlotImage->SetBrushFromTexture(ItemImage);
