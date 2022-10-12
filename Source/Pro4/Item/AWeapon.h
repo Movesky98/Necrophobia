@@ -26,8 +26,48 @@ public:
 		MAX
 	};
 
-	FString GetIconPath();
-	
+#pragma region Get_Set
+	FString GetIconPath()
+	{
+		return ItemIconPath;
+	}
+
+	/* SK_WeaponItem */
+	void SetSKWeaponItem(USkeletalMesh* SK_Weapon)
+	{
+		SK_WeaponItem = SK_Weapon;
+		SK_Mesh->SetSkeletalMesh(SK_WeaponItem);
+	}
+
+	USkeletalMesh* GetSKWeaponItem()
+	{
+		return SK_WeaponItem;
+	}
+
+	/* ItemName */
+	void SetItemName(FString _Name)
+	{
+		ItemName = _Name;
+	}
+
+	FString GetItemName()
+	{
+		return ItemName;
+	}
+
+	/* ItemNum */
+	void SetItemNum(uint16 _Num)
+	{
+		ItemNum = _Num;
+	}
+
+	uint16 GetItemNum()
+	{
+		return ItemNum;
+	}
+
+#pragma endregion
+
 	WeaponType CurrentWeapon;
 	FString TemporaryName;
 
@@ -53,5 +93,6 @@ private:
 	UPROPERTY(Replicated)
 	FString ItemIconPath;
 
+	USkeletalMesh* SK_WeaponItem;
 	UStaticMesh* SM_WeaponItem;
 };

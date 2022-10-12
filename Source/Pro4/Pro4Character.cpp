@@ -5,6 +5,7 @@
 #include "Pro4AnimInstance.h"
 #include "NecrophobiaGameInstance.h"
 #include "UserInterface/PlayerMenu.h"
+#include "Item/AWeapon.h"
 
 #include "DrawDebugHelpers.h"
 #include "Net/UnrealNetwork.h"
@@ -20,7 +21,7 @@ APro4Character::APro4Character()
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("CAMERA"));
-	Weapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WEAPON"));
+	Weapon = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WEAPON"));
 
 	MapSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("MAPSPRINGARM"));
 	MapCapture = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("MAPCAPTURE"));
@@ -55,15 +56,13 @@ APro4Character::APro4Character()
 
 	if (GetMesh()->DoesSocketExist(WeaponSocket)) {
 
-		UE_LOG(Pro4, Log, TEXT("WeaponSocket has exist"))
-
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/AR4/SM_AR4_X.SM_AR4_X"));
-		if (SM_Weapon.Succeeded())
-		{
-			Weapon->SetStaticMesh(SM_Weapon.Object);
-		}
+		UE_LOG(Pro4, Warning, TEXT("WeaponSocket has exist."));
 
 		Weapon->SetupAttachment(GetMesh(), WeaponSocket);
+	}
+	else
+	{
+		UE_LOG(Pro4, Error, TEXT("WeaponSocket has not exist."));
 	}
 }
 
@@ -935,5 +934,40 @@ void APro4Character::NotifyActorEndOverlap(AActor* Act)
 	if (Act->ActorHasTag(TEXT("Encroach")))
 	{
 		UnEncroached();
+	}
+}
+
+void APro4Character::SetPlayerWeapon(USkeletalMesh* PlayerWeapon, FString _ItemName)
+{
+	if (Weapon->SkeletalMesh != nullptr)
+	{
+		// 무기를 변경했을 때, 땅에 들고있던 무기를 내려놓음.
+		UWorld* World = GetWorld();
+
+		if (World)
+		{
+			FActorSpawnParameters SpawnParams;
+			FVector SpawnLocation = GetActorLocation();
+			FRotator Rotation;
+
+			AAWeapon* DropItem = World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), SpawnLocation, Rotation, SpawnParams);
+			DropItem->SetSKWeaponItem(Weapon->SkeletalMesh);
+			DropItem->SetItemName(CharacterWeaponInfo.MainWeaponName);
+			DropItem->SetItemNum(1);
+			UE_LOG(Pro4, Warning, TEXT("Spawn Weapon : %s"), *CharacterWeaponInfo.MainWeaponName);
+			Weapon->SetSkeletalMesh(PlayerWeapon);
+			CharacterWeaponInfo.MainWeaponName = _ItemName;
+			UE_LOG(Pro4, Warning, TEXT("PlayerWeapon : %s"), *CharacterWeaponInfo.MainWeaponName);
+		}
+		else
+		{
+			UE_LOG(Pro4, Error, TEXT("Drop Weapon Item ERROR."));
+		}
+	}
+	else
+	{
+		UE_LOG(Pro4, Warning, TEXT("First Player Weapon : %s"), *_ItemName);
+		Weapon->SetSkeletalMesh(PlayerWeapon);
+		CharacterWeaponInfo.MainWeaponName = _ItemName;
 	}
 }

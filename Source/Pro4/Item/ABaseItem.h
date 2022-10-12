@@ -43,6 +43,9 @@ public:
 	// virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(VisibleDefaultsOnly, Category = Box)
+	USkeletalMeshComponent* SK_Mesh;
+	
+	UPROPERTY(VisibleDefaultsOnly, Category = Box)
 	UStaticMeshComponent* BoxMesh;
 
 	UPROPERTY(VisibleDefaultsOnly, Category = SphereCollision)

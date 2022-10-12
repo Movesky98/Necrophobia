@@ -9,15 +9,18 @@ AABaseItem::AABaseItem()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
-	BoxMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BoxMesh"));
+	SK_Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshItem"));
+	BoxMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshItem"));
+
 	SphereCollision = CreateDefaultSubobject<USphereComponent>(TEXT("SphereCollision"));
 	
-	RootComponent = BoxMesh;
-	SphereCollision->SetupAttachment(BoxMesh);
+	RootComponent = SK_Mesh;
+	BoxMesh->SetupAttachment(SK_Mesh);
+	SphereCollision->SetupAttachment(SK_Mesh);
 
-	BoxMesh->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f));
-	BoxMesh->SetCollisionProfileName(TEXT("BaseItem"));
-	BoxMesh->SetIsReplicated(true);
+	SK_Mesh->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f));
+	SK_Mesh->SetCollisionProfileName(TEXT("BaseItem"));
+	SK_Mesh->SetIsReplicated(true);
 
 	SphereCollision->InitSphereRadius(200.0f);
 	SphereCollision->SetCollisionProfileName(TEXT("BaseItem"));

@@ -8,6 +8,7 @@
 #include "../Item/AArmor.h"
 #include "../Item/AWeapon.h"
 #include "../Pro4PlayerController.h"
+#include "../Pro4Character.h"
 
 #include "UObject/ConstructorHelpers.h"
 
@@ -123,6 +124,10 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 	{
 		AAWeapon* Weapon = Cast<AAWeapon>(BaseItem);
 		if (!ensure(Weapon != nullptr)) return;
+
+		APro4Character* MyPawn = Cast<APro4Character>(GetWorld()->GetFirstPlayerController()->GetPawn());
+		MyPawn->SetPlayerWeapon(Weapon->GetSKWeaponItem(), Weapon->GetItemName());
+
 		InventoryItem->SetUp(Weapon->ItemName, Weapon->ItemNum, Weapon->GetIconPath());
 		UE_LOG(Pro4, Warning, TEXT("Icon Path : %s"), *Weapon->GetIconPath());
 		InventoryBox->AddChildToWrapBox(InventoryItem);

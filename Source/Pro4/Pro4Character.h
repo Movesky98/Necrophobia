@@ -9,6 +9,14 @@
 #include "Engine/TextureRenderTarget2D.h"
 #include "Pro4Character.generated.h"
 
+USTRUCT()
+struct FWeaponInfo
+{
+	GENERATED_BODY()
+	FString MainWeaponName = "";
+	FString SubWeaponName = "";
+};
+
 UCLASS()
 class PRO4_API APro4Character : public ACharacter
 {
@@ -51,6 +59,7 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	void SetPlayerWeapon(USkeletalMesh* PlayerWeapon, FString _ItemName);
 	
 
 	UPROPERTY(VisibleAnywhere, Category=Camera)
@@ -60,20 +69,20 @@ public:
 	UCameraComponent *Camera;
 
 	UPROPERTY(VisibleAnywhere, Category = MapCam)
-		USpringArmComponent* MapSpringArm;
+	USpringArmComponent* MapSpringArm;
 
 	UPROPERTY(VisibleAnywhere, Category = MapCam)
-		USceneCaptureComponent2D* MapCapture;
+	USceneCaptureComponent2D* MapCapture;
 
 	UPROPERTY(EditAnywhere, Category = "GamePlay")
-		FVector MuzzleOffset;
+	FVector MuzzleOffset;
 
 	UPROPERTY(EditAnywhere, Category = "Projectile")
-		TSubclassOf<APro4Projectile> ProjectileClass;
+	TSubclassOf<APro4Projectile> ProjectileClass;
 		
 
-	UPROPERTY(VisibleAnywhere, Category=Weapon)
-	UStaticMeshComponent* Weapon;
+	UPROPERTY(VisibleAnywhere, Category= "Weapon")
+	USkeletalMeshComponent* Weapon;
 
 	bool IsProning()
 	{
@@ -161,7 +170,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=State)
 	float CurrentAP;
-
+	
+private:
+	FWeaponInfo CharacterWeaponInfo;
 #pragma endregion
 
 

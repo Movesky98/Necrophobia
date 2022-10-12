@@ -73,7 +73,7 @@ void APro4Zombie::Tick(float DeltaTime)
 	}
 	else
 	{
-		GetCharacterMovement()->MaxWalkSpeed = 300.0f;
+		GetCharacterMovement()->MaxWalkSpeed = 200.0f;
 	}
 }
 
