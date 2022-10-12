@@ -27,6 +27,24 @@ public:
 	};
 
 #pragma region Get_Set
+
+	/* Weapon Box Image Path */
+	void SetBoxImagePath(FString _BoxImagePath)
+	{
+		WeaponBoxImagePath = _BoxImagePath;
+	}
+
+	FString GetBoxImagePath()
+	{
+		return WeaponBoxImagePath;
+	}
+
+	/* Icon Path */
+	void SetIconPath(FString _IconPath)
+	{
+		ItemIconPath = _IconPath;
+	}
+
 	FString GetIconPath()
 	{
 		return ItemIconPath;
@@ -67,10 +85,10 @@ public:
 	}
 
 #pragma endregion
-
 	WeaponType CurrentWeapon;
-	FString TemporaryName;
 
+	FString TemporaryName;
+	
 	UPROPERTY(Replicated)
 	FString ItemName;
 
@@ -92,6 +110,9 @@ private:
 
 	UPROPERTY(Replicated)
 	FString ItemIconPath;
+	
+	UPROPERTY(Replicated)
+	FString WeaponBoxImagePath;
 
 	USkeletalMesh* SK_WeaponItem;
 	UStaticMesh* SM_WeaponItem;

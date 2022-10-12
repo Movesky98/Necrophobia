@@ -115,7 +115,6 @@ void UPlayerMenu::ChangePlayerWidget()
 
 void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 {
-	UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
 	AABaseItem* BaseItem = Cast<AABaseItem>(ItemActor);
 	
 	switch (BaseItem->ItemType)
@@ -126,28 +125,50 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		if (!ensure(Weapon != nullptr)) return;
 
 		APro4Character* MyPawn = Cast<APro4Character>(GetWorld()->GetFirstPlayerController()->GetPawn());
-		MyPawn->SetPlayerWeapon(Weapon->GetSKWeaponItem(), Weapon->GetItemName());
+		MyPawn->SetPlayerWeapon(Weapon->GetSKWeaponItem(), Weapon->GetItemName(), Weapon->GetIconPath(), Weapon->GetBoxImagePath());
 
-		InventoryItem->SetUp(Weapon->ItemName, Weapon->ItemNum, Weapon->GetIconPath());
-		UE_LOG(Pro4, Warning, TEXT("Icon Path : %s"), *Weapon->GetIconPath());
-		InventoryBox->AddChildToWrapBox(InventoryItem);
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
+		if (Weapon->GetItemName() == "AR" || Weapon->GetItemName() == "SR")
+		{
+			AddItemToMainWeapon(Weapon->GetBoxImagePath());
+		}
+		else if(Weapon->GetItemName() == "Pistol")
+		{
+
+		}
+		else
+		{
+
+		}
+
+		/*
+		* UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
+		* Weapon Item의 경우 인벤토리에 무기를 저장하지 않음.
+		* 아래는 무기를 제외한 아이템(총알, 수류탄, 연막탄과 같은 여러가지를 가질 수 있는 아이템)을 위한 코드임.
+		* InventoryItem->SetUp(Weapon->ItemName, Weapon->ItemNum, Weapon->GetIconPath());
+		* UE_LOG(Pro4, Warning, TEXT("Icon Path : %s"), *Weapon->GetIconPath());
+		* InventoryBox->AddChildToWrapBox(InventoryItem);
+		* GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
+		*/
 	}
 		break;
 	case AABaseItem::BaseItemType::Armor:
 	{
-		AAArmor* Armor = Cast<AAArmor>(BaseItem);
-		InventoryItem->SetUp(Armor->ItemName, Armor->ItemNum, "Hello");
-		InventoryBox->AddChildToWrapBox(InventoryItem);
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
+		/*
+		* AAArmor* Armor = Cast<AAArmor>(BaseItem);
+		* InventoryItem->SetUp(Armor->ItemName, Armor->ItemNum, "Hello");
+		* InventoryBox->AddChildToWrapBox(InventoryItem);
+		* GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
+		*/
 	}
 		break;
 	case AABaseItem::BaseItemType::Grenade:
 	{
-		AAGrenade* Grenade = Cast<AAGrenade>(BaseItem);
-		InventoryItem->SetUp(Grenade->ItemName, Grenade->ItemNum, "Hello");
-		InventoryBox->AddChildToWrapBox(InventoryItem);
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
+		/*
+		* AAGrenade* Grenade = Cast<AAGrenade>(BaseItem);
+		* InventoryItem->SetUp(Grenade->ItemName, Grenade->ItemNum, "Hello");
+		* InventoryBox->AddChildToWrapBox(InventoryItem);
+		* GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
+		*/
 	}
 		break;
 	case AABaseItem::BaseItemType::Recovery:
@@ -168,4 +189,14 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 void UPlayerMenu::SetImage(UTexture2D* InTexture)
 {
 	TimeImage->SetBrushFromTexture(InTexture);
+}
+
+void UPlayerMenu::AddItemToMainWeapon(FString _IconPath) 
+{
+	// Image를 그림
+	UTexture2D* ItemImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *_IconPath), NULL, LOAD_None, NULL);
+
+	MainWeaponBox->SetBrushFromTexture(ItemImage);
+
+	UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *MainWeaponBox->Brush.GetResourceName().ToString());
 }

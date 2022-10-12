@@ -56,7 +56,7 @@ void AAWeapon::RandomSpawn(int32 Random)
 
 	switch (CurrentWeapon)
 	{
-	case AAWeapon::WeaponType::AR:
+	case WeaponType::AR:
 	{
 		UE_LOG(Pro4, Log, TEXT("AR is spawned."));
 
@@ -65,12 +65,12 @@ void AAWeapon::RandomSpawn(int32 Random)
 		{
 			SK_WeaponItem = SK_Weapon.Object;
 		}
-
+		WeaponBoxImagePath = "/Game/UI/Sprites/Weapon_Icon/AR4_Image";
 		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/AR4_Icon_500x500";
 		TemporaryName = "AR";
 	}
 		break;
-	case AAWeapon::WeaponType::SR:
+	case WeaponType::SR:
 	{
 		UE_LOG(Pro4, Log, TEXT("SR is spawned."));
 
@@ -80,11 +80,12 @@ void AAWeapon::RandomSpawn(int32 Random)
 			SK_WeaponItem = SK_Weapon.Object;
 		}
 
+		WeaponBoxImagePath = "/Game/UI/Sprites/Weapon_Icon/KA_val_Image";
 		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/KA_val_Icon_500x500";
 		TemporaryName = "SR";
 	}
 		break;
-	case AAWeapon::WeaponType::Pistol:
+	case WeaponType::Pistol:
 	{
 		UE_LOG(Pro4, Log, TEXT("Pistol is spawned."));
 
@@ -94,11 +95,12 @@ void AAWeapon::RandomSpawn(int32 Random)
 			SK_WeaponItem = SK_Weapon.Object;
 		}
 
+		WeaponBoxImagePath = "/Game/UI/Sprites/Weapon_Icon/SMG11_Image";
 		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/SMG11_Icon_500x500";
 		TemporaryName = "Pistol";
 	}
 		break;
-	case AAWeapon::WeaponType::Knife:
+	case WeaponType::Knife:
 	{
 		UE_LOG(Pro4, Log, TEXT("Knife is spawned."));
 
@@ -108,6 +110,7 @@ void AAWeapon::RandomSpawn(int32 Random)
 			SK_WeaponItem = SK_Weapon.Object;
 		}
 
+		WeaponBoxImagePath = "/Game/UI/Sprites/Weapon_Icon/M9_Knife_Image";
 		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/M9_Knife_Icon_500x500";
 		TemporaryName = "Knife";
 	}
@@ -118,7 +121,8 @@ void AAWeapon::RandomSpawn(int32 Random)
 void AAWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
+	
+	DOREPLIFETIME(AAWeapon, WeaponBoxImagePath);
 	DOREPLIFETIME(AAWeapon, ItemIconPath);
 	DOREPLIFETIME(AAWeapon, ItemNum);
 	DOREPLIFETIME(AAWeapon, ItemName);

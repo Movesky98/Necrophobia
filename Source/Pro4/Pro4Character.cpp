@@ -937,7 +937,7 @@ void APro4Character::NotifyActorEndOverlap(AActor* Act)
 	}
 }
 
-void APro4Character::SetPlayerWeapon(USkeletalMesh* PlayerWeapon, FString _ItemName)
+void APro4Character::SetPlayerWeapon(USkeletalMesh* PlayerWeapon, FString _ItemName, FString _IconPath, FString _BoxImagePath)
 {
 	if (Weapon->SkeletalMesh != nullptr)
 	{
@@ -953,10 +953,16 @@ void APro4Character::SetPlayerWeapon(USkeletalMesh* PlayerWeapon, FString _ItemN
 			AAWeapon* DropItem = World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), SpawnLocation, Rotation, SpawnParams);
 			DropItem->SetSKWeaponItem(Weapon->SkeletalMesh);
 			DropItem->SetItemName(CharacterWeaponInfo.MainWeaponName);
+			DropItem->SetIconPath(CharacterWeaponInfo.MainWeaponIconPath);
+			DropItem->SetBoxImagePath(CharacterWeaponInfo.MainWeaponImagePath);
 			DropItem->SetItemNum(1);
-			UE_LOG(Pro4, Warning, TEXT("Spawn Weapon : %s"), *CharacterWeaponInfo.MainWeaponName);
+			UE_LOG(Pro4, Warning, TEXT("Drop Weapon : %s"), *CharacterWeaponInfo.MainWeaponName);
+
 			Weapon->SetSkeletalMesh(PlayerWeapon);
+
 			CharacterWeaponInfo.MainWeaponName = _ItemName;
+			CharacterWeaponInfo.MainWeaponIconPath = _IconPath;
+			CharacterWeaponInfo.MainWeaponImagePath = _BoxImagePath;
 			UE_LOG(Pro4, Warning, TEXT("PlayerWeapon : %s"), *CharacterWeaponInfo.MainWeaponName);
 		}
 		else
@@ -969,5 +975,7 @@ void APro4Character::SetPlayerWeapon(USkeletalMesh* PlayerWeapon, FString _ItemN
 		UE_LOG(Pro4, Warning, TEXT("First Player Weapon : %s"), *_ItemName);
 		Weapon->SetSkeletalMesh(PlayerWeapon);
 		CharacterWeaponInfo.MainWeaponName = _ItemName;
+		CharacterWeaponInfo.MainWeaponIconPath = _IconPath;
+		CharacterWeaponInfo.MainWeaponImagePath = _BoxImagePath;
 	}
 }

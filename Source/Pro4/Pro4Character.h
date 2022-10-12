@@ -14,7 +14,12 @@ struct FWeaponInfo
 {
 	GENERATED_BODY()
 	FString MainWeaponName = "";
+	FString MainWeaponIconPath = "";
+	FString MainWeaponImagePath = "";
+
 	FString SubWeaponName = "";
+	FString SubWeaponIconPath = "";
+	FString SubWeaponImagePath = "";
 };
 
 UCLASS()
@@ -59,7 +64,7 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	void SetPlayerWeapon(USkeletalMesh* PlayerWeapon, FString _ItemName);
+	void SetPlayerWeapon(USkeletalMesh* PlayerWeapon, FString _ItemName, FString _IconPath, FString _BoxImagePath);
 	
 
 	UPROPERTY(VisibleAnywhere, Category=Camera)
