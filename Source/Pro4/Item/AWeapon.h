@@ -26,6 +26,8 @@ public:
 		MAX
 	};
 
+	void ViewWeaponName();
+
 #pragma region Get_Set
 
 	/* Weapon Box Image Path */
@@ -102,10 +104,10 @@ public:
 
 protected:
 	void NotifyActorBeginOverlap(AActor* OtherActor) override;
+	// void NotifyActorEndOverlap(AActor* OtherActor) override;
 
 private:
 	void RandomSpawn(int32 Random);
-
 	void SetUp();
 
 	UPROPERTY(Replicated)
@@ -116,4 +118,6 @@ private:
 
 	USkeletalMesh* SK_WeaponItem;
 	UStaticMesh* SM_WeaponItem;
+
+	bool bIsObservable;
 };

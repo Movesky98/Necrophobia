@@ -45,6 +45,19 @@ void AAWeapon::SetUp()
 	ItemNum = 1;
 }
 
+void AAWeapon::ViewWeaponName()
+{
+	if (!bIsObservable)
+	{
+		bIsObservable = !bIsObservable;
+	}
+	else
+	{
+		return;
+	}
+	UE_LOG(Pro4, Warning, TEXT("WeaponName Function is Executed"));
+}
+
 void AAWeapon::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	UE_LOG(Pro4, Log, TEXT("Weapon is overlapping."));

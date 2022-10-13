@@ -17,6 +17,7 @@
 #include "Components/WidgetSwitcher.h"
 #include "Components/WrapBox.h"
 #include "Components/Image.h"
+#include "Components/SizeBox.h"
 
 UPlayerMenu::UPlayerMenu(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -65,6 +66,10 @@ void UPlayerMenu::SetUp()
 
 	PlayerController->SetInputMode(InputModeData);
 	PlayerController->SetShowMouseCursor(false);
+
+	MainWeaponBox->SetVisibility(ESlateVisibility::Hidden);
+	SubWeaponBox->SetVisibility(ESlateVisibility::Hidden);
+	KnifeBox->SetVisibility(ESlateVisibility::Hidden);
 }
 
 /* 인게임 내 플레이 시간을 표기하는 함수 */
@@ -127,17 +132,49 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		APro4Character* MyPawn = Cast<APro4Character>(GetWorld()->GetFirstPlayerController()->GetPawn());
 		MyPawn->SetPlayerWeapon(Weapon->GetSKWeaponItem(), Weapon->GetItemName(), Weapon->GetIconPath(), Weapon->GetBoxImagePath());
 
-		if (Weapon->GetItemName() == "AR" || Weapon->GetItemName() == "SR")
+		if (Weapon->GetItemName() == "AR")
 		{
-			AddItemToMainWeapon(Weapon->GetBoxImagePath());
+			MainWeaponSizeBox->SetWidthOverride(475);
+			MainWeaponSizeBox->SetHeightOverride(136);
+			AddItemToWeapon(Weapon->GetBoxImagePath(), Weapon->GetItemName()); 
+			
+			if (MainWeaponBox->GetVisibility() == ESlateVisibility::Hidden)
+			{
+				MainWeaponBox->SetVisibility(ESlateVisibility::Visible);
+			}
+		}
+		else if (Weapon->GetItemName() == "SR")
+		{
+			MainWeaponSizeBox->SetWidthOverride(475);
+			MainWeaponSizeBox->SetHeightOverride(112);
+			AddItemToWeapon(Weapon->GetBoxImagePath(), Weapon->GetItemName());
+
+			if (MainWeaponBox->GetVisibility() == ESlateVisibility::Hidden)
+			{
+				MainWeaponBox->SetVisibility(ESlateVisibility::Visible);
+			}
 		}
 		else if(Weapon->GetItemName() == "Pistol")
 		{
+			SubWeaponSizeBox->SetWidthOverride(149);
+			SubWeaponSizeBox->SetHeightOverride(145);
+			AddItemToWeapon(Weapon->GetBoxImagePath(), Weapon->GetItemName());
 
+			if (SubWeaponBox->GetVisibility() == ESlateVisibility::Hidden)
+			{
+				SubWeaponBox->SetVisibility(ESlateVisibility::Visible);
+			}
 		}
 		else
 		{
+			MainWeaponSizeBox->SetWidthOverride(475);
+			MainWeaponSizeBox->SetHeightOverride(136);
+			AddItemToWeapon(Weapon->GetBoxImagePath(), Weapon->GetItemName());
 
+			if (KnifeBox->GetVisibility() == ESlateVisibility::Hidden)
+			{
+				KnifeBox->SetVisibility(ESlateVisibility::Visible);
+			}
 		}
 
 		/*
@@ -191,12 +228,33 @@ void UPlayerMenu::SetImage(UTexture2D* InTexture)
 	TimeImage->SetBrushFromTexture(InTexture);
 }
 
-void UPlayerMenu::AddItemToMainWeapon(FString _IconPath) 
+void UPlayerMenu::AddItemToWeapon(FString _IconPath, FString _WeaponName) 
 {
-	// Image를 그림
-	UTexture2D* ItemImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *_IconPath), NULL, LOAD_None, NULL);
+	if (_WeaponName == "Pistol")
+	{
+		// Image를 그림
+		UTexture2D* ItemImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *_IconPath), NULL, LOAD_None, NULL);
 
-	MainWeaponBox->SetBrushFromTexture(ItemImage);
+		SubWeaponBox->SetBrushFromTexture(ItemImage);
 
-	UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *MainWeaponBox->Brush.GetResourceName().ToString());
+		UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *SubWeaponBox->Brush.GetResourceName().ToString());
+	}
+	else if(_WeaponName == "Knife")
+	{
+		// Image를 그림
+		UTexture2D* ItemImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *_IconPath), NULL, LOAD_None, NULL);
+
+		KnifeBox->SetBrushFromTexture(ItemImage);
+
+		UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *KnifeBox->Brush.GetResourceName().ToString());
+	}
+	else
+	{
+		// Image를 그림
+		UTexture2D* ItemImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *_IconPath), NULL, LOAD_None, NULL);
+
+		MainWeaponBox->SetBrushFromTexture(ItemImage);
+
+		UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *MainWeaponBox->Brush.GetResourceName().ToString());
+	}
 }

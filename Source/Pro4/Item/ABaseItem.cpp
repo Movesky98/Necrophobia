@@ -1,6 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "ABaseItem.h"
+#include "../UserInterface/ItemNameWidget.h"
+
+#include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values
@@ -11,12 +14,21 @@ AABaseItem::AABaseItem()
 
 	SK_Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshItem"));
 	BoxMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshItem"));
+	NameWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("ItemNameWidget"));
 
 	SphereCollision = CreateDefaultSubobject<USphereComponent>(TEXT("SphereCollision"));
-	
+
 	RootComponent = SK_Mesh;
 	BoxMesh->SetupAttachment(SK_Mesh);
 	SphereCollision->SetupAttachment(SK_Mesh);
+
+	NameWidget->SetupAttachment(SphereCollision);
+	static ConstructorHelpers::FClassFinder<UItemNameWidget> BP_ItemNameWidget(TEXT("/Game/UI/Item/BP_ItemName"));
+
+	if (BP_ItemNameWidget.Succeeded())
+	{
+		NameWidget->SetWidgetClass(BP_ItemNameWidget.Class);
+	}
 
 	SK_Mesh->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f));
 	SK_Mesh->SetCollisionProfileName(TEXT("BaseItem"));
