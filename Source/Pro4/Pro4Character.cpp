@@ -219,6 +219,7 @@ void APro4Character::Tick(float DeltaTime)
 		}
 	}
 
+	CheckFrontActorUsingTrace();
 	// Character Role Test.
 	DrawDebugString(GetWorld(), FVector(0, 0, 150), GetEnumRole(GetLocalRole()), this, FColor::Green, DeltaTime);
 }
@@ -937,45 +938,166 @@ void APro4Character::NotifyActorEndOverlap(AActor* Act)
 	}
 }
 
+
+#pragma region PlayerUI_Inventory_Section
+/* 플레이어가 무기를 획득할 경우 실행되는 함수 */
 void APro4Character::SetPlayerWeapon(USkeletalMesh* PlayerWeapon, FString _ItemName, FString _IconPath, FString _BoxImagePath)
 {
-	if (Weapon->SkeletalMesh != nullptr)
+	UWorld* World = GetWorld();
+
+	if (World)
 	{
-		// 무기를 변경했을 때, 땅에 들고있던 무기를 내려놓음.
-		UWorld* World = GetWorld();
+		FActorSpawnParameters SpawnParams;
+		FVector SpawnLocation = GetActorLocation();
+		FRotator Rotation;
 
-		if (World)
+		if (_ItemName == "AR" || _ItemName == "SR")
 		{
-			FActorSpawnParameters SpawnParams;
-			FVector SpawnLocation = GetActorLocation();
-			FRotator Rotation;
+			if (MainWeapon.bHaveWeapon)
+			{
+				AAWeapon* DropItem = World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), SpawnLocation, Rotation, SpawnParams);
+				SetDropWeapon(DropItem, MainWeapon);
 
-			AAWeapon* DropItem = World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), SpawnLocation, Rotation, SpawnParams);
-			DropItem->SetSKWeaponItem(Weapon->SkeletalMesh);
-			DropItem->SetItemName(CharacterWeaponInfo.MainWeaponName);
-			DropItem->SetIconPath(CharacterWeaponInfo.MainWeaponIconPath);
-			DropItem->SetBoxImagePath(CharacterWeaponInfo.MainWeaponImagePath);
-			DropItem->SetItemNum(1);
-			UE_LOG(Pro4, Warning, TEXT("Drop Weapon : %s"), *CharacterWeaponInfo.MainWeaponName);
-
-			Weapon->SetSkeletalMesh(PlayerWeapon);
-
-			CharacterWeaponInfo.MainWeaponName = _ItemName;
-			CharacterWeaponInfo.MainWeaponIconPath = _IconPath;
-			CharacterWeaponInfo.MainWeaponImagePath = _BoxImagePath;
-			UE_LOG(Pro4, Warning, TEXT("PlayerWeapon : %s"), *CharacterWeaponInfo.MainWeaponName);
+				Weapon->SetSkeletalMesh(PlayerWeapon);
+				SetWeaponInfo(MainWeapon, PlayerWeapon, _ItemName, _IconPath, _BoxImagePath);
+			}
+			else
+			{
+				UE_LOG(Pro4, Warning, TEXT("First Player MainWeapon : %s"), *_ItemName);
+				Weapon->SetSkeletalMesh(PlayerWeapon);
+				SetWeaponInfo(MainWeapon, PlayerWeapon, _ItemName, _IconPath, _BoxImagePath);
+				MainWeapon.bHaveWeapon = true;
+			}
 		}
-		else
+		else if (_ItemName == "Pistol")
 		{
-			UE_LOG(Pro4, Error, TEXT("Drop Weapon Item ERROR."));
+			if (SubWeapon.bHaveWeapon)
+			{
+				AAWeapon* DropItem = World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), SpawnLocation, Rotation, SpawnParams);
+				SetDropWeapon(DropItem, SubWeapon);
+
+				Weapon->SetSkeletalMesh(PlayerWeapon);
+				SetWeaponInfo(SubWeapon, PlayerWeapon, _ItemName, _IconPath, _BoxImagePath);
+			}
+			else
+			{
+				UE_LOG(Pro4, Warning, TEXT("First Player SubWeapon : %s"), *_ItemName);
+				Weapon->SetSkeletalMesh(PlayerWeapon);
+				SetWeaponInfo(SubWeapon, PlayerWeapon, _ItemName, _IconPath, _BoxImagePath);
+				SubWeapon.bHaveWeapon = true;
+			}
+		}
+		else // Knife
+		{
+			if (Knife.bHaveWeapon)
+			{
+				AAWeapon* DropItem = World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), SpawnLocation, Rotation, SpawnParams);
+				SetDropWeapon(DropItem, Knife);
+
+				Weapon->SetSkeletalMesh(PlayerWeapon);
+				SetWeaponInfo(Knife, PlayerWeapon, _ItemName, _IconPath, _BoxImagePath);
+			}
+			else
+			{
+				Weapon->SetSkeletalMesh(PlayerWeapon);
+				SetWeaponInfo(Knife, PlayerWeapon, _ItemName, _IconPath, _BoxImagePath);
+				Knife.bHaveWeapon = true;
+			}
+		}
+	}
+}
+
+void APro4Character::SetDropWeapon(AAWeapon* DropItem, FWeaponInfo& _Weapon)
+{
+	DropItem->SetSKWeaponItem(_Weapon.Weapon);
+	DropItem->SetItemName(_Weapon.Name);
+	DropItem->SetIconPath(_Weapon.IconPath);
+	DropItem->SetBoxImagePath(_Weapon.ImagePath);
+	DropItem->SetItemNum(1);
+	UE_LOG(Pro4, Warning, TEXT("Drop Weapon : %s"), *_Weapon.Name);
+}
+
+void APro4Character::SetWeaponInfo(FWeaponInfo& Cur_Weapon, USkeletalMesh* SK_Weapon, FString _Name, FString _IconPath, FString _ImagePath)
+{
+	Cur_Weapon.Weapon = SK_Weapon;
+	Cur_Weapon.Name = _Name;
+	Cur_Weapon.IconPath = _IconPath;
+	Cur_Weapon.ImagePath = _ImagePath;
+	UE_LOG(Pro4, Warning, TEXT("PlayerWeapon : %s"), *Cur_Weapon.Name);
+}
+
+#pragma endregion
+
+void APro4Character::CheckFrontActorUsingTrace()
+{
+	FVector CharacterLoc;
+	FRotator CharacterRot;
+	FHitResult Hit;
+
+	GetController()->GetPlayerViewPoint(CharacterLoc, CharacterRot);
+
+	FVector Start = CharacterLoc;
+	FVector End = CharacterLoc + (CharacterRot.Vector() * 500);
+
+	FCollisionQueryParams TraceParams;
+	UWorld* World = GetWorld();
+
+	bHit = World->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, TraceParams);
+
+	if (bHit)
+	{
+		if (Hit.GetActor())
+		{
+			DrawDebugLine(World, Start, Hit.ImpactPoint, FColor::Red, false, 2.0f);
+			DrawDebugString(GetWorld(), Hit.ImpactPoint - Start, TEXT("There are Something exist."), this, FColor::Green, 1.0f);
+
+			AActor* HitActor = Hit.GetActor();
+
+			if (HitActor->ActorHasTag(TEXT("Item")))
+			{
+				AABaseItem* BaseItem = Cast<AABaseItem>(HitActor);
+				switch (BaseItem->ItemType)
+				{
+				case AABaseItem::BaseItemType::Weapon:
+				{
+					AAWeapon* Hit_Weapon = Cast<AAWeapon>(BaseItem);
+					Hit_Weapon->ViewWeaponName();
+				}
+					break;
+				case AABaseItem::BaseItemType::Grenade:
+				{
+				
+				}
+					break;
+				case AABaseItem::BaseItemType::Armor:
+				{
+
+				}
+					break;
+				case AABaseItem::BaseItemType::Ammo:
+				{
+
+				}
+					break;
+				case AABaseItem::BaseItemType::Recovery:
+				{
+
+				}
+					break;
+				case AABaseItem::BaseItemType::Parts:
+				{
+
+				}
+					break;
+				default:
+					UE_LOG(Pro4, Error, TEXT("Player Trace Error"));
+					break;
+				}
+			}
 		}
 	}
 	else
 	{
-		UE_LOG(Pro4, Warning, TEXT("First Player Weapon : %s"), *_ItemName);
-		Weapon->SetSkeletalMesh(PlayerWeapon);
-		CharacterWeaponInfo.MainWeaponName = _ItemName;
-		CharacterWeaponInfo.MainWeaponIconPath = _IconPath;
-		CharacterWeaponInfo.MainWeaponImagePath = _BoxImagePath;
+
 	}
 }

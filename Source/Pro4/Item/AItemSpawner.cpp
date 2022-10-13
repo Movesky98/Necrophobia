@@ -18,6 +18,8 @@ AAItemSpawner::AAItemSpawner()
 	ItemSpawnerComponent = CreateDefaultSubobject<USphereComponent>(TEXT("ItemSpawner"));
 
 	ItemSpawnerComponent->InitSphereRadius(50.0f);
+	ItemSpawnerComponent->SetCollisionProfileName(TEXT("BaseItem"));
+	
 	RootComponent = ItemSpawnerComponent;
 	
 	Weapon = AAWeapon::StaticClass();

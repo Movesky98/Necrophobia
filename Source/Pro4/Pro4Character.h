@@ -13,13 +13,11 @@ USTRUCT()
 struct FWeaponInfo
 {
 	GENERATED_BODY()
-	FString MainWeaponName = "";
-	FString MainWeaponIconPath = "";
-	FString MainWeaponImagePath = "";
-
-	FString SubWeaponName = "";
-	FString SubWeaponIconPath = "";
-	FString SubWeaponImagePath = "";
+	bool bHaveWeapon = false;
+	FString Name = "";
+	FString IconPath = "";
+	FString ImagePath = "";
+	USkeletalMesh* Weapon = nullptr;
 };
 
 UCLASS()
@@ -177,7 +175,10 @@ public:
 	float CurrentAP;
 	
 private:
-	FWeaponInfo CharacterWeaponInfo;
+	FWeaponInfo MainWeapon;
+	FWeaponInfo SubWeapon;
+	FWeaponInfo Knife;
+
 #pragma endregion
 
 
@@ -286,4 +287,11 @@ private:
 
 	// Character Role Test.
 	FString GetEnumRole(ENetRole CharacterRole);
+
+	/* Trace Sector */
+	void CheckFrontActorUsingTrace();
+
+	/* Inventory Sector */
+	void SetDropWeapon(class AAWeapon* DropItem, FWeaponInfo& _Weapon);
+	void SetWeaponInfo(FWeaponInfo& Cur_Weapon, USkeletalMesh* SK_Weapon, FString _Name, FString _IconPath, FString _ImagePath);
 };
