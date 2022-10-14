@@ -7,6 +7,8 @@
 #include "Pro4Zombie.generated.h"
 
 DECLARE_MULTICAST_DELEGATE(FOnAttackEndDelegate);
+DECLARE_MULTICAST_DELEGATE(FOnWakeUpEndDelegate);
+DECLARE_MULTICAST_DELEGATE(FOnAttackStarttedDelegate);
 
 UCLASS()
 class PRO4_API APro4Zombie : public ACharacter
@@ -23,6 +25,14 @@ protected:
 
 private:
 	bool IsFind;
+	bool IsAttacking;
+	bool IsDowning;
+	bool IsRun = false;
+	bool IsDown;
+	bool IsMontagePlay;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
+	float CountWakeUp;
 
 	int32 AttackNum;
 
@@ -31,10 +41,8 @@ private:
 
 	UFUNCTION()
 		void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
-
-private:
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
-		bool IsAttacking;
+	UFUNCTION()
+		void OnWakeUpMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 public:	
 	// Called every frame
@@ -45,8 +53,6 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void PostInitializeComponents() override;
 	void MovementSetting();
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Reload, Meta = (AllowPrivateAccess = true))
-		bool IsRun=false;
 	
 	void ZombieRun()
 	{
@@ -63,6 +69,35 @@ public:
 		return IsRun;
 	}
 
+	bool ZombieDowning()
+	{
+		return IsDowning;
+	}
+
+	bool DownAnimCheck()
+	{
+		return IsDown;
+	}
+
+	void ZombieAnimStand()
+	{
+		IsDown = false;
+	}
+
+	void FindingT()
+	{
+		IsFind = true;
+	}
+
+	void FindingF()
+	{
+		IsFind = false;
+	}
+
 	void Attack();
+	void WakeUp();
+
 	FOnAttackEndDelegate OnAttackEnd;
+	FOnWakeUpEndDelegate OnWakeUpEnd;
+	FOnAttackStarttedDelegate OnAttackStart;
 };

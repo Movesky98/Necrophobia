@@ -13,6 +13,12 @@ UZombieAnimInstance::UZombieAnimInstance()
 	{
 		AttackMontage = ATTACK_MONTAGE.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> WAKEUP_MONTAGE(TEXT("/Game/Character_Animation/Zombie/NormalMaleZombie/Zombie_WakeUp_Montage.Zombie_WakeUp_Montage"));
+	if (WAKEUP_MONTAGE.Succeeded())
+	{
+		WakeUpMontage = WAKEUP_MONTAGE.Object;
+	}
 }
 
 void UZombieAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -27,6 +33,7 @@ void UZombieAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		if (Character)
 		{
 			IsRun = Character->ZombieRunning();
+			IsDown = Character->DownAnimCheck();
 		}
 	}
 }
@@ -36,5 +43,13 @@ void UZombieAnimInstance::PlayAttackMontage()
 	if (!Montage_IsPlaying(AttackMontage))
 	{
 		Montage_Play(AttackMontage, 1.0f);
+	}
+}
+
+void UZombieAnimInstance::PlayWakeUpMontage()
+{
+	if (!Montage_IsPlaying(WakeUpMontage))
+	{
+		Montage_Play(WakeUpMontage, 1.0f);
 	}
 }
