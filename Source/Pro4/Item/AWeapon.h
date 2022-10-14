@@ -26,11 +26,71 @@ public:
 		MAX
 	};
 
-	FString GetIconPath();
-	
-	WeaponType CurrentWeapon;
-	FString TemporaryName;
+	void ViewWeaponName();
 
+#pragma region Get_Set
+
+	/* Weapon Box Image Path */
+	void SetBoxImagePath(FString _BoxImagePath)
+	{
+		WeaponBoxImagePath = _BoxImagePath;
+	}
+
+	FString GetBoxImagePath()
+	{
+		return WeaponBoxImagePath;
+	}
+
+	/* Icon Path */
+	void SetIconPath(FString _IconPath)
+	{
+		ItemIconPath = _IconPath;
+	}
+
+	FString GetIconPath()
+	{
+		return ItemIconPath;
+	}
+
+	/* SK_WeaponItem */
+	void SetSKWeaponItem(USkeletalMesh* SK_Weapon)
+	{
+		SK_WeaponItem = SK_Weapon;
+		SK_Mesh->SetSkeletalMesh(SK_WeaponItem);
+	}
+
+	USkeletalMesh* GetSKWeaponItem()
+	{
+		return SK_WeaponItem;
+	}
+
+	/* ItemName */
+	void SetItemName(FString _Name)
+	{
+		ItemName = _Name;
+	}
+
+	FString GetItemName()
+	{
+		return ItemName;
+	}
+
+	/* ItemNum */
+	void SetItemNum(uint16 _Num)
+	{
+		ItemNum = _Num;
+	}
+
+	uint16 GetItemNum()
+	{
+		return ItemNum;
+	}
+
+#pragma endregion
+	WeaponType CurrentWeapon;
+
+	FString TemporaryName;
+	
 	UPROPERTY(Replicated)
 	FString ItemName;
 
@@ -44,14 +104,20 @@ public:
 
 protected:
 	void NotifyActorBeginOverlap(AActor* OtherActor) override;
+	// void NotifyActorEndOverlap(AActor* OtherActor) override;
 
 private:
 	void RandomSpawn(int32 Random);
-
 	void SetUp();
 
 	UPROPERTY(Replicated)
 	FString ItemIconPath;
+	
+	UPROPERTY(Replicated)
+	FString WeaponBoxImagePath;
 
+	USkeletalMesh* SK_WeaponItem;
 	UStaticMesh* SM_WeaponItem;
+
+	bool bIsObservable;
 };

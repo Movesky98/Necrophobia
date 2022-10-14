@@ -43,7 +43,13 @@ public:
 	// virtual void Tick(float DeltaTime) override;
 
 	UPROPERTY(VisibleDefaultsOnly, Category = Box)
+	USkeletalMeshComponent* SK_Mesh;
+	
+	UPROPERTY(VisibleDefaultsOnly, Category = Box)
 	UStaticMeshComponent* BoxMesh;
+
+	UPROPERTY(VisibleDefaultsOnly, Category = "UI")
+	class UWidgetComponent* NameWidget;
 
 	UPROPERTY(VisibleDefaultsOnly, Category = SphereCollision)
 	USphereComponent* SphereCollision;

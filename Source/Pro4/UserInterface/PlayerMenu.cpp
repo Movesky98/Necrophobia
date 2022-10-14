@@ -8,6 +8,7 @@
 #include "../Item/AArmor.h"
 #include "../Item/AWeapon.h"
 #include "../Pro4PlayerController.h"
+#include "../Pro4Character.h"
 
 #include "UObject/ConstructorHelpers.h"
 
@@ -16,6 +17,7 @@
 #include "Components/WidgetSwitcher.h"
 #include "Components/WrapBox.h"
 #include "Components/Image.h"
+#include "Components/SizeBox.h"
 
 UPlayerMenu::UPlayerMenu(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -64,6 +66,10 @@ void UPlayerMenu::SetUp()
 
 	PlayerController->SetInputMode(InputModeData);
 	PlayerController->SetShowMouseCursor(false);
+
+	MainWeaponBox->SetVisibility(ESlateVisibility::Hidden);
+	SubWeaponBox->SetVisibility(ESlateVisibility::Hidden);
+	KnifeBox->SetVisibility(ESlateVisibility::Hidden);
 }
 
 /* 인게임 내 플레이 시간을 표기하는 함수 */
@@ -114,7 +120,6 @@ void UPlayerMenu::ChangePlayerWidget()
 
 void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 {
-	UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
 	AABaseItem* BaseItem = Cast<AABaseItem>(ItemActor);
 	
 	switch (BaseItem->ItemType)
@@ -123,26 +128,84 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 	{
 		AAWeapon* Weapon = Cast<AAWeapon>(BaseItem);
 		if (!ensure(Weapon != nullptr)) return;
-		InventoryItem->SetUp(Weapon->ItemName, Weapon->ItemNum, Weapon->GetIconPath());
-		UE_LOG(Pro4, Warning, TEXT("Icon Path : %s"), *Weapon->GetIconPath());
-		InventoryBox->AddChildToWrapBox(InventoryItem);
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
+
+		APro4Character* MyPawn = Cast<APro4Character>(GetWorld()->GetFirstPlayerController()->GetPawn());
+		MyPawn->SetPlayerWeapon(Weapon->GetSKWeaponItem(), Weapon->GetItemName(), Weapon->GetIconPath(), Weapon->GetBoxImagePath());
+
+		if (Weapon->GetItemName() == "AR")
+		{
+			MainWeaponSizeBox->SetWidthOverride(475);
+			MainWeaponSizeBox->SetHeightOverride(136);
+			AddItemToWeapon(Weapon->GetBoxImagePath(), Weapon->GetItemName()); 
+			
+			if (MainWeaponBox->GetVisibility() == ESlateVisibility::Hidden)
+			{
+				MainWeaponBox->SetVisibility(ESlateVisibility::Visible);
+			}
+		}
+		else if (Weapon->GetItemName() == "SR")
+		{
+			MainWeaponSizeBox->SetWidthOverride(475);
+			MainWeaponSizeBox->SetHeightOverride(112);
+			AddItemToWeapon(Weapon->GetBoxImagePath(), Weapon->GetItemName());
+
+			if (MainWeaponBox->GetVisibility() == ESlateVisibility::Hidden)
+			{
+				MainWeaponBox->SetVisibility(ESlateVisibility::Visible);
+			}
+		}
+		else if(Weapon->GetItemName() == "Pistol")
+		{
+			SubWeaponSizeBox->SetWidthOverride(149);
+			SubWeaponSizeBox->SetHeightOverride(145);
+			AddItemToWeapon(Weapon->GetBoxImagePath(), Weapon->GetItemName());
+
+			if (SubWeaponBox->GetVisibility() == ESlateVisibility::Hidden)
+			{
+				SubWeaponBox->SetVisibility(ESlateVisibility::Visible);
+			}
+		}
+		else
+		{
+			MainWeaponSizeBox->SetWidthOverride(475);
+			MainWeaponSizeBox->SetHeightOverride(136);
+			AddItemToWeapon(Weapon->GetBoxImagePath(), Weapon->GetItemName());
+
+			if (KnifeBox->GetVisibility() == ESlateVisibility::Hidden)
+			{
+				KnifeBox->SetVisibility(ESlateVisibility::Visible);
+			}
+		}
+
+		/*
+		* UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
+		* Weapon Item의 경우 인벤토리에 무기를 저장하지 않음.
+		* 아래는 무기를 제외한 아이템(총알, 수류탄, 연막탄과 같은 여러가지를 가질 수 있는 아이템)을 위한 코드임.
+		* InventoryItem->SetUp(Weapon->ItemName, Weapon->ItemNum, Weapon->GetIconPath());
+		* UE_LOG(Pro4, Warning, TEXT("Icon Path : %s"), *Weapon->GetIconPath());
+		* InventoryBox->AddChildToWrapBox(InventoryItem);
+		* GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
+		*/
 	}
 		break;
 	case AABaseItem::BaseItemType::Armor:
 	{
-		AAArmor* Armor = Cast<AAArmor>(BaseItem);
-		InventoryItem->SetUp(Armor->ItemName, Armor->ItemNum, "Hello");
-		InventoryBox->AddChildToWrapBox(InventoryItem);
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
+		/*
+		* AAArmor* Armor = Cast<AAArmor>(BaseItem);
+		* InventoryItem->SetUp(Armor->ItemName, Armor->ItemNum, "Hello");
+		* InventoryBox->AddChildToWrapBox(InventoryItem);
+		* GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
+		*/
 	}
 		break;
 	case AABaseItem::BaseItemType::Grenade:
 	{
-		AAGrenade* Grenade = Cast<AAGrenade>(BaseItem);
-		InventoryItem->SetUp(Grenade->ItemName, Grenade->ItemNum, "Hello");
-		InventoryBox->AddChildToWrapBox(InventoryItem);
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
+		/*
+		* AAGrenade* Grenade = Cast<AAGrenade>(BaseItem);
+		* InventoryItem->SetUp(Grenade->ItemName, Grenade->ItemNum, "Hello");
+		* InventoryBox->AddChildToWrapBox(InventoryItem);
+		* GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
+		*/
 	}
 		break;
 	case AABaseItem::BaseItemType::Recovery:
@@ -163,4 +226,35 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 void UPlayerMenu::SetImage(UTexture2D* InTexture)
 {
 	TimeImage->SetBrushFromTexture(InTexture);
+}
+
+void UPlayerMenu::AddItemToWeapon(FString _IconPath, FString _WeaponName) 
+{
+	if (_WeaponName == "Pistol")
+	{
+		// Image를 그림
+		UTexture2D* ItemImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *_IconPath), NULL, LOAD_None, NULL);
+
+		SubWeaponBox->SetBrushFromTexture(ItemImage);
+
+		UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *SubWeaponBox->Brush.GetResourceName().ToString());
+	}
+	else if(_WeaponName == "Knife")
+	{
+		// Image를 그림
+		UTexture2D* ItemImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *_IconPath), NULL, LOAD_None, NULL);
+
+		KnifeBox->SetBrushFromTexture(ItemImage);
+
+		UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *KnifeBox->Brush.GetResourceName().ToString());
+	}
+	else
+	{
+		// Image를 그림
+		UTexture2D* ItemImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *_IconPath), NULL, LOAD_None, NULL);
+
+		MainWeaponBox->SetBrushFromTexture(ItemImage);
+
+		UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *MainWeaponBox->Brush.GetResourceName().ToString());
+	}
 }

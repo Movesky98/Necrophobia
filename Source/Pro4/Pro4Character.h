@@ -9,6 +9,17 @@
 #include "Engine/TextureRenderTarget2D.h"
 #include "Pro4Character.generated.h"
 
+USTRUCT()
+struct FWeaponInfo
+{
+	GENERATED_BODY()
+	bool bHaveWeapon = false;
+	FString Name = "";
+	FString IconPath = "";
+	FString ImagePath = "";
+	USkeletalMesh* Weapon = nullptr;
+};
+
 UCLASS()
 class PRO4_API APro4Character : public ACharacter
 {
@@ -51,6 +62,7 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	void SetPlayerWeapon(USkeletalMesh* PlayerWeapon, FString _ItemName, FString _IconPath, FString _BoxImagePath);
 	
 
 	UPROPERTY(VisibleAnywhere, Category=Camera)
@@ -60,20 +72,20 @@ public:
 	UCameraComponent *Camera;
 
 	UPROPERTY(VisibleAnywhere, Category = MapCam)
-		USpringArmComponent* MapSpringArm;
+	USpringArmComponent* MapSpringArm;
 
 	UPROPERTY(VisibleAnywhere, Category = MapCam)
-		USceneCaptureComponent2D* MapCapture;
+	USceneCaptureComponent2D* MapCapture;
 
 	UPROPERTY(EditAnywhere, Category = "GamePlay")
-		FVector MuzzleOffset;
+	FVector MuzzleOffset;
 
 	UPROPERTY(EditAnywhere, Category = "Projectile")
-		TSubclassOf<APro4Projectile> ProjectileClass;
+	TSubclassOf<APro4Projectile> ProjectileClass;
 		
 
-	UPROPERTY(VisibleAnywhere, Category=Weapon)
-	UStaticMeshComponent* Weapon;
+	UPROPERTY(VisibleAnywhere, Category= "Weapon")
+	USkeletalMeshComponent* Weapon;
 
 	bool IsProning()
 	{
@@ -161,6 +173,11 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=State)
 	float CurrentAP;
+	
+private:
+	FWeaponInfo MainWeapon;
+	FWeaponInfo SubWeapon;
+	FWeaponInfo Knife;
 
 #pragma endregion
 
@@ -270,4 +287,11 @@ private:
 
 	// Character Role Test.
 	FString GetEnumRole(ENetRole CharacterRole);
+
+	/* Trace Sector */
+	void CheckFrontActorUsingTrace();
+
+	/* Inventory Sector */
+	void SetDropWeapon(class AAWeapon* DropItem, FWeaponInfo& _Weapon);
+	void SetWeaponInfo(FWeaponInfo& Cur_Weapon, USkeletalMesh* SK_Weapon, FString _Name, FString _IconPath, FString _ImagePath);
 };

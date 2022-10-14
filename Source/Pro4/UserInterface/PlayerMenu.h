@@ -28,6 +28,7 @@ public:
 
 	void ChangePlayerWidget();
 
+	void AddItemToWeapon(FString _IconPath, FString _WeaponName);
 	void AddItemToInventory(AActor* ItemActor, uint16 Num);
 
 	class UTexture2D* Day;
@@ -55,8 +56,28 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	class UProgressBar* Armor_ProgressBar;
 
+#pragma region InventoryField
 	UPROPERTY(meta = (BindWidget))
 	class UWrapBox* InventoryBox;
+
+	UPROPERTY(meta = (BindWidget))
+	class USizeBox* MainWeaponSizeBox;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* MainWeaponBox;
+	
+	UPROPERTY(meta = (BindWidget))
+	class USizeBox* SubWeaponSizeBox;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* SubWeaponBox;
+
+	UPROPERTY(meta = (BindWidget))
+	class USizeBox* KnifeSizeBox;
+	
+	UPROPERTY(meta = (BindWidget))
+	class UImage* KnifeBox;
+#pragma endregion
 
 	UPROPERTY(meta = (BindWidget))
 	class UWidgetSwitcher* UISwitcher;

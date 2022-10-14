@@ -14,6 +14,7 @@ AAWeapon::AAWeapon()
 	ItemType = BaseItemType::Weapon;
 	bReplicates = true;
 	bNetLoadOnClient = true;
+	
 
 	// 여기서 GetLocalRole()을 실행하게 될 경우, Authority를 획득하게 됨.
 	int32 RandomNum = FMath::RandRange(0, static_cast<int32>(WeaponType::MAX) - 1);
@@ -39,9 +40,22 @@ void AAWeapon::BeginPlay()
 
 void AAWeapon::SetUp()
 {
-	BoxMesh->SetStaticMesh(SM_WeaponItem);
+	SK_Mesh->SetSkeletalMesh(SK_WeaponItem);
 	ItemName = TemporaryName;
 	ItemNum = 1;
+}
+
+void AAWeapon::ViewWeaponName()
+{
+	if (!bIsObservable)
+	{
+		bIsObservable = !bIsObservable;
+	}
+	else
+	{
+		return;
+	}
+	UE_LOG(Pro4, Warning, TEXT("WeaponName Function is Executed"));
 }
 
 void AAWeapon::NotifyActorBeginOverlap(AActor* OtherActor)
@@ -55,58 +69,61 @@ void AAWeapon::RandomSpawn(int32 Random)
 
 	switch (CurrentWeapon)
 	{
-	case AAWeapon::WeaponType::AR:
+	case WeaponType::AR:
 	{
 		UE_LOG(Pro4, Log, TEXT("AR is spawned."));
 
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/AR4/SM_AR4_X"));
-		if (SM_Weapon.Succeeded())
+		static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/AR4/SK_AR4"));
+		if (SK_Weapon.Succeeded())
 		{
-			SM_WeaponItem = SM_Weapon.Object;
+			SK_WeaponItem = SK_Weapon.Object;
 		}
-
+		WeaponBoxImagePath = "/Game/UI/Sprites/Weapon_Icon/AR4_Image";
 		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/AR4_Icon_500x500";
 		TemporaryName = "AR";
 	}
 		break;
-	case AAWeapon::WeaponType::SR:
+	case WeaponType::SR:
 	{
 		UE_LOG(Pro4, Log, TEXT("SR is spawned."));
 
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/KA_Val/SM_KA_Val"));
-		if (SM_Weapon.Succeeded())
+		static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/KA_Val/SK_KA_Val_Y"));
+		if (SK_Weapon.Succeeded())
 		{
-			SM_WeaponItem = SM_Weapon.Object;
+			SK_WeaponItem = SK_Weapon.Object;
 		}
 
+		WeaponBoxImagePath = "/Game/UI/Sprites/Weapon_Icon/KA_val_Image";
 		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/KA_val_Icon_500x500";
 		TemporaryName = "SR";
 	}
 		break;
-	case AAWeapon::WeaponType::Pistol:
+	case WeaponType::Pistol:
 	{
 		UE_LOG(Pro4, Log, TEXT("Pistol is spawned."));
 
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/SMG11/SM_SMG11"));
-		if (SM_Weapon.Succeeded())
+		static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/SMG11/SK_SMG11_Y"));
+		if (SK_Weapon.Succeeded())
 		{
-			SM_WeaponItem = SM_Weapon.Object;
+			SK_WeaponItem = SK_Weapon.Object;
 		}
 
+		WeaponBoxImagePath = "/Game/UI/Sprites/Weapon_Icon/SMG11_Image";
 		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/SMG11_Icon_500x500";
 		TemporaryName = "Pistol";
 	}
 		break;
-	case AAWeapon::WeaponType::Knife:
+	case WeaponType::Knife:
 	{
 		UE_LOG(Pro4, Log, TEXT("Knife is spawned."));
 
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/M9_Knife/SM_M9_Knife"));
-		if (SM_Weapon.Succeeded())
+		static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/M9_Knife/SK_M9_Knife_X"));
+		if (SK_Weapon.Succeeded())
 		{
-			SM_WeaponItem = SM_Weapon.Object;
+			SK_WeaponItem = SK_Weapon.Object;
 		}
 
+		WeaponBoxImagePath = "/Game/UI/Sprites/Weapon_Icon/M9_Knife_Image";
 		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/M9_Knife_Icon_500x500";
 		TemporaryName = "Knife";
 	}
@@ -117,13 +134,9 @@ void AAWeapon::RandomSpawn(int32 Random)
 void AAWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
+	
+	DOREPLIFETIME(AAWeapon, WeaponBoxImagePath);
 	DOREPLIFETIME(AAWeapon, ItemIconPath);
 	DOREPLIFETIME(AAWeapon, ItemNum);
 	DOREPLIFETIME(AAWeapon, ItemName);
-}
-
-FString AAWeapon::GetIconPath()
-{
-	return ItemIconPath;
 }

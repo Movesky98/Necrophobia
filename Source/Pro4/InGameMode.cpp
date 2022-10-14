@@ -26,14 +26,18 @@ AInGameMode::AInGameMode()
 
     static ConstructorHelpers::FClassFinder<APro4Character> BP_PlayerCharacter(TEXT("/Game/BLUEPRINT(JunJae)/BP_Pro4Character"));
 
-    if (BP_PlayerCharacter.Succeeded())
+    /*if (BP_PlayerCharacter.Succeeded())   BP_PlayerCharacter은 아예 C++로 구현해놓겠음.
     {
         DefaultPawnClass = BP_PlayerCharacter.Class;
+        UE_LOG(Pro4, Warning, TEXT("Set PawnClass : BP_PlayerCharacter"));
     }
     else
     {
-        DefaultPawnClass = APro4Character::StaticClass();
-    }
+    
+    }*/
+
+    DefaultPawnClass = APro4Character::StaticClass();
+    UE_LOG(Pro4, Warning, TEXT("Set PawnClass : APro4Character"));
     PlayerControllerClass = APro4PlayerController::StaticClass();
     GameStateClass = AInGameState::StaticClass();
 }

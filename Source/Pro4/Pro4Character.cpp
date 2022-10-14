@@ -5,6 +5,7 @@
 #include "Pro4AnimInstance.h"
 #include "NecrophobiaGameInstance.h"
 #include "UserInterface/PlayerMenu.h"
+#include "Item/AWeapon.h"
 
 #include "DrawDebugHelpers.h"
 #include "Net/UnrealNetwork.h"
@@ -20,7 +21,7 @@ APro4Character::APro4Character()
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("CAMERA"));
-	Weapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WEAPON"));
+	Weapon = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WEAPON"));
 
 	MapSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("MAPSPRINGARM"));
 	MapCapture = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("MAPCAPTURE"));
@@ -55,15 +56,13 @@ APro4Character::APro4Character()
 
 	if (GetMesh()->DoesSocketExist(WeaponSocket)) {
 
-		UE_LOG(Pro4, Log, TEXT("WeaponSocket has exist"))
-
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/AR4/SM_AR4_X.SM_AR4_X"));
-		if (SM_Weapon.Succeeded())
-		{
-			Weapon->SetStaticMesh(SM_Weapon.Object);
-		}
+		UE_LOG(Pro4, Warning, TEXT("WeaponSocket has exist."));
 
 		Weapon->SetupAttachment(GetMesh(), WeaponSocket);
+	}
+	else
+	{
+		UE_LOG(Pro4, Error, TEXT("WeaponSocket has not exist."));
 	}
 }
 
@@ -220,6 +219,7 @@ void APro4Character::Tick(float DeltaTime)
 		}
 	}
 
+	CheckFrontActorUsingTrace();
 	// Character Role Test.
 	DrawDebugString(GetWorld(), FVector(0, 0, 150), GetEnumRole(GetLocalRole()), this, FColor::Green, DeltaTime);
 }
@@ -935,5 +935,169 @@ void APro4Character::NotifyActorEndOverlap(AActor* Act)
 	if (Act->ActorHasTag(TEXT("Encroach")))
 	{
 		UnEncroached();
+	}
+}
+
+
+#pragma region PlayerUI_Inventory_Section
+/* 플레이어가 무기를 획득할 경우 실행되는 함수 */
+void APro4Character::SetPlayerWeapon(USkeletalMesh* PlayerWeapon, FString _ItemName, FString _IconPath, FString _BoxImagePath)
+{
+	UWorld* World = GetWorld();
+
+	if (World)
+	{
+		FActorSpawnParameters SpawnParams;
+		FVector SpawnLocation = GetActorLocation();
+		FRotator Rotation;
+
+		if (_ItemName == "AR" || _ItemName == "SR")
+		{
+			if (MainWeapon.bHaveWeapon)
+			{
+				AAWeapon* DropItem = World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), SpawnLocation, Rotation, SpawnParams);
+				SetDropWeapon(DropItem, MainWeapon);
+
+				Weapon->SetSkeletalMesh(PlayerWeapon);
+				SetWeaponInfo(MainWeapon, PlayerWeapon, _ItemName, _IconPath, _BoxImagePath);
+			}
+			else
+			{
+				UE_LOG(Pro4, Warning, TEXT("First Player MainWeapon : %s"), *_ItemName);
+				Weapon->SetSkeletalMesh(PlayerWeapon);
+				SetWeaponInfo(MainWeapon, PlayerWeapon, _ItemName, _IconPath, _BoxImagePath);
+				MainWeapon.bHaveWeapon = true;
+			}
+		}
+		else if (_ItemName == "Pistol")
+		{
+			if (SubWeapon.bHaveWeapon)
+			{
+				AAWeapon* DropItem = World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), SpawnLocation, Rotation, SpawnParams);
+				SetDropWeapon(DropItem, SubWeapon);
+
+				Weapon->SetSkeletalMesh(PlayerWeapon);
+				SetWeaponInfo(SubWeapon, PlayerWeapon, _ItemName, _IconPath, _BoxImagePath);
+			}
+			else
+			{
+				UE_LOG(Pro4, Warning, TEXT("First Player SubWeapon : %s"), *_ItemName);
+				Weapon->SetSkeletalMesh(PlayerWeapon);
+				SetWeaponInfo(SubWeapon, PlayerWeapon, _ItemName, _IconPath, _BoxImagePath);
+				SubWeapon.bHaveWeapon = true;
+			}
+		}
+		else // Knife
+		{
+			if (Knife.bHaveWeapon)
+			{
+				AAWeapon* DropItem = World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), SpawnLocation, Rotation, SpawnParams);
+				SetDropWeapon(DropItem, Knife);
+
+				Weapon->SetSkeletalMesh(PlayerWeapon);
+				SetWeaponInfo(Knife, PlayerWeapon, _ItemName, _IconPath, _BoxImagePath);
+			}
+			else
+			{
+				Weapon->SetSkeletalMesh(PlayerWeapon);
+				SetWeaponInfo(Knife, PlayerWeapon, _ItemName, _IconPath, _BoxImagePath);
+				Knife.bHaveWeapon = true;
+			}
+		}
+	}
+}
+
+void APro4Character::SetDropWeapon(AAWeapon* DropItem, FWeaponInfo& _Weapon)
+{
+	DropItem->SetSKWeaponItem(_Weapon.Weapon);
+	DropItem->SetItemName(_Weapon.Name);
+	DropItem->SetIconPath(_Weapon.IconPath);
+	DropItem->SetBoxImagePath(_Weapon.ImagePath);
+	DropItem->SetItemNum(1);
+	UE_LOG(Pro4, Warning, TEXT("Drop Weapon : %s"), *_Weapon.Name);
+}
+
+void APro4Character::SetWeaponInfo(FWeaponInfo& Cur_Weapon, USkeletalMesh* SK_Weapon, FString _Name, FString _IconPath, FString _ImagePath)
+{
+	Cur_Weapon.Weapon = SK_Weapon;
+	Cur_Weapon.Name = _Name;
+	Cur_Weapon.IconPath = _IconPath;
+	Cur_Weapon.ImagePath = _ImagePath;
+	UE_LOG(Pro4, Warning, TEXT("PlayerWeapon : %s"), *Cur_Weapon.Name);
+}
+
+#pragma endregion
+
+void APro4Character::CheckFrontActorUsingTrace()
+{
+	FVector CharacterLoc;
+	FRotator CharacterRot;
+	FHitResult Hit;
+
+	GetController()->GetPlayerViewPoint(CharacterLoc, CharacterRot);
+
+	FVector Start = CharacterLoc;
+	FVector End = CharacterLoc + (CharacterRot.Vector() * 500);
+
+	FCollisionQueryParams TraceParams;
+	UWorld* World = GetWorld();
+
+	bHit = World->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, TraceParams);
+
+	if (bHit)
+	{
+		if (Hit.GetActor())
+		{
+			DrawDebugLine(World, Start, Hit.ImpactPoint, FColor::Red, false, 2.0f);
+			DrawDebugString(GetWorld(), Hit.ImpactPoint - Start, TEXT("There are Something exist."), this, FColor::Green, 1.0f);
+
+			AActor* HitActor = Hit.GetActor();
+
+			if (HitActor->ActorHasTag(TEXT("Item")))
+			{
+				AABaseItem* BaseItem = Cast<AABaseItem>(HitActor);
+				switch (BaseItem->ItemType)
+				{
+				case AABaseItem::BaseItemType::Weapon:
+				{
+					AAWeapon* Hit_Weapon = Cast<AAWeapon>(BaseItem);
+					Hit_Weapon->ViewWeaponName();
+				}
+					break;
+				case AABaseItem::BaseItemType::Grenade:
+				{
+				
+				}
+					break;
+				case AABaseItem::BaseItemType::Armor:
+				{
+
+				}
+					break;
+				case AABaseItem::BaseItemType::Ammo:
+				{
+
+				}
+					break;
+				case AABaseItem::BaseItemType::Recovery:
+				{
+
+				}
+					break;
+				case AABaseItem::BaseItemType::Parts:
+				{
+
+				}
+					break;
+				default:
+					UE_LOG(Pro4, Error, TEXT("Player Trace Error"));
+					break;
+				}
+			}
+		}
+	}
+	else
+	{
+
 	}
 }
