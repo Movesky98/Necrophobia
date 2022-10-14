@@ -64,6 +64,8 @@ APro4Character::APro4Character()
 	{
 		UE_LOG(Pro4, Error, TEXT("WeaponSocket has not exist."));
 	}
+
+	Tags.Add("Player");
 }
 
 // Called when the game starts or when spawned
@@ -219,7 +221,10 @@ void APro4Character::Tick(float DeltaTime)
 		}
 	}
 
-	CheckFrontActorUsingTrace();
+	/* Trace하는 함수 */
+	// CheckFrontActorUsingTrace();
+	
+
 	// Character Role Test.
 	DrawDebugString(GetWorld(), FVector(0, 0, 150), GetEnumRole(GetLocalRole()), this, FColor::Green, DeltaTime);
 }
@@ -578,6 +583,7 @@ void APro4Character::EquipMain1()
 		UE_LOG(Pro4, Log, TEXT("Disarming."));
 		Equipflag = 0;
 		CurrentWeaponMode = WeaponMode::Disarming;
+		Weapon->SetSkeletalMesh(nullptr);
 	}
 	else
 	{
@@ -588,6 +594,7 @@ void APro4Character::EquipMain1()
 		IsMontagePlay = true;
 		IsEquipping = true;
 		CurrentWeaponMode = WeaponMode::Main1;
+		Weapon->SetSkeletalMesh(MainWeapon.Weapon);
 	}
 }
 
@@ -598,6 +605,7 @@ void APro4Character::EquipMain2()
 		UE_LOG(Pro4, Log, TEXT("Disarming."));
 		Equipflag = 0;
 		CurrentWeaponMode = WeaponMode::Disarming;
+		Weapon->SetSkeletalMesh(nullptr);
 	}
 	else
 	{
@@ -609,6 +617,7 @@ void APro4Character::EquipMain2()
 		IsMontagePlay = true;
 		IsEquipping = true;
 		CurrentWeaponMode = WeaponMode::Main2;
+		Weapon->SetSkeletalMesh(SubWeapon.Weapon);
 	}
 }
 
@@ -618,6 +627,7 @@ void APro4Character::EquipSub()
 	{
 		UE_LOG(Pro4, Log, TEXT("Disarming."));
 		CurrentWeaponMode = WeaponMode::Disarming;
+		Weapon->SetSkeletalMesh(nullptr);
 	}
 	else
 	{
@@ -629,6 +639,7 @@ void APro4Character::EquipSub()
 		IsMontagePlay = true;
 		IsEquipping = true;
 		CurrentWeaponMode = WeaponMode::Sub;
+		Weapon->SetSkeletalMesh(Knife.Weapon);
 	}
 }
 

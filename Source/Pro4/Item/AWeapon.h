@@ -104,7 +104,7 @@ public:
 
 protected:
 	void NotifyActorBeginOverlap(AActor* OtherActor) override;
-	// void NotifyActorEndOverlap(AActor* OtherActor) override;
+	void NotifyActorEndOverlap(AActor* OtherActor) override;
 
 private:
 	void RandomSpawn(int32 Random);
@@ -119,5 +119,7 @@ private:
 	USkeletalMesh* SK_WeaponItem;
 	UStaticMesh* SM_WeaponItem;
 
+	class UItemNameWidget* WBP_NameWidget;
+	
 	bool bIsObservable;
 };

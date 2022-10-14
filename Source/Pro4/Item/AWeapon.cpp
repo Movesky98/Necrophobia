@@ -2,7 +2,9 @@
 
 
 #include "AWeapon.h"
+#include "../UserInterface/ItemNameWidget.h"
 
+#include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "DrawDebugHelpers.h"
 
@@ -19,6 +21,10 @@ AAWeapon::AAWeapon()
 	// 여기서 GetLocalRole()을 실행하게 될 경우, Authority를 획득하게 됨.
 	int32 RandomNum = FMath::RandRange(0, static_cast<int32>(WeaponType::MAX) - 1);
 	RandomSpawn(RandomNum);
+
+	/* Widget Component에서 아이템의 이름을 가진 Widget을 가져옴 */
+	NameWidget->InitWidget();
+	WBP_NameWidget = Cast<UItemNameWidget>(NameWidget->GetUserWidgetObject());
 }
 
 void AAWeapon::Tick(float DeltaTime)
@@ -26,7 +32,7 @@ void AAWeapon::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	// ItemName Draw
-	DrawDebugString(GetWorld(), FVector(0, 0, 50), ItemName, this, FColor::Green, DeltaTime);
+	// DrawDebugString(GetWorld(), FVector(0, 0, 50), ItemName, this, FColor::Green, DeltaTime);
 }
 
 void AAWeapon::BeginPlay()
@@ -42,25 +48,44 @@ void AAWeapon::SetUp()
 {
 	SK_Mesh->SetSkeletalMesh(SK_WeaponItem);
 	ItemName = TemporaryName;
+
+	if(WBP_NameWidget != nullptr)
+	{
+		WBP_NameWidget->SetItemName(ItemName);
+	}
+	else
+	{
+		UE_LOG(Pro4, Warning, TEXT("ItemNameWidget Error"));
+	}
+
 	ItemNum = 1;
 }
 
 void AAWeapon::ViewWeaponName()
 {
-	if (!bIsObservable)
-	{
-		bIsObservable = !bIsObservable;
-	}
-	else
-	{
-		return;
-	}
-	UE_LOG(Pro4, Warning, TEXT("WeaponName Function is Executed"));
+	bIsObservable = !bIsObservable;
+	WBP_NameWidget->ToggleVisibility();
 }
 
 void AAWeapon::NotifyActorBeginOverlap(AActor* OtherActor)
 {
-	UE_LOG(Pro4, Log, TEXT("Weapon is overlapping."));
+	if (OtherActor->ActorHasTag("Player"))
+	{
+		ViewWeaponName();
+
+		UE_LOG(Pro4, Log, TEXT("Player is overlapping."));
+	}
+}
+
+void AAWeapon::NotifyActorEndOverlap(AActor* OtherActor)
+{
+	if (OtherActor->ActorHasTag("Player"))
+	{
+		ViewWeaponName();
+
+
+		UE_LOG(Pro4, Log, TEXT("Player Overlap End."));
+	}
 }
 
 void AAWeapon::RandomSpawn(int32 Random)

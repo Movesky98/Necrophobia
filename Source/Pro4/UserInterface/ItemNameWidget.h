@@ -13,6 +13,14 @@ UCLASS()
 class PRO4_API UItemNameWidget : public UUserWidget
 {
 	GENERATED_BODY()
+public:
+	UItemNameWidget(const FObjectInitializer& ObjectInitializer);
+
+	void ToggleVisibility();
+	virtual bool Initialize();
+
+	UFUNCTION(BlueprintCallable)
+	void SetItemName(FString& _ItemName);
 
 private:
 	UPROPERTY(meta = (BindWidget))

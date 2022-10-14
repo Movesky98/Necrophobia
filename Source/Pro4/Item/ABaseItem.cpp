@@ -21,8 +21,8 @@ AABaseItem::AABaseItem()
 	RootComponent = SK_Mesh;
 	BoxMesh->SetupAttachment(SK_Mesh);
 	SphereCollision->SetupAttachment(SK_Mesh);
+	NameWidget->SetupAttachment(SK_Mesh);
 
-	NameWidget->SetupAttachment(SphereCollision);
 	static ConstructorHelpers::FClassFinder<UItemNameWidget> BP_ItemNameWidget(TEXT("/Game/UI/Item/BP_ItemName"));
 
 	if (BP_ItemNameWidget.Succeeded())
@@ -30,11 +30,18 @@ AABaseItem::AABaseItem()
 		NameWidget->SetWidgetClass(BP_ItemNameWidget.Class);
 	}
 
-	SK_Mesh->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f));
+	NameWidget->SetWidgetSpace(EWidgetSpace::Screen);
+	FVector2D DrawSize;
+	DrawSize.Set(100.0f, 50.0f);
+
+	NameWidget->SetDrawSize(DrawSize);
+	NameWidget->SetRelativeLocation(FVector(0.0, 0.0, 30.0f));
+	SK_Mesh->SetRelativeLocation(FVector(0.0f, 0.0f, 30.0f));
 	SK_Mesh->SetCollisionProfileName(TEXT("BaseItem"));
 	SK_Mesh->SetIsReplicated(true);
 
 	SphereCollision->InitSphereRadius(200.0f);
+
 	SphereCollision->SetCollisionProfileName(TEXT("BaseItem"));
 
 
