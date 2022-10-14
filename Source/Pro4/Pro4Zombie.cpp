@@ -30,6 +30,9 @@ APro4Zombie::APro4Zombie()
 	
 	MovementSetting();
 	IsAttacking = false;
+	IsDowning = true;
+	IsMontagePlay = false;
+	IsDown = true;
 }
 
 // Called when the game starts or when spawned
@@ -45,8 +48,8 @@ void APro4Zombie::PostInitializeComponents()
 	ZombieAnim = Cast<UZombieAnimInstance>(GetMesh()->GetAnimInstance());
 	if (ZombieAnim != nullptr) 
 	{
-		UE_LOG(Pro4, Warning, TEXT("ZombieAnimInstance is not null."));
 		ZombieAnim->OnMontageEnded.AddDynamic(this, &APro4Zombie::OnAttackMontageEnded);
+		ZombieAnim->OnMontageEnded.AddDynamic(this, &APro4Zombie::OnWakeUpMontageEnded);
 	}
 	else
 	{
@@ -75,6 +78,15 @@ void APro4Zombie::Tick(float DeltaTime)
 	{
 		GetCharacterMovement()->MaxWalkSpeed = 200.0f;
 	}
+
+	if (IsMontagePlay && IsDowning)
+	{
+		CountWakeUp += DeltaTime;
+		if (CountWakeUp > 1.0f)
+		{
+			IsDown = false;
+		}
+	}
 }
 
 // Called to bind functionality to input
@@ -101,12 +113,26 @@ void APro4Zombie::Attack()
 	default:
 		break;
 	}
-	
 	IsAttacking = true;
+	IsMontagePlay = true;
+}
+
+void APro4Zombie::WakeUp()
+{
+	if (!IsDowning) return;
+	ZombieAnim->PlayWakeUpMontage();
+	IsMontagePlay = true;
 }
 
 void APro4Zombie::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	IsAttacking = false;
+	IsMontagePlay = false;
 	OnAttackEnd.Broadcast();
+}
+
+void APro4Zombie::OnWakeUpMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	IsMontagePlay = false;
+	IsDowning = false;
 }
