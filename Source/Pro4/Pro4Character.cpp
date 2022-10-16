@@ -6,6 +6,7 @@
 #include "NecrophobiaGameInstance.h"
 #include "UserInterface/PlayerMenu.h"
 #include "Item/AWeapon.h"
+#include "Door.h"
 
 #include "DrawDebugHelpers.h"
 #include "Net/UnrealNetwork.h"
@@ -186,11 +187,12 @@ void APro4Character::Tick(float DeltaTime)
 		SpringArm->SetRelativeRotation(FRotator::ZeroRotator);
 	}
 
-	CurrentHP += 1.0f;
+	/* Player HealthPoint Section */
+	/*CurrentHP += 1.0f;
 	if (CurrentHP >= 90.0f) 
 	{
 		CurrentHP = 10.0f;
-	}
+	}*/
 
 	if (IsEncroach)
 	{
@@ -910,6 +912,16 @@ void APro4Character::InteractPressed()
 				Instance->PlayerMenu->AddItemToInventory(Interactable, 1);
 				Server_DestroyItem(Interactable);
 			}
+			else if (Interactable->ActorHasTag(TEXT("Door")))
+			{
+				ADoor* Door = Cast<ADoor>(Interactable);
+				if (Door->GetCanPlayerOpenDoor())
+				{
+					Door->SetIsPlayerOpen(true);
+
+					UE_LOG(Pro4, Warning, TEXT("Door"), *Interactable->GetName());
+				}
+			}
 		}
 	}
 }
@@ -1110,5 +1122,45 @@ void APro4Character::CheckFrontActorUsingTrace()
 	else
 	{
 
+	}
+}
+
+void APro4Character::Console_SetPlayerHP(float HealthPoint)
+{
+	CurrentHP = HealthPoint;
+}
+
+void APro4Character::Console_GetDamaged(float Damage)
+{
+	CurrentHP -= Damage;
+	if (CurrentHP < 0)
+	{
+		CurrentHP = 0;
+		UE_LOG(Pro4, Warning, TEXT("Player is dead."));
+	}
+
+	/* 플레이어가 공격받지 않는 상황에서 맞았을 경우 */
+	if (!bIsPlayerGetAttacked)
+	{
+		// 회복을 하기위해 타이머를 설정, 현재 플레이어의 상태 : 피격상태
+		bIsPlayerGetAttacked = true;
+		GetWorldTimerManager().SetTimer(HealthRecoveryTimer, this, &APro4Character::PlayerHealthUpdate, 1.0f, true, 5.0f);
+	}
+	else
+	{
+		// 다시 공격받았을 경우, 타이머를 리셋하고 다시 설정. 현재 플레이어의 상태 : 피격상태
+		GetWorldTimerManager().ClearTimer(HealthRecoveryTimer);
+		GetWorldTimerManager().SetTimer(HealthRecoveryTimer, this, &APro4Character::PlayerHealthUpdate, 1.0f, true, 5.0f);
+	}
+}
+
+void APro4Character::PlayerHealthUpdate()
+{
+	CurrentHP += 10;
+
+	if (CurrentHP >= 100)
+	{
+		bIsPlayerGetAttacked = false;
+		GetWorldTimerManager().ClearTimer(HealthRecoveryTimer);
 	}
 }

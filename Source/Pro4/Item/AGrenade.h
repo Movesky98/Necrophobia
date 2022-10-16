@@ -24,15 +24,34 @@ public:
 		Molotov,	// 화염병
 		MAX
 	};
-	
-	GrenadeType CurrentGrenade;
-	FString TemporaryName;
 
-	UPROPERTY(Replicated)
-	FString ItemName;
+	void ViewItemName();
 
-	UPROPERTY(Replicated)
-	uint16 ItemNum;
+#pragma region Get_Set
+
+	/* ItemName */
+	void SetItemName(FString _Name)
+	{
+		ItemName = _Name;
+	}
+
+	FString GetItemName()
+	{
+		return ItemName;
+	}
+
+	/* ItemNum */
+	void SetItemNum(uint16 _Num)
+	{
+		ItemNum = _Num;
+	}
+
+	uint16 GetItemNum()
+	{
+		return ItemNum;
+	}
+
+#pragma endregion
 
 	virtual void BeginPlay();
 
@@ -41,9 +60,25 @@ public:
 
 protected:
 	void NotifyActorBeginOverlap(AActor* OtherActor) override;
+	void NotifyActorEndOverlap(AActor* OtherActor) override;
 
 private:
 	void RandomSpawn(int32 Random);
+	void SetUp();
+
+	GrenadeType CurrentGrenade;
 
 	UStaticMesh* SM_GrenadeItem;
+
+	FString TemporaryName;
+
+	UPROPERTY(Replicated)
+	FString ItemName;
+
+	UPROPERTY(Replicated)
+	uint16 ItemNum;
+
+	class UItemNameWidget* WBP_NameWidget;
+
+	bool bIsObservable;
 };

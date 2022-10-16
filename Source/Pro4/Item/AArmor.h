@@ -22,6 +22,48 @@ public:
 		Flak_Jacket,	// πÊ≈∫¡∂≥¢
 		MAX
 	};
+	
+	void ViewItemName();
+
+#pragma region Get_Set
+
+	/* ItemName */
+	void SetItemName(FString _Name)
+	{
+		ItemName = _Name;
+	}
+
+	FString GetItemName()
+	{
+		return ItemName;
+	}
+
+	/* ItemNum */
+	void SetItemNum(uint16 _Num)
+	{
+		ItemNum = _Num;
+	}
+
+	uint16 GetItemNum()
+	{
+		return ItemNum;
+	}
+
+#pragma endregion
+
+	virtual void BeginPlay();
+
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
+
+protected:
+	void NotifyActorBeginOverlap(AActor* OtherActor) override;
+
+	void NotifyActorEndOverlap(AActor* OtherActor) override;
+
+private:
+	void RandomSpawn(int32 Random);
+	void SetUp();
 
 	ArmorType CurrentArmor;
 	FString TemporaryName;
@@ -32,16 +74,9 @@ public:
 	UPROPERTY(Replicated)
 	uint16 ItemNum;
 
-	virtual void BeginPlay();
-
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-protected:
-	void NotifyActorBeginOverlap(AActor* OtherActor) override;
-
-private:
-	void RandomSpawn(int32 Random);
-
 	UStaticMesh* SM_ArmorItem;
+
+	class UItemNameWidget* WBP_NameWidget;
+
+	bool bIsObservable;
 };
