@@ -174,7 +174,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=State)
 	float CurrentAP;
 	
+	UFUNCTION(Exec)
+	void Console_SetPlayerHP(float HealthPoint);
+	
+	UFUNCTION(Exec)
+	void Console_GetDamaged(float Damage);
+
+	void PlayerHealthUpdate();
+
 private:
+	bool bIsPlayerGetAttacked = false;
+	FTimerHandle HealthRecoveryTimer;
+
 	FWeaponInfo MainWeapon;
 	FWeaponInfo SubWeapon;
 	FWeaponInfo Knife;

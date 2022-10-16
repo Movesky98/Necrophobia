@@ -36,6 +36,10 @@ AABaseItem::AABaseItem()
 
 	NameWidget->SetDrawSize(DrawSize);
 	NameWidget->SetRelativeLocation(FVector(0.0, 0.0, 30.0f));
+
+	BoxMesh->SetCollisionProfileName(TEXT("BaseItem"));
+	BoxMesh->SetIsReplicated(true);
+
 	SK_Mesh->SetRelativeLocation(FVector(0.0f, 0.0f, 30.0f));
 	SK_Mesh->SetCollisionProfileName(TEXT("BaseItem"));
 	SK_Mesh->SetIsReplicated(true);

@@ -1,7 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "AGrenade.h"
+#include "../UserInterface/ItemNameWidget.h"
 
+#include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "DrawDebugHelpers.h"
 
@@ -17,6 +19,9 @@ AAGrenade::AAGrenade()
 
 	uint32 RandomItemNum = FMath::RandRange(0, static_cast<int32>(GrenadeType::MAX) - 1);
 	RandomSpawn(RandomItemNum);
+
+	NameWidget->InitWidget();
+	WBP_NameWidget = Cast<UItemNameWidget>(NameWidget->GetUserWidgetObject());
 }
 
 void AAGrenade::BeginPlay()
@@ -24,10 +29,25 @@ void AAGrenade::BeginPlay()
 	Super::BeginPlay();
 	if (GetWorld()->IsServer())
 	{
-		BoxMesh->SetStaticMesh(SM_GrenadeItem);
-		ItemName = TemporaryName;
-		ItemNum = 1;
+		SetUp();
 	}
+}
+
+void AAGrenade::SetUp()
+{
+	BoxMesh->SetStaticMesh(SM_GrenadeItem);
+	ItemName = TemporaryName;
+
+	if (WBP_NameWidget != nullptr)
+	{
+		WBP_NameWidget->SetItemName(ItemName);
+	}
+	else
+	{
+		UE_LOG(Pro4, Warning, TEXT("ItemNameWidget Error"));
+	}
+
+	ItemNum = 1;
 }
 
 void AAGrenade::Tick(float DeltaTime)
@@ -35,13 +55,34 @@ void AAGrenade::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	// ItemName Draw
-	DrawDebugString(GetWorld(), FVector(0, 0, 100), ItemName, this, FColor::Green, DeltaTime);
+	// DrawDebugString(GetWorld(), FVector(0, 0, 100), ItemName, this, FColor::Green, DeltaTime);
+}
+
+void AAGrenade::ViewItemName()
+{
+	bIsObservable = !bIsObservable;
+	WBP_NameWidget->ToggleVisibility();
 }
 
 void AAGrenade::NotifyActorBeginOverlap(AActor* OtherActor)
 {
-	UE_LOG(Pro4, Log, TEXT("Grenade is overlapping."));
+	if (OtherActor->ActorHasTag("Player"))
+	{
+		ViewItemName();
 
+		UE_LOG(Pro4, Log, TEXT("Player is overlapping."));
+	}
+}
+
+void AAGrenade::NotifyActorEndOverlap(AActor* OtherActor)
+{
+	if (OtherActor->ActorHasTag("Player"))
+	{
+		ViewItemName();
+
+
+		UE_LOG(Pro4, Log, TEXT("Player Overlap End."));
+	}
 }
 
 void AAGrenade::RandomSpawn(int32 Random)
@@ -53,7 +94,7 @@ void AAGrenade::RandomSpawn(int32 Random)
 	case AAGrenade::GrenadeType::Grenade:
 	{
 		UE_LOG(Pro4, Log, TEXT("Grenade is spawned."));
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Grenade(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/G67_Grenade/SM_G67_Grenade"));
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Grenade(TEXT("/Game/Weapon/Granade/granade"));
 		if (SM_Grenade.Succeeded())
 		{
 			SM_GrenadeItem = SM_Grenade.Object;
@@ -65,7 +106,7 @@ void AAGrenade::RandomSpawn(int32 Random)
 	case AAGrenade::GrenadeType::Flash:
 	{
 		UE_LOG(Pro4, Log, TEXT("Flash is spawned."));
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Flash(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/G67_Grenade/SM_G67_Grenade"));
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Flash(TEXT("/Game/Weapon/Granade/flashbang"));
 		if (SM_Flash.Succeeded())
 		{
 			SM_GrenadeItem = SM_Flash.Object;
@@ -77,7 +118,7 @@ void AAGrenade::RandomSpawn(int32 Random)
 	case AAGrenade::GrenadeType::Smoke:
 	{
 		UE_LOG(Pro4, Log, TEXT("Smoke is spawned."));
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Smoke(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/G67_Grenade/SM_G67_Grenade"));
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Smoke(TEXT("/Game/Weapon/Granade/smoke"));
 		if (SM_Smoke.Succeeded())
 		{
 			SM_GrenadeItem = SM_Smoke.Object;
@@ -89,7 +130,7 @@ void AAGrenade::RandomSpawn(int32 Random)
 	case AAGrenade::GrenadeType::Molotov:
 	{
 		UE_LOG(Pro4, Log, TEXT("Molotov is spawned."));
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Molotov(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/G67_Grenade/SM_G67_Grenade"));
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Molotov(TEXT("/Game/Weapon/Granade/firebomb"));
 		if (SM_Molotov.Succeeded())
 		{
 			SM_GrenadeItem = SM_Molotov.Object;

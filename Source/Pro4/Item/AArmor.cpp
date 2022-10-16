@@ -1,7 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "AArmor.h"
+#include "../UserInterface/ItemNameWidget.h"
 
+#include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "DrawDebugHelpers.h"
 
@@ -16,6 +18,10 @@ AAArmor::AAArmor()
 
 	uint32 RandomItemNum = FMath::RandRange(0, static_cast<int32>(ArmorType::MAX) - 1);
 	RandomSpawn(RandomItemNum);
+
+	/* Widget Component에서 아이템의 이름을 가진 Widget을 가져옴 */
+	NameWidget->InitWidget();
+	WBP_NameWidget = Cast<UItemNameWidget>(NameWidget->GetUserWidgetObject());
 }
 
 void AAArmor::BeginPlay()
@@ -23,10 +29,25 @@ void AAArmor::BeginPlay()
 	Super::BeginPlay();
 	if (GetWorld()->IsServer())
 	{
-		BoxMesh->SetStaticMesh(SM_ArmorItem);
-		ItemName = TemporaryName;
-		ItemNum = 1;
+		SetUp();
 	}
+}
+
+void AAArmor::SetUp()
+{
+	BoxMesh->SetStaticMesh(SM_ArmorItem);
+	ItemName = TemporaryName;
+
+	if (WBP_NameWidget != nullptr)
+	{
+		WBP_NameWidget->SetItemName(ItemName);
+	}
+	else
+	{
+		UE_LOG(Pro4, Warning, TEXT("ItemNameWidget Error"));
+	}
+
+	ItemNum = 1;
 }
 
 void AAArmor::Tick(float DeltaTime)
@@ -34,12 +55,34 @@ void AAArmor::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	// ItemName Draw
-	DrawDebugString(GetWorld(), FVector(0, 0, 100), ItemName, this, FColor::Green, DeltaTime);
+	// DrawDebugString(GetWorld(), FVector(0, 0, 100), ItemName, this, FColor::Green, DeltaTime);
+}
+
+void AAArmor::ViewItemName()
+{
+	bIsObservable = !bIsObservable;
+	WBP_NameWidget->ToggleVisibility();
 }
 
 void AAArmor::NotifyActorBeginOverlap(AActor* OtherActor)
 {
-	UE_LOG(Pro4, Log, TEXT("Armor is overlapping."));
+	if (OtherActor->ActorHasTag("Player"))
+	{
+		ViewItemName();
+
+		UE_LOG(Pro4, Log, TEXT("Player is overlapping."));
+	}
+}
+
+void AAArmor::NotifyActorEndOverlap(AActor* OtherActor)
+{
+	if (OtherActor->ActorHasTag("Player"))
+	{
+		ViewItemName();
+
+
+		UE_LOG(Pro4, Log, TEXT("Player Overlap End."));
+	}
 }
 
 void AAArmor::RandomSpawn(int32 Random)

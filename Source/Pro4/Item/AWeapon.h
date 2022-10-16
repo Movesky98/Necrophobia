@@ -87,15 +87,6 @@ public:
 	}
 
 #pragma endregion
-	WeaponType CurrentWeapon;
-
-	FString TemporaryName;
-	
-	UPROPERTY(Replicated)
-	FString ItemName;
-
-	UPROPERTY(Replicated)
-	uint16 ItemNum;
 
 	virtual void BeginPlay();
 
@@ -109,6 +100,16 @@ protected:
 private:
 	void RandomSpawn(int32 Random);
 	void SetUp();
+	
+	WeaponType CurrentWeapon;
+
+	FString TemporaryName;
+
+	UPROPERTY(Replicated)
+	FString ItemName;
+
+	UPROPERTY(Replicated)
+	uint16 ItemNum;
 
 	UPROPERTY(Replicated)
 	FString ItemIconPath;
