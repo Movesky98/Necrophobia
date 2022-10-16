@@ -1,7 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "AGrenade.h"
-#include "../UserInterface/ItemNameWidget.h"
 
 #include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"

@@ -2,7 +2,6 @@
 
 
 #include "AWeapon.h"
-#include "../UserInterface/ItemNameWidget.h"
 
 #include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"

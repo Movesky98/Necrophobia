@@ -3,6 +3,7 @@
 #pragma once
 
 #include "ABaseItem.h"
+#include "../UserInterface/ItemNameWidget.h"
 #include "AGrenade.generated.h"
 
 /**
@@ -33,6 +34,7 @@ public:
 	void SetItemName(FString _Name)
 	{
 		ItemName = _Name;
+		WBP_NameWidget->SetItemName(ItemName);
 	}
 
 	FString GetItemName()
