@@ -10,6 +10,15 @@
 #include "Pro4Character.generated.h"
 
 USTRUCT()
+struct FArmorInfo
+{
+	GENERATED_BODY()
+	bool bHaveArmor = false;
+	float AP = 50.0f;
+	USkeletalMesh* ArmorMesh;
+};
+
+USTRUCT()
 struct FWeaponInfo
 {
 	GENERATED_BODY()
@@ -63,6 +72,7 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	void SetPlayerWeapon(USkeletalMesh* PlayerWeapon, FString _ItemName, FString _IconPath, FString _BoxImagePath);
+	void SetPlayerArmor(USkeletalMesh* PlayerArmor, FString _ItemName, float _AP);
 	
 
 	UPROPERTY(VisibleAnywhere, Category=Camera)
@@ -83,6 +93,11 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Projectile")
 	TSubclassOf<APro4Projectile> ProjectileClass;
 		
+	UPROPERTY(VisibleAnywhere, Category = "Weapon")
+	USkeletalMeshComponent* Helmet;
+
+	UPROPERTY(VisibleAnywhere, Category = "Weapon")
+	USkeletalMeshComponent* Vest;
 
 	UPROPERTY(VisibleAnywhere, Category= "Weapon")
 	USkeletalMeshComponent* Weapon;
@@ -186,6 +201,9 @@ private:
 	bool bIsPlayerGetAttacked = false;
 	FTimerHandle HealthRecoveryTimer;
 
+	FArmorInfo PlayerHelmet;
+	FArmorInfo PlayerVest;
+
 	FWeaponInfo MainWeapon;
 	FWeaponInfo SubWeapon;
 	FWeaponInfo Knife;
@@ -196,11 +214,13 @@ private:
 private:
 	void NotifyActorBeginOverlap(AActor* Act) override;
 	void NotifyActorEndOverlap(AActor* Act) override;
+	
 	// 초기 세팅
 	void MovementSetting();
 	void CameraSetting();
 	void WeaponSetting();
 	void StateSetting();
+	void SocketSetting();
 
 	//  움직임 관련 함수
 	void UpDown(float NewAxisValue);

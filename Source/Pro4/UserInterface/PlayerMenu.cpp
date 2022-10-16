@@ -190,12 +190,12 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		break;
 	case AABaseItem::BaseItemType::Armor:
 	{
-		/*
-		* AAArmor* Armor = Cast<AAArmor>(BaseItem);
-		* InventoryItem->SetUp(Armor->ItemName, Armor->ItemNum, "Hello");
-		* InventoryBox->AddChildToWrapBox(InventoryItem);
-		* GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
-		*/
+		AAArmor* Armor = Cast<AAArmor>(BaseItem);
+		if (!ensure(Armor != nullptr)) return;
+
+		APro4Character* MyPawn = Cast<APro4Character>(GetWorld()->GetFirstPlayerController()->GetPawn());
+		MyPawn->SetPlayerArmor(Armor->GetSKItem(), Armor->GetItemName(), Armor->GetCurrentAP());
+
 	}
 		break;
 	case AABaseItem::BaseItemType::Grenade:

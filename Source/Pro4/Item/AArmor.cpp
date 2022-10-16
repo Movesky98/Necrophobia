@@ -1,7 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "AArmor.h"
-#include "../UserInterface/ItemNameWidget.h"
 
 #include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"
@@ -35,8 +34,19 @@ void AAArmor::BeginPlay()
 
 void AAArmor::SetUp()
 {
-	BoxMesh->SetStaticMesh(SM_ArmorItem);
+	SK_Mesh->SetSkeletalMesh(SK_Item);
 	ItemName = TemporaryName;
+
+	//if (ItemName == "Helmet")
+	//{
+	//	// HelmetSettings
+	//	SK_Mesh->SetRelativeLocation(FVector(0.0f, 0.0f, -220.0f));
+	//}
+	//else
+	//{
+	//	// Vest Settings
+	//	SK_Mesh->SetRelativeLocation(FVector(0.0f, 0.0f, -160.0f));
+	//}
 
 	if (WBP_NameWidget != nullptr)
 	{
@@ -95,12 +105,25 @@ void AAArmor::RandomSpawn(int32 Random)
 	{
 		UE_LOG(Pro4, Log, TEXT("Helmet(Armor) is spawned."));
 		
+		static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_Armor(TEXT("/Game/Military/Mesh/Head/SK_Military_Helmet1"));
+		if (SK_Armor.Succeeded())
+		{
+			SK_Item = SK_Armor.Object;
+		}
+
 		TemporaryName = "Helmet";
 	}
 		break;
 	case AAArmor::ArmorType::Flak_Jacket:
 	{
 		UE_LOG(Pro4, Log, TEXT("Flak_Jacket(Armor) is spawned."));
+
+		static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_Armor(TEXT("/Game/Military/Mesh/SK_Military_Vest1"));
+		if (SK_Armor.Succeeded())
+		{
+			SK_Item = SK_Armor.Object;
+		}
+
 		TemporaryName = "Flak_Jacket";
 	}
 		break;
@@ -108,18 +131,13 @@ void AAArmor::RandomSpawn(int32 Random)
 		UE_LOG(Pro4, Log, TEXT("Armor Spawn ERROR"));
 		break;
 	}
-
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Armor(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/Accessories/SM_Scope_25x56_Y"));
-	if (SM_Armor.Succeeded())
-	{
-		SM_ArmorItem = SM_Armor.Object;
-	}
 }
 
 void AAArmor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	DOREPLIFETIME(AAArmor, Current_AP);
 	DOREPLIFETIME(AAArmor, ItemName);
 	DOREPLIFETIME(AAArmor, ItemNum);
 }

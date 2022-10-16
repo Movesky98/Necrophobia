@@ -6,6 +6,7 @@
 #include "NecrophobiaGameInstance.h"
 #include "UserInterface/PlayerMenu.h"
 #include "Item/AWeapon.h"
+#include "Item/AArmor.h"
 #include "Door.h"
 
 #include "DrawDebugHelpers.h"
@@ -16,13 +17,13 @@ APro4Character::APro4Character()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
-	FName WeaponSocket(TEXT("Hand_rSocket"));
 	bReplicates = true;
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("CAMERA"));
 	Weapon = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WEAPON"));
+	Helmet = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HELMET"));
+	Vest = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("VEST"));
 
 	MapSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("MAPSPRINGARM"));
 	MapCapture = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("MAPCAPTURE"));
@@ -41,7 +42,7 @@ APro4Character::APro4Character()
 	MovementSetting();
 	WeaponSetting();
 	StateSetting();
-	
+
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh>SK_Mannequin(TEXT("/Game/Character_Animation/Mannequin/Character/Mesh/SK_Mannequin.SK_Mannequin"));
 	if (SK_Mannequin.Succeeded())
 	{
@@ -49,22 +50,14 @@ APro4Character::APro4Character()
 	}
 
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+
 	static ConstructorHelpers::FClassFinder<UAnimInstance>SK_ANIM(TEXT("/Game/Character_Animation/Mannequin/Animations/UE4AnimBluprint.UE4AnimBluprint_C"));
 	if (SK_ANIM.Succeeded())
 	{
 		GetMesh()->SetAnimInstanceClass(SK_ANIM.Class);
 	}
 
-	if (GetMesh()->DoesSocketExist(WeaponSocket)) {
-
-		UE_LOG(Pro4, Warning, TEXT("WeaponSocket has exist."));
-
-		Weapon->SetupAttachment(GetMesh(), WeaponSocket);
-	}
-	else
-	{
-		UE_LOG(Pro4, Error, TEXT("WeaponSocket has not exist."));
-	}
+	SocketSetting();
 
 	Tags.Add("Player");
 }
@@ -140,6 +133,44 @@ void APro4Character::StateSetting()
 	EncroachLevel = 0;
 	IsEncroach = false;
 	EncroachTime = 0.0f;
+}
+
+void APro4Character::SocketSetting()
+{
+	FName WeaponSocket(TEXT("Hand_rSocket"));
+	FName HeadSocket(TEXT("headSocket"));
+	FName VestSocket(TEXT("VestSocket"));
+
+	if (GetMesh()->DoesSocketExist(WeaponSocket)) {
+
+		UE_LOG(Pro4, Warning, TEXT("WeaponSocket has exist."));
+
+		Weapon->SetupAttachment(GetMesh(), WeaponSocket);
+	}
+	else
+	{
+		UE_LOG(Pro4, Error, TEXT("WeaponSocket has not exist."));
+	}
+
+	if (GetMesh()->DoesSocketExist(HeadSocket)) {
+		UE_LOG(Pro4, Warning, TEXT("HeadSocket has exist."));
+
+		Helmet->SetupAttachment(GetMesh(), HeadSocket);
+	}
+	else
+	{
+		UE_LOG(Pro4, Error, TEXT("HeadSocket has not exist."));
+	}
+
+	if (GetMesh()->DoesSocketExist(VestSocket)) {
+		UE_LOG(Pro4, Warning, TEXT("VestSocket has exist."));
+
+		Vest->SetupAttachment(GetMesh(), VestSocket);
+	}
+	else
+	{
+		UE_LOG(Pro4, Error, TEXT("VestSocket has not exist."));
+	}
 }
 
 /// <summary>
@@ -1047,6 +1078,66 @@ void APro4Character::SetWeaponInfo(FWeaponInfo& Cur_Weapon, USkeletalMesh* SK_We
 	Cur_Weapon.IconPath = _IconPath;
 	Cur_Weapon.ImagePath = _ImagePath;
 	UE_LOG(Pro4, Warning, TEXT("PlayerWeapon : %s"), *Cur_Weapon.Name);
+}
+
+void APro4Character::SetPlayerArmor(USkeletalMesh* PlayerArmor, FString _ItemName, float _AP)
+{
+
+	if(_ItemName == "Helmet")
+	{ 
+		if (!PlayerHelmet.bHaveArmor)
+		{
+			PlayerHelmet.bHaveArmor = true;
+		}
+		else
+		{
+			UWorld* World = GetWorld();
+
+			if (World)
+			{
+				FActorSpawnParameters SpawnParams;
+				FVector SpawnLocation = GetActorLocation();
+				FRotator Rotation;
+
+				AAArmor* DropItem = World->SpawnActor<AAArmor>(AAArmor::StaticClass(), SpawnLocation, Rotation, SpawnParams);
+				DropItem->SetSKItem(PlayerHelmet.ArmorMesh);
+				DropItem->SetItemName("Helmet");
+				DropItem->SetCurrentAP(PlayerHelmet.AP);
+			}
+		}
+		PlayerHelmet.ArmorMesh = PlayerArmor;
+		PlayerHelmet.AP = _AP;
+
+		Helmet->SetSkeletalMesh(PlayerHelmet.ArmorMesh);
+	}
+	else
+	{
+		if (!PlayerVest.bHaveArmor)
+		{
+			PlayerVest.bHaveArmor = true;
+		}
+		else
+		{
+			UWorld* World = GetWorld();
+
+			if (World)
+			{
+				FActorSpawnParameters SpawnParams;
+				FVector SpawnLocation = GetActorLocation();
+				FRotator Rotation;
+
+				AAArmor* DropItem = World->SpawnActor<AAArmor>(AAArmor::StaticClass(), SpawnLocation, Rotation, SpawnParams);
+				DropItem->SetSKItem(PlayerVest.ArmorMesh);
+				DropItem->SetItemName("Flak_Jacket");
+				DropItem->SetCurrentAP(PlayerVest.AP);
+			}
+		}
+
+		PlayerVest.ArmorMesh = PlayerArmor;
+		PlayerVest.AP = _AP;
+
+		Vest->SetSkeletalMesh(PlayerVest.ArmorMesh);
+	}
 }
 
 #pragma endregion

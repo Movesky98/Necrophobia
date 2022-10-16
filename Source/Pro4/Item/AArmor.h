@@ -3,6 +3,7 @@
 #pragma once
 
 #include "ABaseItem.h"
+#include "../UserInterface/ItemNameWidget.h"
 #include "AArmor.generated.h"
 
 /**
@@ -27,10 +28,29 @@ public:
 
 #pragma region Get_Set
 
+	/* Current_AP */
+	void SetCurrentAP(float _AP)
+	{
+		if (_AP >= 100.0f)
+		{
+			Current_AP = 100.0f;
+		}
+		else
+		{
+			Current_AP = _AP;
+		}
+	}
+
+	float GetCurrentAP()
+	{
+		return Current_AP;
+	}
+
 	/* ItemName */
 	void SetItemName(FString _Name)
 	{
 		ItemName = _Name;
+		WBP_NameWidget->SetItemName(ItemName);
 	}
 
 	FString GetItemName()
@@ -47,6 +67,18 @@ public:
 	uint16 GetItemNum()
 	{
 		return ItemNum;
+	}
+
+	/* SK_WeaponItem */
+	void SetSKItem(USkeletalMesh* SK_Armor)
+	{
+		SK_Item = SK_Armor;
+		SK_Mesh->SetSkeletalMesh(SK_Item);
+	}
+
+	USkeletalMesh* GetSKItem()
+	{
+		return SK_Item;
 	}
 
 #pragma endregion
@@ -74,7 +106,12 @@ private:
 	UPROPERTY(Replicated)
 	uint16 ItemNum;
 
-	UStaticMesh* SM_ArmorItem;
+	UPROPERTY(Replicated)
+	float Current_AP;
+
+	float Max_AP = 100.0f;
+
+	USkeletalMesh* SK_Item;
 
 	class UItemNameWidget* WBP_NameWidget;
 
