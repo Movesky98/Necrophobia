@@ -18,6 +18,9 @@ AABaseItem::AABaseItem()
 
 	SphereCollision = CreateDefaultSubobject<USphereComponent>(TEXT("SphereCollision"));
 
+	bReplicates = true;
+	bNetLoadOnClient = true;
+
 	RootComponent = SK_Mesh;
 	BoxMesh->SetupAttachment(SK_Mesh);
 	SphereCollision->SetupAttachment(SK_Mesh);
@@ -31,6 +34,8 @@ AABaseItem::AABaseItem()
 	}
 
 	NameWidget->SetWidgetSpace(EWidgetSpace::Screen);
+	NameWidget->SetIsReplicated(true);
+
 	FVector2D DrawSize;
 	DrawSize.Set(100.0f, 50.0f);
 
@@ -45,10 +50,8 @@ AABaseItem::AABaseItem()
 	SK_Mesh->SetIsReplicated(true);
 
 	SphereCollision->InitSphereRadius(200.0f);
-
 	SphereCollision->SetCollisionProfileName(TEXT("BaseItem"));
 
 
 	Tags.Add("Item");
 }
-

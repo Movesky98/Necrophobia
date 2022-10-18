@@ -7,6 +7,7 @@
 #include "UserInterface/PlayerMenu.h"
 #include "Item/AWeapon.h"
 #include "Item/AArmor.h"
+#include "Item/AGrenade.h"
 #include "Door.h"
 
 #include "DrawDebugHelpers.h"
@@ -66,7 +67,13 @@ APro4Character::APro4Character()
 void APro4Character::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	FString IsServer = "False";
+	if (GetWorld()->IsServer())
+	{
+		IsServer = "True";
+	}
+
+	DrawDebugString(GetWorld(), FVector(0, 0, 150), (TEXT("Is server? : %s"), *IsServer), this, FColor::Red, 15.0f);
 }
 
 /// <summary>
@@ -146,6 +153,7 @@ void APro4Character::SocketSetting()
 		UE_LOG(Pro4, Warning, TEXT("WeaponSocket has exist."));
 
 		Weapon->SetupAttachment(GetMesh(), WeaponSocket);
+		Weapon->SetIsReplicated(true);
 	}
 	else
 	{
@@ -156,6 +164,7 @@ void APro4Character::SocketSetting()
 		UE_LOG(Pro4, Warning, TEXT("HeadSocket has exist."));
 
 		Helmet->SetupAttachment(GetMesh(), HeadSocket);
+		Helmet->SetIsReplicated(true);
 	}
 	else
 	{
@@ -166,6 +175,7 @@ void APro4Character::SocketSetting()
 		UE_LOG(Pro4, Warning, TEXT("VestSocket has exist."));
 
 		Vest->SetupAttachment(GetMesh(), VestSocket);
+		Vest->SetIsReplicated(true);
 	}
 	else
 	{
@@ -941,7 +951,6 @@ void APro4Character::InteractPressed()
 				UE_LOG(Pro4, Log, TEXT("Get %s"), *Interactable->GetName());
 				
 				Instance->PlayerMenu->AddItemToInventory(Interactable, 1);
-				Server_DestroyItem(Interactable);
 			}
 			else if (Interactable->ActorHasTag(TEXT("Door")))
 			{
@@ -995,151 +1004,225 @@ void APro4Character::NotifyActorEndOverlap(AActor* Act)
 
 #pragma region PlayerUI_Inventory_Section
 /* 플레이어가 무기를 획득할 경우 실행되는 함수 */
-void APro4Character::SetPlayerWeapon(USkeletalMesh* PlayerWeapon, FString _ItemName, FString _IconPath, FString _BoxImagePath)
+void APro4Character::SetPlayerWeapon(AAWeapon* SetWeapon)
+{
+	if (SetWeapon->GetItemName() == "AR" || SetWeapon->GetItemName() == "SR")
+	{
+		if (MainWeapon.bHaveWeapon)
+		{
+
+			SpawnWeaponItemOnServer(GetActorLocation(), MainWeapon.Weapon, MainWeapon.Name, MainWeapon.IconPath, MainWeapon.ImagePath);
+		}
+
+		NoticePlayerWeaponOnServer("MainWeapon", SetWeapon->GetSKWeaponItem(), SetWeapon->GetItemName(), SetWeapon->GetIconPath(), SetWeapon->GetBoxImagePath());
+	}
+	else if (SetWeapon->GetItemName() == "Pistol")
+	{
+		if (SubWeapon.bHaveWeapon)
+		{
+			SpawnWeaponItemOnServer(GetActorLocation(), SubWeapon.Weapon, SubWeapon.Name, SubWeapon.IconPath, SubWeapon.ImagePath);
+		}
+
+		NoticePlayerWeaponOnServer("SubWeapon", SetWeapon->GetSKWeaponItem(), SetWeapon->GetItemName(), SetWeapon->GetIconPath(), SetWeapon->GetBoxImagePath());
+	}
+	else // Knife
+	{
+		if (Knife.bHaveWeapon)
+		{
+			SpawnWeaponItemOnServer(GetActorLocation(), Knife.Weapon, Knife.Name, Knife.IconPath, Knife.ImagePath);
+		}
+
+		NoticePlayerWeaponOnServer("Knife", SetWeapon->GetSKWeaponItem(), SetWeapon->GetItemName(), SetWeapon->GetIconPath(), SetWeapon->GetBoxImagePath());
+	}
+
+	Server_DestroyItem(SetWeapon);
+}
+
+/* 클라이언트가 서버에게 드랍된 아이템의 상태를 설정하라고 알리는 함수. */
+void APro4Character::SpawnWeaponItemOnServer_Implementation(FVector Location, USkeletalMesh* WeaponMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath)
+{
+	UWorld* World = GetWorld();
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = GetPlayerController();
+	FRotator Rotation;
+
+	AAWeapon* DropItem = World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), Location, Rotation, SpawnParams);
+
+	SpawnWeaponItemOnClient(DropItem, WeaponMesh, WeaponName, IconPath, ImagePath);
+}
+
+bool APro4Character::SpawnWeaponItemOnServer_Validate(FVector Location, USkeletalMesh* WeaponMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath)
+{
+	return true;
+}
+
+/* NetMulticast로 호출됨. 서버가 클라이언트들에게 드랍된 무기 아이템의 설정을 뿌리는 함수. */
+void APro4Character::SpawnWeaponItemOnClient_Implementation(AAWeapon* SpawnWeapon, USkeletalMesh* WeaponMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath)
+{
+	SpawnWeapon->SetSKWeaponItem(WeaponMesh);
+	SpawnWeapon->SetItemName(WeaponName);
+	SpawnWeapon->SetIconPath(IconPath);
+	SpawnWeapon->SetBoxImagePath(ImagePath);
+}
+
+/* 클라이언트가 서버에게 플레이어의 무기를 세팅하라고 알리는 함수 */
+void APro4Character::NoticePlayerWeaponOnServer_Implementation(const FString& WeaponType, USkeletalMesh* SK_Weapon, const FString& _Name, const FString& _IconPath, const FString& _ImagePath)
+{
+	NoticePlayerWeaponOnClient(WeaponType, SK_Weapon, _Name, _IconPath, _ImagePath);
+}
+
+/* NetMulticast로 호출됨. 서버가 클라이언트들에게 해당 플레이어의 무기 설정을 뿌리는 함수. */
+void APro4Character::NoticePlayerWeaponOnClient_Implementation(const FString& WeaponType, USkeletalMesh* SK_Weapon, const FString& _Name, const FString& _IconPath, const FString& _ImagePath)
+{
+	Weapon->SetSkeletalMesh(SK_Weapon);
+
+	if (WeaponType == "MainWeapon")
+	{
+		MainWeapon.Weapon = SK_Weapon;
+		MainWeapon.Name = _Name;
+		MainWeapon.IconPath = _IconPath;
+		MainWeapon.ImagePath = _ImagePath;
+		if (!MainWeapon.bHaveWeapon)
+		{
+			MainWeapon.bHaveWeapon = true;
+		}
+	}
+	else if (WeaponType == "SubWeapon")
+	{
+		SubWeapon.Weapon = SK_Weapon;
+		SubWeapon.Name = _Name;
+		SubWeapon.IconPath = _IconPath;
+		SubWeapon.ImagePath = _ImagePath;
+		
+		if (!SubWeapon.bHaveWeapon)
+		{
+			SubWeapon.bHaveWeapon = true;
+		}
+	}
+	else
+	{
+		Knife.Weapon = SK_Weapon;
+		Knife.Name = _Name;
+		Knife.IconPath = _IconPath;
+		Knife.ImagePath = _ImagePath;
+
+		if (!Knife.bHaveWeapon)
+		{
+			Knife.bHaveWeapon = true;
+		}
+	}
+}
+
+/* 플레이어의 방어구를 착용하는 함수 */
+void APro4Character::SetPlayerArmor(AAArmor* Armor)
+{
+	// 착용할 방어구가 헬멧일 경우
+	if(Armor->GetItemName() == "Helmet")
+	{ 
+		// 플레이어가 이미 헬멧을 쓰고 있다면
+		if (PlayerHelmet.bHaveArmor)
+		{
+			// 방어구 아이템 스폰을 위해 서버에게 알림.
+			SpawnArmorItemOnServer(GetActorLocation(), PlayerHelmet.ArmorMesh, PlayerHelmet.ArmorName, PlayerHelmet.AP);
+		}
+
+		// 헬멧 아이템을 착용하기 위해 서버에게 알림.
+		NoticePlayerArmorOnServer(Armor, Armor->GetItemName());
+	}
+	else
+	{
+		// 플레이어가 이미 방탄복을 입고 있다면
+		if (PlayerVest.bHaveArmor)
+		{
+			// Spawn Drop Armor Item	
+			SpawnArmorItemOnServer(GetActorLocation(), PlayerVest.ArmorMesh, PlayerVest.ArmorName, PlayerVest.AP);
+		}
+
+		NoticePlayerArmorOnServer(Armor, Armor->GetItemName());
+	}
+
+	Server_DestroyItem(Armor);
+}
+
+/* Client가 드랍한 방어구 아이템을 스폰해달라고 서버에게 알리는 함수 */
+void APro4Character::SpawnArmorItemOnServer_Implementation(FVector Location, USkeletalMesh* ArmorMesh, const FString& ArmorName, float _AP)
 {
 	UWorld* World = GetWorld();
 
 	if (World)
 	{
-		FActorSpawnParameters SpawnParams;
-		FVector SpawnLocation = GetActorLocation();
+		FActorSpawnParameters SpawnParams; 
+		SpawnParams.Owner = GetPlayerController();
 		FRotator Rotation;
 
-		if (_ItemName == "AR" || _ItemName == "SR")
-		{
-			if (MainWeapon.bHaveWeapon)
-			{
-				AAWeapon* DropItem = World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), SpawnLocation, Rotation, SpawnParams);
-				SetDropWeapon(DropItem, MainWeapon);
+		AAArmor* DropItem = World->SpawnActor<AAArmor>(AAArmor::StaticClass(), Location, Rotation, SpawnParams);
 
-				Weapon->SetSkeletalMesh(PlayerWeapon);
-				SetWeaponInfo(MainWeapon, PlayerWeapon, _ItemName, _IconPath, _BoxImagePath);
-			}
-			else
-			{
-				UE_LOG(Pro4, Warning, TEXT("First Player MainWeapon : %s"), *_ItemName);
-				Weapon->SetSkeletalMesh(PlayerWeapon);
-				SetWeaponInfo(MainWeapon, PlayerWeapon, _ItemName, _IconPath, _BoxImagePath);
-				MainWeapon.bHaveWeapon = true;
-			}
-		}
-		else if (_ItemName == "Pistol")
-		{
-			if (SubWeapon.bHaveWeapon)
-			{
-				AAWeapon* DropItem = World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), SpawnLocation, Rotation, SpawnParams);
-				SetDropWeapon(DropItem, SubWeapon);
-
-				Weapon->SetSkeletalMesh(PlayerWeapon);
-				SetWeaponInfo(SubWeapon, PlayerWeapon, _ItemName, _IconPath, _BoxImagePath);
-			}
-			else
-			{
-				UE_LOG(Pro4, Warning, TEXT("First Player SubWeapon : %s"), *_ItemName);
-				Weapon->SetSkeletalMesh(PlayerWeapon);
-				SetWeaponInfo(SubWeapon, PlayerWeapon, _ItemName, _IconPath, _BoxImagePath);
-				SubWeapon.bHaveWeapon = true;
-			}
-		}
-		else // Knife
-		{
-			if (Knife.bHaveWeapon)
-			{
-				AAWeapon* DropItem = World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), SpawnLocation, Rotation, SpawnParams);
-				SetDropWeapon(DropItem, Knife);
-
-				Weapon->SetSkeletalMesh(PlayerWeapon);
-				SetWeaponInfo(Knife, PlayerWeapon, _ItemName, _IconPath, _BoxImagePath);
-			}
-			else
-			{
-				Weapon->SetSkeletalMesh(PlayerWeapon);
-				SetWeaponInfo(Knife, PlayerWeapon, _ItemName, _IconPath, _BoxImagePath);
-				Knife.bHaveWeapon = true;
-			}
-		}
+		// 서버에서 아이템을 스폰하고, 해당 아이템의 정보를 Client들에게 뿌려줌
+		SpawnArmorItemOnClient(DropItem, ArmorMesh, ArmorName, _AP);
 	}
 }
 
-void APro4Character::SetDropWeapon(AAWeapon* DropItem, FWeaponInfo& _Weapon)
+bool APro4Character::SpawnArmorItemOnServer_Validate(FVector Location, USkeletalMesh* ArmorMesh, const FString& ArmorName, float _AP)
 {
-	DropItem->SetSKWeaponItem(_Weapon.Weapon);
-	DropItem->SetItemName(_Weapon.Name);
-	DropItem->SetIconPath(_Weapon.IconPath);
-	DropItem->SetBoxImagePath(_Weapon.ImagePath);
-	DropItem->SetItemNum(1);
-	UE_LOG(Pro4, Warning, TEXT("Drop Weapon : %s"), *_Weapon.Name);
+	return true;
 }
 
-void APro4Character::SetWeaponInfo(FWeaponInfo& Cur_Weapon, USkeletalMesh* SK_Weapon, FString _Name, FString _IconPath, FString _ImagePath)
+/* NetMulticast로 실행되는 함수, 서버가 클라이언트들에게 생성된 아이템의 정보를 뿌려줌. */
+void APro4Character::SpawnArmorItemOnClient_Implementation(AAArmor* SpawnArmor, USkeletalMesh* ArmorMesh, const FString& ArmorName, float _AP)
 {
-	Cur_Weapon.Weapon = SK_Weapon;
-	Cur_Weapon.Name = _Name;
-	Cur_Weapon.IconPath = _IconPath;
-	Cur_Weapon.ImagePath = _ImagePath;
-	UE_LOG(Pro4, Warning, TEXT("PlayerWeapon : %s"), *Cur_Weapon.Name);
+	SpawnArmor->SetSKItem(ArmorMesh);
+	SpawnArmor->SetItemName(ArmorName);
+	SpawnArmor->SetCurrentAP(_AP);
+	SpawnArmor->SetItemNum(1);
 }
 
-void APro4Character::SetPlayerArmor(USkeletalMesh* PlayerArmor, FString _ItemName, float _AP)
+bool APro4Character::SpawnArmorItemOnClient_Validate(AAArmor* SpawnArmor, USkeletalMesh* ArmorMesh, const FString& ArmorName, float _AP)
 {
+	return true;
+}
 
-	if(_ItemName == "Helmet")
-	{ 
+/* 서버에게 플레이어가 방어구를 착용한다고 알리는 함수 */
+void APro4Character::NoticePlayerArmorOnServer_Implementation(AAArmor* _Armor, const FString& ArmorType)
+{
+	NoticePlayerArmorOnClient(_Armor, ArmorType);
+}
+
+/* NetMulticast로 실행되는 함수, 서버가 클라이언트들에게 업데이트 된 방어구 정보를 뿌려줌. */
+void APro4Character::NoticePlayerArmorOnClient_Implementation(AAArmor* _Armor, const FString& ArmorType)
+{
+	if (ArmorType == "Helmet")
+	{
+		PlayerHelmet.ArmorName = _Armor->GetItemName();
+		PlayerHelmet.ArmorMesh = _Armor->GetSKItem();
+		PlayerHelmet.AP = _Armor->GetCurrentAP();
+
+		Helmet->SetSkeletalMesh(PlayerHelmet.ArmorMesh);
+
 		if (!PlayerHelmet.bHaveArmor)
 		{
 			PlayerHelmet.bHaveArmor = true;
 		}
-		else
-		{
-			UWorld* World = GetWorld();
-
-			if (World)
-			{
-				FActorSpawnParameters SpawnParams;
-				FVector SpawnLocation = GetActorLocation();
-				FRotator Rotation;
-
-				AAArmor* DropItem = World->SpawnActor<AAArmor>(AAArmor::StaticClass(), SpawnLocation, Rotation, SpawnParams);
-				DropItem->SetSKItem(PlayerHelmet.ArmorMesh);
-				DropItem->SetItemName("Helmet");
-				DropItem->SetCurrentAP(PlayerHelmet.AP);
-			}
-		}
-		PlayerHelmet.ArmorMesh = PlayerArmor;
-		PlayerHelmet.AP = _AP;
-
-		Helmet->SetSkeletalMesh(PlayerHelmet.ArmorMesh);
 	}
 	else
 	{
-		if (!PlayerVest.bHaveArmor)
+		PlayerVest.ArmorName = _Armor->GetItemName();
+		PlayerVest.ArmorMesh = _Armor->GetSKItem();
+		PlayerVest.AP = _Armor->GetCurrentAP();
+
+		Vest->SetSkeletalMesh(PlayerVest.ArmorMesh);
+
+		if(!PlayerVest.bHaveArmor)
 		{
 			PlayerVest.bHaveArmor = true;
 		}
-		else
-		{
-			UWorld* World = GetWorld();
-
-			if (World)
-			{
-				FActorSpawnParameters SpawnParams;
-				FVector SpawnLocation = GetActorLocation();
-				FRotator Rotation;
-
-				AAArmor* DropItem = World->SpawnActor<AAArmor>(AAArmor::StaticClass(), SpawnLocation, Rotation, SpawnParams);
-				DropItem->SetSKItem(PlayerVest.ArmorMesh);
-				DropItem->SetItemName("Flak_Jacket");
-				DropItem->SetCurrentAP(PlayerVest.AP);
-			}
-		}
-
-		PlayerVest.ArmorMesh = PlayerArmor;
-		PlayerVest.AP = _AP;
-
-		Vest->SetSkeletalMesh(PlayerVest.ArmorMesh);
 	}
 }
 
+void APro4Character::AddPlayerGrenade(AAGrenade* Grenade)
+{
+	Server_DestroyItem(Grenade);
+}
 #pragma endregion
 
 void APro4Character::CheckFrontActorUsingTrace()
@@ -1254,4 +1337,15 @@ void APro4Character::PlayerHealthUpdate()
 		bIsPlayerGetAttacked = false;
 		GetWorldTimerManager().ClearTimer(HealthRecoveryTimer);
 	}
+}
+
+/* Player Controller Class */
+APro4PlayerController* APro4Character::GetPlayerController()
+{
+	return PlayerController;
+}
+
+void APro4Character::SetPlayerController(APro4PlayerController* _PlayerController)
+{
+	PlayerController = _PlayerController;
 }

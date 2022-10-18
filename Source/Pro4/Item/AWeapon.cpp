@@ -13,10 +13,9 @@ AAWeapon::AAWeapon()
 	PrimaryActorTick.bCanEverTick = true;
 
 	ItemType = BaseItemType::Weapon;
-	bReplicates = true;
-	bNetLoadOnClient = true;
 
 	// 여기서 GetLocalRole()을 실행하게 될 경우, Authority를 획득하게 됨.
+	
 	int32 RandomNum = FMath::RandRange(0, static_cast<int32>(WeaponType::MAX) - 1);
 	RandomSpawn(RandomNum);
 
@@ -36,27 +35,34 @@ void AAWeapon::Tick(float DeltaTime)
 void AAWeapon::BeginPlay()
 {
 	Super::BeginPlay();
-	if (GetWorld()->IsServer())
-	{ 
-		SetUp();
+	
+	if (!GetWorld()->IsServer())
+	{
+		return;
 	}
+
+	NetMulticast_SetUp(SK_WeaponItem, TemporaryName, 1);
 }
 
-void AAWeapon::SetUp()
+void AAWeapon::Server_NoticeToServerSetUpItem_Implementation(USkeletalMesh* SK_Weapon, const FString& _ItemName, uint16 _ItemNum)
 {
-	SK_Mesh->SetSkeletalMesh(SK_WeaponItem);
-	ItemName = TemporaryName;
+	NetMulticast_SetUp(SK_Weapon, _ItemName, _ItemNum);
+}
 
-	if(WBP_NameWidget != nullptr)
+/* 클라이언트들에게 아이템 정보를 뿌려줌 */
+void AAWeapon::NetMulticast_SetUp_Implementation(USkeletalMesh* SK_Weapon, const FString& _ItemName, uint16 _ItemNum)
+{
+	
+	if (WBP_NameWidget == nullptr)
 	{
-		WBP_NameWidget->SetItemName(ItemName);
-	}
-	else
-	{
-		UE_LOG(Pro4, Warning, TEXT("ItemNameWidget Error"));
+		return;
 	}
 
-	ItemNum = 1;
+	SK_Mesh->SetSkeletalMesh(SK_Weapon);
+	ItemName = _ItemName;
+	WBP_NameWidget->SetItemName(ItemName);
+	ItemNum = _ItemNum;
+	
 }
 
 void AAWeapon::ViewWeaponName()

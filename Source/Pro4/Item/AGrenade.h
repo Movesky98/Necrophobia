@@ -28,6 +28,10 @@ public:
 
 	void ViewItemName();
 
+
+	UFUNCTION(NetMulticast, Reliable)
+	void NetMulticast_SetUp(UStaticMesh* SM_Grenade, const FString& _ItemName, uint16 _ItemNum);
+
 #pragma region Get_Set
 
 	/* ItemName */
@@ -66,7 +70,6 @@ protected:
 
 private:
 	void RandomSpawn(int32 Random);
-	void SetUp();
 
 	GrenadeType CurrentGrenade;
 

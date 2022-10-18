@@ -39,7 +39,7 @@ void AAItemSpawner::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (GetLocalRole() == ROLE_Authority)
+	if (GetWorld()->IsServer())
 	{
 		if (5.0f < Seconds)
 		{

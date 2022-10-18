@@ -121,7 +121,8 @@ void UPlayerMenu::ChangePlayerWidget()
 void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 {
 	AABaseItem* BaseItem = Cast<AABaseItem>(ItemActor);
-	
+	APro4Character* MyPawn = Cast<APro4Character>(GetWorld()->GetFirstPlayerController()->GetPawn());
+
 	switch (BaseItem->ItemType)
 	{
 	case AABaseItem::BaseItemType::Weapon:
@@ -129,8 +130,7 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		AAWeapon* Weapon = Cast<AAWeapon>(BaseItem);
 		if (!ensure(Weapon != nullptr)) return;
 
-		APro4Character* MyPawn = Cast<APro4Character>(GetWorld()->GetFirstPlayerController()->GetPawn());
-		MyPawn->SetPlayerWeapon(Weapon->GetSKWeaponItem(), Weapon->GetItemName(), Weapon->GetIconPath(), Weapon->GetBoxImagePath());
+		MyPawn->SetPlayerWeapon(Weapon);
 
 		if (Weapon->GetItemName() == "AR")
 		{
@@ -193,13 +193,16 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		AAArmor* Armor = Cast<AAArmor>(BaseItem);
 		if (!ensure(Armor != nullptr)) return;
 
-		APro4Character* MyPawn = Cast<APro4Character>(GetWorld()->GetFirstPlayerController()->GetPawn());
-		MyPawn->SetPlayerArmor(Armor->GetSKItem(), Armor->GetItemName(), Armor->GetCurrentAP());
+		MyPawn->SetPlayerArmor(Armor);
 
 	}
 		break;
 	case AABaseItem::BaseItemType::Grenade:
 	{
+		AAGrenade* Grenade = Cast<AAGrenade>(BaseItem);
+		if (!ensure(Grenade != nullptr)) return;
+
+		MyPawn->AddPlayerGrenade(Grenade);
 		/*
 		* AAGrenade* Grenade = Cast<AAGrenade>(BaseItem);
 		* InventoryItem->SetUp(Grenade->ItemName, Grenade->ItemNum, "Hello");
