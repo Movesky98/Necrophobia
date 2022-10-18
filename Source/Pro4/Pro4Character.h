@@ -185,26 +185,32 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=State)
 	float MaxHP;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=State)
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category=State)
 	float CurrentHP;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=State)
 	float MaxAP;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=State)
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category=State)
 	float CurrentAP;
 	
-	UFUNCTION(Exec)
-	void Console_SetPlayerHP(float HealthPoint);
+	UFUNCTION(Server, Reliable, WithValidation)
+	void RecoverPlayerHealthOnServer();
 	
-	UFUNCTION(Exec)
-	void Console_GetDamaged(float Damage);
+	UFUNCTION(Server, Reliable, WithValidation)
+	void PlayerHealthGetDamagedOnServer(float Damage);
 
-	void PlayerHealthUpdate();
+	void GetDamaged(float Damage);
 
 private:
+	UPROPERTY(Replicated)
 	bool bIsPlayerGetAttacked = false;
+
+	UPROPERTY(Replicated)
+	bool bIsRecoveryTimerStarted = false;
+
 	FTimerHandle HealthRecoveryTimer;
+	FTimerDelegate HealthRecoveryDelegate;
 
 	FArmorInfo PlayerHelmet;
 	FArmorInfo PlayerVest;
@@ -325,6 +331,12 @@ private:
 
 	/* Trace Sector */
 	void CheckFrontActorUsingTrace();
+
+	/* Spawn Projectile Section */
+	UFUNCTION(Server, Reliable, WithValidation)
+	void SpawnProjectileOnServer(FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner);
+
+
 
 	/* Spawn Armor Section */
 	UFUNCTION(Server, Reliable, WithValidation)

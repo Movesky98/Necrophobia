@@ -19,7 +19,7 @@ APro4Character::APro4Character()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
-
+ 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("CAMERA"));
 	Weapon = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WEAPON"));
@@ -28,6 +28,8 @@ APro4Character::APro4Character()
 
 	MapSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("MAPSPRINGARM"));
 	MapCapture = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("MAPCAPTURE"));
+
+	RootComponent = GetCapsuleComponent();
 
 	SpringArm->SetupAttachment(GetCapsuleComponent());
 	Camera->SetupAttachment(SpringArm);
@@ -772,9 +774,7 @@ void APro4Character::Reload()
 ////////////////////////////////////////////////////// 캐릭터 무기장착, 장전 코드 ////////////////////////////////////////////////////////////
 /// </summary>
 
-/// <summary>
-////////////////////////////////////////////////////// 캐릭터 공격 코드 ////////////////////////////////////////////////////////////
-/// </summary>
+#pragma region Character_Attack
 
 void APro4Character::Attack()
 {
@@ -792,7 +792,7 @@ void APro4Character::Attack()
 			// if(���Ⱑ �����̸�)
 			// Swing();
 			// else(���Ⱑ �����̸�)
-			Fire();
+			// Fire();
 			break;
 		case WeaponMode::ATW:
 			Throw();
@@ -837,11 +837,17 @@ void APro4Character::Fire()
 		FRotator CameraRotation;
 		GetActorEyesViewPoint(CameraLocation, CameraRotation);
 
-		FVector MuzzleLocation = Weapon->GetComponentLocation();
+		FVector MuzzleLocation;
+		if (Weapon != nullptr)
+		{
+			if (Weapon->DoesSocketExist("gunFireLocation"))
+			{
+				MuzzleLocation = Weapon->GetSocketLocation("gunFireLocation");
+			}
+
+		}
 		FRotator MuzzleRotation = CameraRotation;
 		MuzzleRotation.Pitch += 10.0f;
-
-		UWorld* World = GetWorld();
 
 		if (CurrentWeaponMode == WeaponMode::Main1 || CurrentWeaponMode == WeaponMode::Main2) // 주무기일 때의 총알 발사 (탄창 상태 반영 안함)
 		{
@@ -865,19 +871,8 @@ void APro4Character::Fire()
 				}
 			}
 
-			if (World)
-			{
-				FActorSpawnParameters SpawnParams;
-				SpawnParams.Owner = this;
-				SpawnParams.Instigator = GetInstigator();
+			SpawnProjectileOnServer(MuzzleLocation, MuzzleRotation, MuzzleRotation.Vector(), this);
 
-				APro4Projectile* Projectile = World->SpawnActor<APro4Projectile>(ProjectileClass, MuzzleLocation, MuzzleRotation, SpawnParams);
-				if (Projectile)
-				{
-					FVector LaunchDirection = MuzzleRotation.Vector();
-					Projectile->FireInDirection(LaunchDirection);
-				}
-			}
 			if (FireMod) // 연사 상태이면 함수 딜레이 후 다시 콜 (주무기 종류에 따라서 연사속도 변경)
 			{
 				GetWorld()->GetTimerManager().SetTimer(FireDelay, this, &APro4Character::Fire, .075f, false);
@@ -907,9 +902,30 @@ void APro4Character::Punch() // 주먹질
 	UE_LOG(Pro4, Log, TEXT("Punch"));
 }
 
-/// <summary>
-////////////////////////////////////////////////////// 캐릭터 공격 코드 ////////////////////////////////////////////////////////////
-/// </summary>
+/* 플레이어가 서버에게 총알을 스폰해달라고 요청하는 함수 */
+void APro4Character::SpawnProjectileOnServer_Implementation(FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner)
+{
+	UWorld* World = GetWorld();
+
+	if (World)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = _Owner;
+		SpawnParams.Instigator = GetInstigator();
+
+		APro4Projectile* Projectile = World->SpawnActor<APro4Projectile>(ProjectileClass, Location, Rotation, SpawnParams);
+		if (Projectile)
+		{
+			Projectile->FireInDirection(LaunchDirection);
+		}
+	}
+}
+
+bool APro4Character::SpawnProjectileOnServer_Validate(FVector Location, FRotator Rotator, FVector LaunchDirection, AActor* _Owner)
+{
+	return true;
+}
+#pragma endregion
 
 
 
@@ -1301,14 +1317,41 @@ void APro4Character::CheckFrontActorUsingTrace()
 	}
 }
 
-void APro4Character::Console_SetPlayerHP(float HealthPoint)
+/* Player Controller Class */
+APro4PlayerController* APro4Character::GetPlayerController()
 {
-	CurrentHP = HealthPoint;
+	return PlayerController;
 }
 
-void APro4Character::Console_GetDamaged(float Damage)
+void APro4Character::SetPlayerController(APro4PlayerController* _PlayerController)
+{
+	PlayerController = _PlayerController;
+}
+
+#pragma region PlayerHealth
+
+/* 플레이어의 체력이 회복되었음을 서버에 알리는 함수 */
+void APro4Character::RecoverPlayerHealthOnServer_Implementation()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, "Recovery Player HP On Server");
+	CurrentHP += 10.0f;
+
+	if (CurrentHP >= 100)
+	{
+		bIsPlayerGetAttacked = false;
+		GetWorldTimerManager().ClearTimer(HealthRecoveryTimer);
+	}
+}
+
+bool APro4Character::RecoverPlayerHealthOnServer_Validate()
+{
+	return true;
+}
+
+void APro4Character::PlayerHealthGetDamagedOnServer_Implementation(float Damage)
 {
 	CurrentHP -= Damage;
+
 	if (CurrentHP < 0)
 	{
 		CurrentHP = 0;
@@ -1320,34 +1363,40 @@ void APro4Character::Console_GetDamaged(float Damage)
 	{
 		// 회복을 하기위해 타이머를 설정, 현재 플레이어의 상태 : 피격상태
 		bIsPlayerGetAttacked = true;
-		GetWorldTimerManager().SetTimer(HealthRecoveryTimer, this, &APro4Character::PlayerHealthUpdate, 1.0f, true, 5.0f);
+		GetWorldTimerManager().SetTimer(HealthRecoveryTimer, this, &APro4Character::RecoverPlayerHealthOnServer, 1.0f, true, 5.0f);
 	}
 	else
 	{
 		// 다시 공격받았을 경우, 타이머를 리셋하고 다시 설정. 현재 플레이어의 상태 : 피격상태
 		GetWorldTimerManager().ClearTimer(HealthRecoveryTimer);
-		GetWorldTimerManager().SetTimer(HealthRecoveryTimer, this, &APro4Character::PlayerHealthUpdate, 1.0f, true, 5.0f);
+		GetWorldTimerManager().SetTimer(HealthRecoveryTimer, this, &APro4Character::RecoverPlayerHealthOnServer, 1.0f, true, 5.0f);
 	}
 }
 
-void APro4Character::PlayerHealthUpdate()
+bool APro4Character::PlayerHealthGetDamagedOnServer_Validate(float Damage)
 {
-	CurrentHP += 10;
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, "Processing Player get Damage On Server");
 
-	if (CurrentHP >= 100)
+	if (Damage >= 100.0f || Damage < 0.0f)
 	{
-		bIsPlayerGetAttacked = false;
-		GetWorldTimerManager().ClearTimer(HealthRecoveryTimer);
+		return false;
 	}
+	
+	return true;
 }
 
-/* Player Controller Class */
-APro4PlayerController* APro4Character::GetPlayerController()
+void APro4Character::GetDamaged(float Damage)
 {
-	return PlayerController;
+	PlayerHealthGetDamagedOnServer(Damage);
 }
 
-void APro4Character::SetPlayerController(APro4PlayerController* _PlayerController)
+void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-	PlayerController = _PlayerController;
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(APro4Character, CurrentHP);
+	DOREPLIFETIME(APro4Character, CurrentAP);
 }
+
+
+#pragma endregion
