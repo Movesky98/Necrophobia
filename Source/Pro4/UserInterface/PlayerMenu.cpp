@@ -127,38 +127,38 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 	{
 	case AABaseItem::BaseItemType::Weapon:
 	{
-		AAWeapon* Weapon = Cast<AAWeapon>(BaseItem);
-		if (!ensure(Weapon != nullptr)) return;
+		AAWeapon* NewWeapon = Cast<AAWeapon>(BaseItem);
+		if (!ensure(NewWeapon != nullptr)) return;
 
-		MyPawn->SetPlayerWeapon(Weapon);
+		MyPawn->SetPlayerWeapon(NewWeapon);
 
-		if (Weapon->GetItemName() == "AR")
+		if (NewWeapon->GetItemName() == "AR")
 		{
 			MainWeaponSizeBox->SetWidthOverride(475);
 			MainWeaponSizeBox->SetHeightOverride(136);
-			AddItemToWeapon(Weapon->GetBoxImagePath(), Weapon->GetItemName()); 
+			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetItemName());
 			
 			if (MainWeaponBox->GetVisibility() == ESlateVisibility::Hidden)
 			{
 				MainWeaponBox->SetVisibility(ESlateVisibility::Visible);
 			}
 		}
-		else if (Weapon->GetItemName() == "SR")
+		else if (NewWeapon->GetItemName() == "SR")
 		{
 			MainWeaponSizeBox->SetWidthOverride(475);
 			MainWeaponSizeBox->SetHeightOverride(112);
-			AddItemToWeapon(Weapon->GetBoxImagePath(), Weapon->GetItemName());
+			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetItemName());
 
 			if (MainWeaponBox->GetVisibility() == ESlateVisibility::Hidden)
 			{
 				MainWeaponBox->SetVisibility(ESlateVisibility::Visible);
 			}
 		}
-		else if(Weapon->GetItemName() == "Pistol")
+		else if(NewWeapon->GetItemName() == "Pistol")
 		{
 			SubWeaponSizeBox->SetWidthOverride(149);
 			SubWeaponSizeBox->SetHeightOverride(145);
-			AddItemToWeapon(Weapon->GetBoxImagePath(), Weapon->GetItemName());
+			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetItemName());
 
 			if (SubWeaponBox->GetVisibility() == ESlateVisibility::Hidden)
 			{
@@ -169,7 +169,7 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		{
 			MainWeaponSizeBox->SetWidthOverride(475);
 			MainWeaponSizeBox->SetHeightOverride(136);
-			AddItemToWeapon(Weapon->GetBoxImagePath(), Weapon->GetItemName());
+			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetItemName());
 
 			if (KnifeBox->GetVisibility() == ESlateVisibility::Hidden)
 			{

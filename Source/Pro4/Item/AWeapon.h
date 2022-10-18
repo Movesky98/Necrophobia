@@ -29,11 +29,8 @@ public:
 
 	void ViewWeaponName();
 
-	UFUNCTION(Server, Reliable)
-	void Server_NoticeToServerSetUpItem(USkeletalMesh* SK_Weapon, const FString& _ItemName, uint16 _ItemNum);
-
 	UFUNCTION(NetMulticast, Reliable)
-	void NetMulticast_SetUp(USkeletalMesh* SK_Weapon, const FString& _ItemName, uint16 _ItemNum);
+	void NetMulticast_SetUp(USkeletalMesh* SK_Weapon, const FString& _ItemName, const FString& _IconPath, const FString& _ImagePath, uint16 _ItemNum);
 
 #pragma region Get_Set
 

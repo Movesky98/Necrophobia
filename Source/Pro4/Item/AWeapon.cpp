@@ -29,28 +29,21 @@ void AAWeapon::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	// ItemName Draw
-	// DrawDebugString(GetWorld(), FVector(0, 0, 50), ItemName, this, FColor::Green, DeltaTime);
+	DrawDebugString(GetWorld(), FVector(0, 0, 50), ItemName, this, FColor::Green, DeltaTime);
 }
 
 void AAWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	if (!GetWorld()->IsServer())
+	if (GetWorld()->IsServer())
 	{
-		return;
+		NetMulticast_SetUp(SK_WeaponItem, TemporaryName, ItemIconPath, WeaponBoxImagePath, 1);
 	}
-
-	NetMulticast_SetUp(SK_WeaponItem, TemporaryName, 1);
-}
-
-void AAWeapon::Server_NoticeToServerSetUpItem_Implementation(USkeletalMesh* SK_Weapon, const FString& _ItemName, uint16 _ItemNum)
-{
-	NetMulticast_SetUp(SK_Weapon, _ItemName, _ItemNum);
 }
 
 /* 클라이언트들에게 아이템 정보를 뿌려줌 */
-void AAWeapon::NetMulticast_SetUp_Implementation(USkeletalMesh* SK_Weapon, const FString& _ItemName, uint16 _ItemNum)
+void AAWeapon::NetMulticast_SetUp_Implementation(USkeletalMesh* SK_Weapon, const FString& _ItemName, const FString& _IconPath, const FString& _ImagePath, uint16 _ItemNum)
 {
 	
 	if (WBP_NameWidget == nullptr)
@@ -61,8 +54,9 @@ void AAWeapon::NetMulticast_SetUp_Implementation(USkeletalMesh* SK_Weapon, const
 	SK_Mesh->SetSkeletalMesh(SK_Weapon);
 	ItemName = _ItemName;
 	WBP_NameWidget->SetItemName(ItemName);
+	ItemIconPath = _IconPath;
+	WeaponBoxImagePath = _ImagePath;
 	ItemNum = _ItemNum;
-	
 }
 
 void AAWeapon::ViewWeaponName()
