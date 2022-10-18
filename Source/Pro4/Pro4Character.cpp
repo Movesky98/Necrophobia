@@ -1014,7 +1014,7 @@ void APro4Character::SetPlayerWeapon(AAWeapon* SetWeapon)
 			SpawnWeaponItemOnServer(GetActorLocation(), MainWeapon.Weapon, MainWeapon.Name, MainWeapon.IconPath, MainWeapon.ImagePath);
 		}
 
-		NoticePlayerWeaponOnServer("MainWeapon", SetWeapon->GetSKWeaponItem(), SetWeapon->GetItemName(), SetWeapon->GetIconPath(), SetWeapon->GetBoxImagePath());
+		NoticePlayerWeaponOnServer(SetWeapon);
 	}
 	else if (SetWeapon->GetItemName() == "Pistol")
 	{
@@ -1023,7 +1023,7 @@ void APro4Character::SetPlayerWeapon(AAWeapon* SetWeapon)
 			SpawnWeaponItemOnServer(GetActorLocation(), SubWeapon.Weapon, SubWeapon.Name, SubWeapon.IconPath, SubWeapon.ImagePath);
 		}
 
-		NoticePlayerWeaponOnServer("SubWeapon", SetWeapon->GetSKWeaponItem(), SetWeapon->GetItemName(), SetWeapon->GetIconPath(), SetWeapon->GetBoxImagePath());
+		NoticePlayerWeaponOnServer(SetWeapon);
 	}
 	else // Knife
 	{
@@ -1032,7 +1032,7 @@ void APro4Character::SetPlayerWeapon(AAWeapon* SetWeapon)
 			SpawnWeaponItemOnServer(GetActorLocation(), Knife.Weapon, Knife.Name, Knife.IconPath, Knife.ImagePath);
 		}
 
-		NoticePlayerWeaponOnServer("Knife", SetWeapon->GetSKWeaponItem(), SetWeapon->GetItemName(), SetWeapon->GetIconPath(), SetWeapon->GetBoxImagePath());
+		NoticePlayerWeaponOnServer(SetWeapon);
 	}
 
 	Server_DestroyItem(SetWeapon);
@@ -1064,36 +1064,38 @@ void APro4Character::SpawnWeaponItemOnClient_Implementation(AAWeapon* SpawnWeapo
 	SpawnWeapon->SetItemName(WeaponName);
 	SpawnWeapon->SetIconPath(IconPath);
 	SpawnWeapon->SetBoxImagePath(ImagePath);
+	SpawnWeapon->SetItemNum(1);
 }
 
 /* 클라이언트가 서버에게 플레이어의 무기를 세팅하라고 알리는 함수 */
-void APro4Character::NoticePlayerWeaponOnServer_Implementation(const FString& WeaponType, USkeletalMesh* SK_Weapon, const FString& _Name, const FString& _IconPath, const FString& _ImagePath)
+void APro4Character::NoticePlayerWeaponOnServer_Implementation(AAWeapon* _Weapon)
 {
-	NoticePlayerWeaponOnClient(WeaponType, SK_Weapon, _Name, _IconPath, _ImagePath);
+	NoticePlayerWeaponOnClient(_Weapon);
 }
 
 /* NetMulticast로 호출됨. 서버가 클라이언트들에게 해당 플레이어의 무기 설정을 뿌리는 함수. */
-void APro4Character::NoticePlayerWeaponOnClient_Implementation(const FString& WeaponType, USkeletalMesh* SK_Weapon, const FString& _Name, const FString& _IconPath, const FString& _ImagePath)
+void APro4Character::NoticePlayerWeaponOnClient_Implementation(AAWeapon* _Weapon)
 {
-	Weapon->SetSkeletalMesh(SK_Weapon);
+	Weapon->SetSkeletalMesh(_Weapon->GetSKWeaponItem());
 
-	if (WeaponType == "MainWeapon")
+	if (_Weapon->GetItemName() == "AR" || _Weapon->GetItemName() == "SR")
 	{
-		MainWeapon.Weapon = SK_Weapon;
-		MainWeapon.Name = _Name;
-		MainWeapon.IconPath = _IconPath;
-		MainWeapon.ImagePath = _ImagePath;
+		MainWeapon.Weapon = _Weapon->GetSKWeaponItem();
+		MainWeapon.Name = _Weapon->GetItemName();
+		MainWeapon.IconPath = _Weapon->GetIconPath();
+		MainWeapon.ImagePath = _Weapon->GetBoxImagePath();
+
 		if (!MainWeapon.bHaveWeapon)
 		{
 			MainWeapon.bHaveWeapon = true;
 		}
 	}
-	else if (WeaponType == "SubWeapon")
+	else if (_Weapon->GetItemName() == "Pistol")
 	{
-		SubWeapon.Weapon = SK_Weapon;
-		SubWeapon.Name = _Name;
-		SubWeapon.IconPath = _IconPath;
-		SubWeapon.ImagePath = _ImagePath;
+		SubWeapon.Weapon = _Weapon->GetSKWeaponItem();
+		SubWeapon.Name = _Weapon->GetItemName();
+		SubWeapon.IconPath = _Weapon->GetIconPath();
+		SubWeapon.ImagePath = _Weapon->GetBoxImagePath();
 		
 		if (!SubWeapon.bHaveWeapon)
 		{
@@ -1102,10 +1104,10 @@ void APro4Character::NoticePlayerWeaponOnClient_Implementation(const FString& We
 	}
 	else
 	{
-		Knife.Weapon = SK_Weapon;
-		Knife.Name = _Name;
-		Knife.IconPath = _IconPath;
-		Knife.ImagePath = _ImagePath;
+		Knife.Weapon = _Weapon->GetSKWeaponItem();
+		Knife.Name = _Weapon->GetItemName();
+		Knife.IconPath = _Weapon->GetIconPath();
+		Knife.ImagePath = _Weapon->GetBoxImagePath();
 
 		if (!Knife.bHaveWeapon)
 		{

@@ -326,7 +326,7 @@ private:
 	/* Trace Sector */
 	void CheckFrontActorUsingTrace();
 
-	/* Spawn Item Section */
+	/* Spawn Armor Section */
 	UFUNCTION(Server, Reliable, WithValidation)
 	void SpawnArmorItemOnServer(FVector Location, USkeletalMesh* ArmorMesh, const FString& ArmorName, float _AP);
 
@@ -343,14 +343,14 @@ private:
 	UFUNCTION(Server, Reliable, WithValidation)
 	void SpawnWeaponItemOnServer(FVector Location, USkeletalMesh* WeaponMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath);
 
-	UFUNCTION(Client, Reliable)
+	UFUNCTION(NetMulticast, Reliable)
 	void SpawnWeaponItemOnClient(class AAWeapon* SpawnWeapon, USkeletalMesh* WeaponMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath);
 
 	UFUNCTION(Server, Reliable)
-	void NoticePlayerWeaponOnServer(const FString& WeaponType, USkeletalMesh* SK_Weapon, const FString& _Name, const FString& _IconPath, const FString& _ImagePath);
+	void NoticePlayerWeaponOnServer(AAWeapon* _Weapon);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void NoticePlayerWeaponOnClient(const FString& WeaponType, USkeletalMesh* SK_Weapon, const FString& _Name, const FString& _IconPath, const FString& _ImagePath);
+	void NoticePlayerWeaponOnClient(AAWeapon* _Weapon);
 
 	/* 아이템 획득 시, 해당 아이템을 공통적으로 제거하는 함수 */
 	UFUNCTION(Server, Reliable)
