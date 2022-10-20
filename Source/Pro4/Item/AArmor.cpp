@@ -12,8 +12,6 @@ AAArmor::AAArmor()
 	PrimaryActorTick.bCanEverTick = true;
 
 	ItemType = BaseItemType::Armor;
-	bReplicates = true;
-	bNetLoadOnClient = true;
 
 	uint32 RandomItemNum = FMath::RandRange(0, static_cast<int32>(ArmorType::MAX) - 1);
 	RandomSpawn(RandomItemNum);
@@ -28,14 +26,21 @@ void AAArmor::BeginPlay()
 	Super::BeginPlay();
 	if (GetWorld()->IsServer())
 	{
-		SetUp();
+		NetMulticast_SetUp(SK_ArmorItem, TemporaryName, 1);
 	}
 }
 
-void AAArmor::SetUp()
+void AAArmor::NetMulticast_SetUp_Implementation(USkeletalMesh* SK_Armor, const FString& _ItemName, uint16 _ItemNum)
 {
-	SK_Mesh->SetSkeletalMesh(SK_Item);
-	ItemName = TemporaryName;
+	if (WBP_NameWidget == nullptr)
+	{
+		return;
+	}
+
+	SK_Mesh->SetSkeletalMesh(SK_Armor);
+	ItemName = _ItemName;
+	WBP_NameWidget->SetItemName(ItemName);
+	ItemNum = _ItemNum;
 
 	//if (ItemName == "Helmet")
 	//{
@@ -47,17 +52,6 @@ void AAArmor::SetUp()
 	//	// Vest Settings
 	//	SK_Mesh->SetRelativeLocation(FVector(0.0f, 0.0f, -160.0f));
 	//}
-
-	if (WBP_NameWidget != nullptr)
-	{
-		WBP_NameWidget->SetItemName(ItemName);
-	}
-	else
-	{
-		UE_LOG(Pro4, Warning, TEXT("ItemNameWidget Error"));
-	}
-
-	ItemNum = 1;
 }
 
 void AAArmor::Tick(float DeltaTime)
@@ -65,7 +59,7 @@ void AAArmor::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	// ItemName Draw
-	// DrawDebugString(GetWorld(), FVector(0, 0, 100), ItemName, this, FColor::Green, DeltaTime);
+	DrawDebugString(GetWorld(), FVector(0, 0, 100), ItemName, this, FColor::Green, DeltaTime);
 }
 
 void AAArmor::ViewItemName()
@@ -108,7 +102,7 @@ void AAArmor::RandomSpawn(int32 Random)
 		static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_Armor(TEXT("/Game/Military/Mesh/Head/SK_Military_Helmet1"));
 		if (SK_Armor.Succeeded())
 		{
-			SK_Item = SK_Armor.Object;
+			SK_ArmorItem = SK_Armor.Object;
 		}
 
 		TemporaryName = "Helmet";
@@ -121,7 +115,7 @@ void AAArmor::RandomSpawn(int32 Random)
 		static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_Armor(TEXT("/Game/Military/Mesh/SK_Military_Vest1"));
 		if (SK_Armor.Succeeded())
 		{
-			SK_Item = SK_Armor.Object;
+			SK_ArmorItem = SK_Armor.Object;
 		}
 
 		TemporaryName = "Flak_Jacket";

@@ -121,44 +121,44 @@ void UPlayerMenu::ChangePlayerWidget()
 void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 {
 	AABaseItem* BaseItem = Cast<AABaseItem>(ItemActor);
-	
+	APro4Character* MyPawn = Cast<APro4Character>(GetWorld()->GetFirstPlayerController()->GetPawn());
+
 	switch (BaseItem->ItemType)
 	{
 	case AABaseItem::BaseItemType::Weapon:
 	{
-		AAWeapon* Weapon = Cast<AAWeapon>(BaseItem);
-		if (!ensure(Weapon != nullptr)) return;
+		AAWeapon* NewWeapon = Cast<AAWeapon>(BaseItem);
+		if (!ensure(NewWeapon != nullptr)) return;
 
-		APro4Character* MyPawn = Cast<APro4Character>(GetWorld()->GetFirstPlayerController()->GetPawn());
-		MyPawn->SetPlayerWeapon(Weapon->GetSKWeaponItem(), Weapon->GetItemName(), Weapon->GetIconPath(), Weapon->GetBoxImagePath());
+		MyPawn->SetPlayerWeapon(NewWeapon);
 
-		if (Weapon->GetItemName() == "AR")
+		if (NewWeapon->GetItemName() == "AR")
 		{
 			MainWeaponSizeBox->SetWidthOverride(475);
 			MainWeaponSizeBox->SetHeightOverride(136);
-			AddItemToWeapon(Weapon->GetBoxImagePath(), Weapon->GetItemName()); 
+			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetItemName());
 			
 			if (MainWeaponBox->GetVisibility() == ESlateVisibility::Hidden)
 			{
 				MainWeaponBox->SetVisibility(ESlateVisibility::Visible);
 			}
 		}
-		else if (Weapon->GetItemName() == "SR")
+		else if (NewWeapon->GetItemName() == "SR")
 		{
 			MainWeaponSizeBox->SetWidthOverride(475);
 			MainWeaponSizeBox->SetHeightOverride(112);
-			AddItemToWeapon(Weapon->GetBoxImagePath(), Weapon->GetItemName());
+			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetItemName());
 
 			if (MainWeaponBox->GetVisibility() == ESlateVisibility::Hidden)
 			{
 				MainWeaponBox->SetVisibility(ESlateVisibility::Visible);
 			}
 		}
-		else if(Weapon->GetItemName() == "Pistol")
+		else if(NewWeapon->GetItemName() == "Pistol")
 		{
 			SubWeaponSizeBox->SetWidthOverride(149);
 			SubWeaponSizeBox->SetHeightOverride(145);
-			AddItemToWeapon(Weapon->GetBoxImagePath(), Weapon->GetItemName());
+			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetItemName());
 
 			if (SubWeaponBox->GetVisibility() == ESlateVisibility::Hidden)
 			{
@@ -169,7 +169,7 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		{
 			MainWeaponSizeBox->SetWidthOverride(475);
 			MainWeaponSizeBox->SetHeightOverride(136);
-			AddItemToWeapon(Weapon->GetBoxImagePath(), Weapon->GetItemName());
+			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetItemName());
 
 			if (KnifeBox->GetVisibility() == ESlateVisibility::Hidden)
 			{
@@ -193,13 +193,16 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		AAArmor* Armor = Cast<AAArmor>(BaseItem);
 		if (!ensure(Armor != nullptr)) return;
 
-		APro4Character* MyPawn = Cast<APro4Character>(GetWorld()->GetFirstPlayerController()->GetPawn());
-		MyPawn->SetPlayerArmor(Armor->GetSKItem(), Armor->GetItemName(), Armor->GetCurrentAP());
+		MyPawn->SetPlayerArmor(Armor);
 
 	}
 		break;
 	case AABaseItem::BaseItemType::Grenade:
 	{
+		AAGrenade* Grenade = Cast<AAGrenade>(BaseItem);
+		if (!ensure(Grenade != nullptr)) return;
+
+		MyPawn->AddPlayerGrenade(Grenade);
 		/*
 		* AAGrenade* Grenade = Cast<AAGrenade>(BaseItem);
 		* InventoryItem->SetUp(Grenade->ItemName, Grenade->ItemNum, "Hello");

@@ -13,8 +13,6 @@ AAGrenade::AAGrenade()
 	PrimaryActorTick.bCanEverTick = true;
 
 	ItemType = BaseItemType::Grenade;
-	bReplicates = true;
-	bNetLoadOnClient = true;
 
 	uint32 RandomItemNum = FMath::RandRange(0, static_cast<int32>(GrenadeType::MAX) - 1);
 	RandomSpawn(RandomItemNum);
@@ -28,25 +26,21 @@ void AAGrenade::BeginPlay()
 	Super::BeginPlay();
 	if (GetWorld()->IsServer())
 	{
-		SetUp();
+		NetMulticast_SetUp(SM_GrenadeItem, TemporaryName, 1);
 	}
 }
 
-void AAGrenade::SetUp()
+void AAGrenade::NetMulticast_SetUp_Implementation(UStaticMesh* SM_Grenade, const FString& _ItemName, uint16 _ItemNum)
 {
-	BoxMesh->SetStaticMesh(SM_GrenadeItem);
-	ItemName = TemporaryName;
-
-	if (WBP_NameWidget != nullptr)
+	if (WBP_NameWidget == nullptr)
 	{
-		WBP_NameWidget->SetItemName(ItemName);
-	}
-	else
-	{
-		UE_LOG(Pro4, Warning, TEXT("ItemNameWidget Error"));
+		return;
 	}
 
-	ItemNum = 1;
+	BoxMesh->SetStaticMesh(SM_Grenade);
+	ItemName = _ItemName;
+	WBP_NameWidget->SetItemName(ItemName);
+	ItemNum = _ItemNum;
 }
 
 void AAGrenade::Tick(float DeltaTime)

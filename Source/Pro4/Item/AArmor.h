@@ -26,6 +26,10 @@ public:
 	
 	void ViewItemName();
 
+
+	UFUNCTION(NetMulticast, Reliable)
+	void NetMulticast_SetUp(USkeletalMesh* SK_Armor, const FString& _ItemName, uint16 _ItemNum);
+
 #pragma region Get_Set
 
 	/* Current_AP */
@@ -72,13 +76,13 @@ public:
 	/* SK_WeaponItem */
 	void SetSKItem(USkeletalMesh* SK_Armor)
 	{
-		SK_Item = SK_Armor;
-		SK_Mesh->SetSkeletalMesh(SK_Item);
+		SK_ArmorItem = SK_Armor;
+		SK_Mesh->SetSkeletalMesh(SK_ArmorItem);
 	}
 
 	USkeletalMesh* GetSKItem()
 	{
-		return SK_Item;
+		return SK_Mesh->SkeletalMesh;
 	}
 
 #pragma endregion
@@ -95,7 +99,6 @@ protected:
 
 private:
 	void RandomSpawn(int32 Random);
-	void SetUp();
 
 	ArmorType CurrentArmor;
 	FString TemporaryName;
@@ -111,7 +114,7 @@ private:
 
 	float Max_AP = 100.0f;
 
-	USkeletalMesh* SK_Item;
+	USkeletalMesh* SK_ArmorItem;
 
 	class UItemNameWidget* WBP_NameWidget;
 

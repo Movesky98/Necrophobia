@@ -29,6 +29,9 @@ public:
 
 	void ViewWeaponName();
 
+	UFUNCTION(NetMulticast, Reliable)
+	void NetMulticast_SetUp(USkeletalMesh* SK_Weapon, const FString& _ItemName, const FString& _IconPath, const FString& _ImagePath, uint16 _ItemNum);
+
 #pragma region Get_Set
 
 	/* Weapon Box Image Path */
@@ -62,7 +65,7 @@ public:
 
 	USkeletalMesh* GetSKWeaponItem()
 	{
-		return SK_WeaponItem;
+		return SK_Mesh->SkeletalMesh;
 	}
 
 	/* ItemName */
@@ -101,7 +104,6 @@ protected:
 
 private:
 	void RandomSpawn(int32 Random);
-	void SetUp();
 	
 	WeaponType CurrentWeapon;
 

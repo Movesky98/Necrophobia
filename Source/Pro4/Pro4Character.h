@@ -7,6 +7,7 @@
 #include "Pro4Projectile.h"
 #include "Components/SceneCaptureComponent2D.h"
 #include "Engine/TextureRenderTarget2D.h"
+#include "Pro4PlayerController.h"
 #include "Pro4Character.generated.h"
 
 USTRUCT()
@@ -15,6 +16,7 @@ struct FArmorInfo
 	GENERATED_BODY()
 	bool bHaveArmor = false;
 	float AP = 50.0f;
+	FString ArmorName = "";
 	USkeletalMesh* ArmorMesh;
 };
 
@@ -71,9 +73,12 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	void SetPlayerWeapon(USkeletalMesh* PlayerWeapon, FString _ItemName, FString _IconPath, FString _BoxImagePath);
-	void SetPlayerArmor(USkeletalMesh* PlayerArmor, FString _ItemName, float _AP);
+	void SetPlayerWeapon(class AAWeapon* SetWeapon);
+	void SetPlayerArmor(class AAArmor* Armor);
+	void AddPlayerGrenade(class AAGrenade* Grenade);
 	
+	APro4PlayerController* GetPlayerController();
+	void SetPlayerController(APro4PlayerController* PlayerController);
 
 	UPROPERTY(VisibleAnywhere, Category=Camera)
 	USpringArmComponent *SpringArm;
@@ -180,26 +185,32 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=State)
 	float MaxHP;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=State)
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category=State)
 	float CurrentHP;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=State)
 	float MaxAP;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=State)
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category=State)
 	float CurrentAP;
 	
-	UFUNCTION(Exec)
-	void Console_SetPlayerHP(float HealthPoint);
+	UFUNCTION(Server, Reliable, WithValidation)
+	void RecoverPlayerHealthOnServer();
 	
-	UFUNCTION(Exec)
-	void Console_GetDamaged(float Damage);
+	UFUNCTION(Server, Reliable, WithValidation)
+	void PlayerHealthGetDamagedOnServer(float Damage);
 
-	void PlayerHealthUpdate();
+	void GetDamaged(float Damage);
 
 private:
+	UPROPERTY(Replicated)
 	bool bIsPlayerGetAttacked = false;
+
+	UPROPERTY(Replicated)
+	bool bIsRecoveryTimerStarted = false;
+
 	FTimerHandle HealthRecoveryTimer;
+	FTimerDelegate HealthRecoveryDelegate;
 
 	FArmorInfo PlayerHelmet;
 	FArmorInfo PlayerVest;
@@ -214,6 +225,9 @@ private:
 private:
 	void NotifyActorBeginOverlap(AActor* Act) override;
 	void NotifyActorEndOverlap(AActor* Act) override;
+
+	// 주요 클래스
+	APro4PlayerController* PlayerController;
 	
 	// 초기 세팅
 	void MovementSetting();
@@ -254,10 +268,6 @@ private:
 
 	/* 플레이어 UI 교체 함수 */
 	void ChangePlayerWidget();
-
-	/* 아이템 획득 시, 해당 아이템을 공통적으로 제거하는 함수 */
-	UFUNCTION(Server, Reliable)
-	void Server_DestroyItem(AActor* DestroyActor);
 
 	float CameraRotationX;
 
@@ -322,7 +332,39 @@ private:
 	/* Trace Sector */
 	void CheckFrontActorUsingTrace();
 
-	/* Inventory Sector */
-	void SetDropWeapon(class AAWeapon* DropItem, FWeaponInfo& _Weapon);
-	void SetWeaponInfo(FWeaponInfo& Cur_Weapon, USkeletalMesh* SK_Weapon, FString _Name, FString _IconPath, FString _ImagePath);
+	/* Spawn Projectile Section */
+	UFUNCTION(Server, Reliable, WithValidation)
+	void SpawnProjectileOnServer(FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner);
+
+
+
+	/* Spawn Armor Section */
+	UFUNCTION(Server, Reliable, WithValidation)
+	void SpawnArmorItemOnServer(FVector Location, USkeletalMesh* ArmorMesh, const FString& ArmorName, float _AP);
+
+	UFUNCTION(NetMulticast, Reliable, WithValidation)
+	void SpawnArmorItemOnClient(class AAArmor* SpawnArmor, USkeletalMesh* ArmorMesh, const FString& ArmorName, float _AP);
+
+	UFUNCTION(Server, Reliable)
+	void NoticePlayerArmorOnServer(class AAArmor* _Armor, const FString& ArmorType);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void NoticePlayerArmorOnClient(class AAArmor* _Armor, const FString& ArmorType);
+
+	/* Spawn Weapon Section */
+	UFUNCTION(Server, Reliable, WithValidation)
+	void SpawnWeaponItemOnServer(FVector Location, USkeletalMesh* WeaponMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void SpawnWeaponItemOnClient(class AAWeapon* SpawnWeapon, USkeletalMesh* WeaponMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath);
+
+	UFUNCTION(Server, Reliable)
+	void NoticePlayerWeaponOnServer(AAWeapon* _Weapon);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void NoticePlayerWeaponOnClient(AAWeapon* _Weapon);
+
+	/* 아이템 획득 시, 해당 아이템을 공통적으로 제거하는 함수 */
+	UFUNCTION(Server, Reliable)
+	void Server_DestroyItem(AActor* DestroyActor);
 };
