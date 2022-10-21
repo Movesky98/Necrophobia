@@ -77,6 +77,7 @@ void APro4Boss::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 void APro4Boss::Attack()
 {
 	if (IsAttacking) return;
+
 	AttackNum = FMath::RandRange(1, 2);
 	BossAnim->PlayAttackMontage();
 
@@ -91,6 +92,7 @@ void APro4Boss::Attack()
 	default:
 		break;
 	}
+
 	IsAttacking = true;
 	IsMontagePlay = true;
 }

@@ -16,7 +16,7 @@ bool UBTDecorator_BossAttackRange::CalculateRawConditionValue(UBehaviorTreeCompo
 {
 	bool bResult = Super::CalculateRawConditionValue(OwnerComp, NodeMemory);
 
-	auto ControllingPawn = OwnerComp.GetAIOwner()->GetPawn();
+	auto ControllingPawn = Cast<APro4Boss>(OwnerComp.GetAIOwner()->GetPawn());
 	if (ControllingPawn == nullptr)
 	{
 		return false;
@@ -28,5 +28,5 @@ bool UBTDecorator_BossAttackRange::CalculateRawConditionValue(UBehaviorTreeCompo
 		return false;
 	}
 
-	return bResult && Target->GetDistanceTo(ControllingPawn) <= 500.0f;
+	return bResult && (Target->GetDistanceTo(ControllingPawn) <= 500.0f);
 }

@@ -24,4 +24,5 @@ protected:
 
 private:
 	bool IsAttacking = false;
+	int32 AttackNum;
 };
