@@ -8,6 +8,7 @@
 #include "Item/AWeapon.h"
 #include "Item/AArmor.h"
 #include "Item/AGrenade.h"
+#include "ZombieSpawner.h"
 #include "Door.h"
 
 #include "DrawDebugHelpers.h"
@@ -25,11 +26,18 @@ APro4Character::APro4Character()
 	Weapon = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WEAPON"));
 	Helmet = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HELMET"));
 	Vest = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("VEST"));
+	Grenade = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GRENADE"));
+	DetectZSpawnerCol = CreateDefaultSubobject<UBoxComponent>(TEXT("DetectCollsion"));
 
 	MapSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("MAPSPRINGARM"));
 	MapCapture = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("MAPCAPTURE"));
 
 	RootComponent = GetCapsuleComponent();
+	DetectZSpawnerCol->SetupAttachment(GetCapsuleComponent());
+	DetectZSpawnerCol->SetIsReplicated(true);
+	DetectZSpawnerCol->SetBoxExtent(DetectExtent);
+	DetectZSpawnerCol->SetCollisionProfileName(TEXT("Detect_ZSpawner"));
+	DetectZSpawnerCol->SetGenerateOverlapEvents(false);
 
 	SpringArm->SetupAttachment(GetCapsuleComponent());
 	Camera->SetupAttachment(SpringArm);
@@ -69,13 +77,13 @@ APro4Character::APro4Character()
 void APro4Character::BeginPlay()
 {
 	Super::BeginPlay();
-	FString IsServer = "False";
-	if (GetWorld()->IsServer())
-	{
-		IsServer = "True";
-	}
+	
+	DetectZSpawnerCol->OnComponentBeginOverlap.AddDynamic(this, &APro4Character::ZombieSpawnerBeginOverlap);
+	DetectZSpawnerCol->OnComponentEndOverlap.AddDynamic(this, &APro4Character::ZombieSpawnerEndOverlap);
 
-	DrawDebugString(GetWorld(), FVector(0, 0, 150), (TEXT("Is server? : %s"), *IsServer), this, FColor::Red, 15.0f);
+	GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, GetActorLocation().ToString());
+
+	PlayerController = Cast<APro4PlayerController>(GetWorld()->GetFirstPlayerController());
 }
 
 /// <summary>
@@ -126,6 +134,24 @@ void APro4Character::WeaponSetting()
 	IsEquipping = false;
 	IsReloading = false;
 	FireMod = false;
+
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Grenade(TEXT("/Game/Weapon/Granade/granade"));
+	if (SM_Grenade.Succeeded())
+	{
+		PlayerGrenade.SM_Grenade = SM_Grenade.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Flash(TEXT("/Game/Weapon/Granade/flashbang"));
+	if (SM_Flash.Succeeded())
+	{
+		PlayerGrenade.SM_Flash = SM_Flash.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Smoke(TEXT("/Game/Weapon/Granade/smoke"));
+	if (SM_Smoke.Succeeded())
+	{
+		PlayerGrenade.SM_Smoke = SM_Smoke.Object;
+	}
 }
 
 
@@ -147,6 +173,7 @@ void APro4Character::StateSetting()
 void APro4Character::SocketSetting()
 {
 	FName WeaponSocket(TEXT("Hand_rSocket"));
+	FName GrenadeSocket(TEXT("Hand_r_GrenadeSocket"));
 	FName HeadSocket(TEXT("headSocket"));
 	FName VestSocket(TEXT("VestSocket"));
 
@@ -182,6 +209,18 @@ void APro4Character::SocketSetting()
 	else
 	{
 		UE_LOG(Pro4, Error, TEXT("VestSocket has not exist."));
+	}
+
+	if (GetMesh()->DoesSocketExist(GrenadeSocket)) {
+		UE_LOG(Pro4, Warning, TEXT("GrenadeSocket has exist."));
+
+		Grenade->SetupAttachment(GetMesh(), GrenadeSocket);
+		Grenade->SetRelativeScale3D(FVector(2.0f));
+		Grenade->SetIsReplicated(true);
+	}
+	else
+	{
+		UE_LOG(Pro4, Error, TEXT("GrenadeSocket has not exist."));
 	}
 }
 
@@ -230,13 +269,6 @@ void APro4Character::Tick(float DeltaTime)
 		SpringArm->SetRelativeRotation(FRotator::ZeroRotator);
 	}
 
-	/* Player HealthPoint Section */
-	/*CurrentHP += 1.0f;
-	if (CurrentHP >= 90.0f) 
-	{
-		CurrentHP = 10.0f;
-	}*/
-
 	if (IsEncroach)
 	{
 		EncroachTime += DeltaTime;
@@ -269,7 +301,6 @@ void APro4Character::Tick(float DeltaTime)
 	/* Trace하는 함수 */
 	// CheckFrontActorUsingTrace();
 	
-
 	// Character Role Test.
 	DrawDebugString(GetWorld(), FVector(0, 0, 150), GetEnumRole(GetLocalRole()), this, FColor::Green, DeltaTime);
 }
@@ -699,6 +730,7 @@ void APro4Character::EquipATW()
 	{
 		UE_LOG(Pro4, Log, TEXT("ATW."));
 		CurrentWeaponMode = WeaponMode::ATW;
+		Grenade->SetStaticMesh(PlayerGrenade.SM_Grenade);
 	}
 }
 
@@ -892,6 +924,27 @@ void APro4Character::Throw() // 투척무기 던지기
 	* 던지는 애니메이션
 	*/
 	UE_LOG(Pro4, Log, TEXT("ATW Throw"));
+
+	if (Grenade->GetStaticMesh() != nullptr)
+	{
+		FVector CameraLocation;
+		FRotator CameraRotation;
+		GetActorEyesViewPoint(CameraLocation, CameraRotation);
+
+		FVector ThrowLocation;
+
+		if (GetMesh()->DoesSocketExist("Hand_r_GrenadeSocket"))
+		{
+			ThrowLocation = GetMesh()->GetSocketLocation("Hand_r_GrenadeSocket");
+			ThrowLocation.X += 200.0f;
+		}
+
+		FRotator ThrowRotation = CameraRotation;
+		ThrowRotation.Pitch += 10.0f;
+
+		DrawDebugSolidBox(GetWorld(), ThrowLocation, FVector(5.0f), FColor::Blue, true, 5.0f);
+		SpawnGrenadeOnServer(ThrowLocation, ThrowRotation, ThrowRotation.Vector(), this);
+	}
 }
 
 void APro4Character::Punch() // 주먹질
@@ -925,13 +978,37 @@ bool APro4Character::SpawnProjectileOnServer_Validate(FVector Location, FRotator
 {
 	return true;
 }
+
+/* 플레이어가 서버에게 수류탄을 스폰해달라고 요청하는 함수 */
+void APro4Character::SpawnGrenadeOnServer_Implementation(FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner)
+{
+	UWorld* World = GetWorld();
+
+	if (World)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = _Owner;
+		SpawnParams.Instigator = GetInstigator();
+
+		AAGrenade* SpawnGrenade = World->SpawnActor<AAGrenade>(AAGrenade::StaticClass(), Location, Rotation, SpawnParams);
+
+		if (SpawnGrenade)
+		{
+			FString GrenadeName = "Grenade";
+			SpawnGrenade->NetMulticast_SetUp(Grenade->GetStaticMesh(), GrenadeName, 1);
+			SpawnGrenade->SetSimulatePhysics(LaunchDirection);
+		}
+	}
+}
+
+bool APro4Character::SpawnGrenadeOnServer_Validate(FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner)
+{
+	return true;
+}
+
 #pragma endregion
 
-
-
-/// <summary>
-/// F 버튼을 눌렀을 때 아이템, 문 등 상호작용을 하기위한 함수
-/// </summary>
+/* F 버튼을 눌렀을 때 아이템, 문 등 상호작용을 하기위한 함수 */
 void APro4Character::InteractPressed()
 {
 	UE_LOG(Pro4, Log, TEXT("Interact Pressed."));
@@ -1237,9 +1314,30 @@ void APro4Character::NoticePlayerArmorOnClient_Implementation(AAArmor* _Armor, c
 	}
 }
 
-void APro4Character::AddPlayerGrenade(AAGrenade* Grenade)
+void APro4Character::AddPlayerGrenade(AAGrenade* _Grenade)
 {
-	Server_DestroyItem(Grenade);
+	UNecrophobiaGameInstance* Instance = Cast<UNecrophobiaGameInstance>(GetGameInstance());
+
+	if (!_Grenade->GetItemName().Compare("Grenade"))
+	{
+		PlayerGrenade.GrenadeNum++;
+
+		Instance->PlayerMenu->AddItemToGrenade(_Grenade->GetItemName(), PlayerGrenade.GrenadeNum);
+	}
+	else if(!_Grenade->GetItemName().Compare("Smoke"))
+	{
+		PlayerGrenade.SmokeNum++;
+
+		Instance->PlayerMenu->AddItemToGrenade(_Grenade->GetItemName(), PlayerGrenade.SmokeNum);
+	}
+	else if (!_Grenade->GetItemName().Compare("Flash"))
+	{
+		PlayerGrenade.FlashNum++;
+
+		Instance->PlayerMenu->AddItemToGrenade(_Grenade->GetItemName(), PlayerGrenade.FlashNum);
+	}
+
+	Server_DestroyItem(_Grenade);
 }
 #pragma endregion
 
@@ -1400,3 +1498,46 @@ void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 
 
 #pragma endregion
+
+void APro4Character::ZombieSpawnerBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor->ActorHasTag("ZombieSpawner"))
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, TEXT("ZombieSpawner is Detected."));
+
+		AZombieSpawner* ZombieSpawner = Cast<AZombieSpawner>(OtherActor);
+		if (SpawnZombieCurCount < SpawnZombieMaxCount)
+		{
+			SpawnZombieCurCount++;
+			ZombieSpawner->PlayerOverlapToZSpawner(GetInstigator());
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, TEXT("20 zombies have already been spawned."));
+		}
+	}
+
+
+	/* Draw Player's ZombieSpawner Detection Extent */
+	DrawDebugBox(GetWorld(), GetActorLocation(), DetectExtent, FColor::Green, false, 5.0f, 0, 10.0f);
+}
+
+void APro4Character::ZombieSpawnerEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (OtherActor->ActorHasTag("ZombieSpawner"))
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, TEXT("ZombieSpawner is Detected."));
+
+		AZombieSpawner* ZombieSpawner = Cast<AZombieSpawner>(OtherActor);
+		ZombieSpawner->PlayerAwayFromSpawner(GetInstigator());
+	}
+
+	/* Draw Player's ZombieSpawner Detection Extent */
+	DrawDebugBox(GetWorld(), GetActorLocation(), DetectExtent, FColor::Red, false, 5.0f, 0, 10.0f);
+}
+
+
+void APro4Character::DetectZombieSpawner(bool isNight)
+{
+	DetectZSpawnerCol->SetGenerateOverlapEvents(isNight);
+}

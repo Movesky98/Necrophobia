@@ -5,6 +5,7 @@
 #include "Pro4Character.h"
 #include "NecrophobiaGameInstance.h"
 #include "InGameState.h"
+#include "InGamePlayerState.h"
 #include "UserInterface/PlayerMenu.h"
 
 #include "Engine/Engine.h"
@@ -40,6 +41,7 @@ AInGameMode::AInGameMode()
     UE_LOG(Pro4, Warning, TEXT("Set PawnClass : APro4Character"));
     PlayerControllerClass = APro4PlayerController::StaticClass();
     GameStateClass = AInGameState::StaticClass();
+    PlayerStateClass = AInGamePlayerState::StaticClass();
 }
 
 void AInGameMode::BeginPlay()

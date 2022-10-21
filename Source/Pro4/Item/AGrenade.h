@@ -4,6 +4,8 @@
 
 #include "ABaseItem.h"
 #include "../UserInterface/ItemNameWidget.h"
+
+#include "GameFramework/ProjectileMovementComponent.h"
 #include "AGrenade.generated.h"
 
 /**
@@ -28,9 +30,13 @@ public:
 
 	void ViewItemName();
 
+	UFUNCTION()
+	void GrenadeExplosion(UPrimitiveComponent* Comp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 	UFUNCTION(NetMulticast, Reliable)
 	void NetMulticast_SetUp(UStaticMesh* SM_Grenade, const FString& _ItemName, uint16 _ItemNum);
+
+	void SetSimulatePhysics(const FVector& ThrowDirection);
 
 #pragma region Get_Set
 
@@ -71,11 +77,15 @@ protected:
 private:
 	void RandomSpawn(int32 Random);
 
-	GrenadeType CurrentGrenade;
+	UFUNCTION()
+	void SetGrenadeExplosion();
 
+	GrenadeType CurrentGrenade;
+	FString TemporaryName;
 	UStaticMesh* SM_GrenadeItem;
 
-	FString TemporaryName;
+	UPROPERTY(VisibleAnywhere, Category = "GrenadeProejctile")
+	UProjectileMovementComponent* GrenadeProjectile;
 
 	UPROPERTY(Replicated)
 	FString ItemName;
@@ -86,4 +96,6 @@ private:
 	class UItemNameWidget* WBP_NameWidget;
 
 	bool bIsObservable;
+
+	FTimerHandle SetExplosionTimer;
 };

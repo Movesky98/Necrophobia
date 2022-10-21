@@ -11,6 +11,18 @@
 #include "Pro4Character.generated.h"
 
 USTRUCT()
+struct FGrenadeInfo
+{
+	GENERATED_BODY()
+	UStaticMesh* SM_Grenade = nullptr;
+	uint16 GrenadeNum = 0;
+	UStaticMesh* SM_Smoke = nullptr;
+	uint16 SmokeNum = 0;
+	UStaticMesh* SM_Flash = nullptr;
+	uint16 FlashNum = 0;
+};
+
+USTRUCT()
 struct FArmorInfo
 {
 	GENERATED_BODY()
@@ -75,7 +87,8 @@ public:
 
 	void SetPlayerWeapon(class AAWeapon* SetWeapon);
 	void SetPlayerArmor(class AAArmor* Armor);
-	void AddPlayerGrenade(class AAGrenade* Grenade);
+	void AddPlayerGrenade(class AAGrenade* _Grenade);
+	void DetectZombieSpawner(bool isNight);
 	
 	APro4PlayerController* GetPlayerController();
 	void SetPlayerController(APro4PlayerController* PlayerController);
@@ -98,14 +111,17 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Projectile")
 	TSubclassOf<APro4Projectile> ProjectileClass;
 		
-	UPROPERTY(VisibleAnywhere, Category = "Weapon")
+	UPROPERTY(VisibleAnywhere, Category = "Player")
 	USkeletalMeshComponent* Helmet;
 
-	UPROPERTY(VisibleAnywhere, Category = "Weapon")
+	UPROPERTY(VisibleAnywhere, Category = "Player")
 	USkeletalMeshComponent* Vest;
 
-	UPROPERTY(VisibleAnywhere, Category= "Weapon")
+	UPROPERTY(VisibleAnywhere, Category= "Player")
 	USkeletalMeshComponent* Weapon;
+
+	UPROPERTY(VisibleAnywhere, Category = "Player")
+	UStaticMeshComponent* Grenade;
 
 	bool IsProning()
 	{
@@ -219,6 +235,7 @@ private:
 	FWeaponInfo SubWeapon;
 	FWeaponInfo Knife;
 
+	FGrenadeInfo PlayerGrenade;
 #pragma endregion
 
 
@@ -336,7 +353,8 @@ private:
 	UFUNCTION(Server, Reliable, WithValidation)
 	void SpawnProjectileOnServer(FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner);
 
-
+	UFUNCTION(Server, Reliable, WithValidation)
+	void SpawnGrenadeOnServer(FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner);
 
 	/* Spawn Armor Section */
 	UFUNCTION(Server, Reliable, WithValidation)
@@ -367,4 +385,20 @@ private:
 	/* 아이템 획득 시, 해당 아이템을 공통적으로 제거하는 함수 */
 	UFUNCTION(Server, Reliable)
 	void Server_DestroyItem(AActor* DestroyActor);
+
+	/* Detect Zombie Spawner Sector */
+	UPROPERTY(VisibleAnywhere, Category = DetectZSpawner)
+	UBoxComponent* DetectZSpawnerCol;
+	bool IsDayChanged = false;
+	FVector DetectExtent = FVector(1000.0f, 1000.0f, 1000.0f);
+
+	uint16 SpawnZombieCurCount = 0;
+	uint16 SpawnZombieMaxCount = 20;
+
+	UFUNCTION()
+	void ZombieSpawnerEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UFUNCTION()
+	void ZombieSpawnerBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
 };

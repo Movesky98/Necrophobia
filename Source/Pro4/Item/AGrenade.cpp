@@ -1,7 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "AGrenade.h"
+#include "../Pro4Character.h"
 
+#include "TimerManager.h"
 #include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "DrawDebugHelpers.h"
@@ -13,9 +15,20 @@ AAGrenade::AAGrenade()
 	PrimaryActorTick.bCanEverTick = true;
 
 	ItemType = BaseItemType::Grenade;
+	GrenadeProjectile = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("GrenadeProjectile"));
+	
+	GrenadeProjectile->SetUpdatedComponent(BoxMesh);
+	GrenadeProjectile->InitialSpeed = 0.0f;
+	GrenadeProjectile->MaxSpeed = 1500.0f;
+	GrenadeProjectile->bRotationFollowsVelocity = true;
+	GrenadeProjectile->bShouldBounce = true;
+	GrenadeProjectile->Bounciness = 0.3f;
+	GrenadeProjectile->bSimulationEnabled = false;
 
 	uint32 RandomItemNum = FMath::RandRange(0, static_cast<int32>(GrenadeType::MAX) - 1);
 	RandomSpawn(RandomItemNum);
+
+	BoxMesh->SetRelativeScale3D(FVector(2.0f));
 
 	NameWidget->InitWidget();
 	WBP_NameWidget = Cast<UItemNameWidget>(NameWidget->GetUserWidgetObject());
@@ -24,6 +37,7 @@ AAGrenade::AAGrenade()
 void AAGrenade::BeginPlay()
 {
 	Super::BeginPlay();
+
 	if (GetWorld()->IsServer())
 	{
 		NetMulticast_SetUp(SM_GrenadeItem, TemporaryName, 1);
@@ -133,6 +147,53 @@ void AAGrenade::RandomSpawn(int32 Random)
 	}
 		break;
 	}
+}
+
+/* 수류탄이 폭발했을 때 실행되는 함수 */
+void AAGrenade::SetGrenadeExplosion()
+{
+	TArray<FHitResult> OutHits;
+
+	FVector ExplosionLocation = GetActorLocation();
+
+	FCollisionShape GrenadeColSphere = FCollisionShape::MakeSphere(500.0f);
+	DrawDebugSphere(GetWorld(), ExplosionLocation, GrenadeColSphere.GetSphereRadius(), 30, FColor::Green, true, 5.0f);
+
+	bool bIsHit = GetWorld()->SweepMultiByChannel(OutHits, ExplosionLocation, ExplosionLocation, FQuat::Identity, ECC_Visibility, GrenadeColSphere);
+
+	if (bIsHit)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Silver, TEXT("Grenade is Expluded!"));
+		
+		for (auto& Hit : OutHits)
+		{
+			if (Hit.GetActor()->ActorHasTag("Player"))
+			{
+				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Silver, Hit.GetActor()->GetName());
+				
+				APro4Character* PlayerCharacter = Cast<APro4Character>(Hit.GetActor());
+
+				PlayerCharacter->GetDamaged(40.0f);
+			}
+		}
+	}
+	
+	GetWorldTimerManager().ClearTimer(SetExplosionTimer);
+	Destroy();
+}
+
+void AAGrenade::GrenadeExplosion(UPrimitiveComponent* Comp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+
+}
+
+void AAGrenade::SetSimulatePhysics(const FVector& ThrowDirection)
+{
+	BoxMesh->SetRelativeScale3D(FVector(10.0f));
+	GrenadeProjectile->bSimulationEnabled = true;
+	GrenadeProjectile->Velocity = ThrowDirection * GrenadeProjectile->MaxSpeed;
+
+	GetWorldTimerManager().SetTimer(SetExplosionTimer, this, &AAGrenade::SetGrenadeExplosion, 1.0f, false, 5.0f);
 }
 
 void AAGrenade::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

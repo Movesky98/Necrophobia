@@ -21,10 +21,10 @@ AABaseItem::AABaseItem()
 	bReplicates = true;
 	bNetLoadOnClient = true;
 
-	RootComponent = SK_Mesh;
-	BoxMesh->SetupAttachment(SK_Mesh);
-	SphereCollision->SetupAttachment(SK_Mesh);
-	NameWidget->SetupAttachment(SK_Mesh);
+	RootComponent = BoxMesh;
+	SK_Mesh->SetupAttachment(BoxMesh);
+	SphereCollision->SetupAttachment(BoxMesh);
+	NameWidget->SetupAttachment(BoxMesh);
 
 	static ConstructorHelpers::FClassFinder<UItemNameWidget> BP_ItemNameWidget(TEXT("/Game/UI/Item/BP_ItemName"));
 
@@ -49,9 +49,9 @@ AABaseItem::AABaseItem()
 	SK_Mesh->SetCollisionProfileName(TEXT("BaseItem"));
 	SK_Mesh->SetIsReplicated(true);
 
-	SphereCollision->InitSphereRadius(200.0f);
+	SphereCollision->InitSphereRadius(15.0f);
 	SphereCollision->SetCollisionProfileName(TEXT("BaseItem"));
-
+	SphereCollision->SetSimulatePhysics(false);
 
 	Tags.Add("Item");
 }
