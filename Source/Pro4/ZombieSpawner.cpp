@@ -3,6 +3,7 @@
 
 #include "ZombieSpawner.h"
 #include "Pro4Zombie.h"
+#include "Pro4Character.h"
 
 #include "Net/UnrealNetwork.h"
 
@@ -73,7 +74,9 @@ void AZombieSpawner::PlayerAwayFromSpawner(APawn* PlayerInstigator)
 /* 서버에게 좀비를 스폰해달라 요청하는 함수 */
 void AZombieSpawner::SpawnZombieOnServer_Implementation(APawn* PlayerInstigator)
 {
-	if (!bIsSpawn)
+	APro4Character* PlayerCharacter = Cast<APro4Character>(OverlapPlayer);
+
+	if (!bIsSpawn && PlayerCharacter->GetSpawnZombieCurCount() < PlayerCharacter->GetSpawnZombieMaxCount())
 	{
 		UWorld* World = GetWorld();
 
@@ -86,6 +89,7 @@ void AZombieSpawner::SpawnZombieOnServer_Implementation(APawn* PlayerInstigator)
 			SpawnParams.Instigator = PlayerInstigator;	// Target Player
 
 			APro4Zombie* SpawnZombie = World->SpawnActor<APro4Zombie>(Zombie, SpawnLocation, SpawnRotation, SpawnParams);
+			PlayerCharacter->SetSpawnZombieCurCount(PlayerCharacter->GetSpawnZombieCurCount() + 1);
 		}
 
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Server Spawned Zombie."));

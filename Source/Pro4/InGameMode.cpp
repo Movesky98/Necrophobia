@@ -25,7 +25,7 @@ AInGameMode::AInGameMode()
     PrimaryActorTick.bCanEverTick = true;
     // set default pawn class to our Blueprinted character
 
-    static ConstructorHelpers::FClassFinder<APro4Character> BP_PlayerCharacter(TEXT("/Game/BLUEPRINT(JunJae)/BP_Pro4Character"));
+    // static ConstructorHelpers::FClassFinder<APro4Character> BP_PlayerCharacter(TEXT("/Game/BLUEPRINT(JunJae)/BP_Pro4Character"));
 
     /*if (BP_PlayerCharacter.Succeeded())   BP_PlayerCharacter은 아예 C++로 구현해놓겠음.
     {

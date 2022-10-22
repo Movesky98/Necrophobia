@@ -152,33 +152,37 @@ void AAGrenade::RandomSpawn(int32 Random)
 /* 수류탄이 폭발했을 때 실행되는 함수 */
 void AAGrenade::SetGrenadeExplosion()
 {
+	GetWorldTimerManager().ClearTimer(SetExplosionTimer);
 	TArray<FHitResult> OutHits;
 
 	FVector ExplosionLocation = GetActorLocation();
-
+	FName ProfileName = "Grenade";
 	FCollisionShape GrenadeColSphere = FCollisionShape::MakeSphere(500.0f);
+	FCollisionQueryParams GrenadeColParams;
+
 	DrawDebugSphere(GetWorld(), ExplosionLocation, GrenadeColSphere.GetSphereRadius(), 30, FColor::Green, true, 5.0f);
 
-	bool bIsHit = GetWorld()->SweepMultiByChannel(OutHits, ExplosionLocation, ExplosionLocation, FQuat::Identity, ECC_Visibility, GrenadeColSphere);
+	bool bIsHit = GetWorld()->SweepMultiByProfile(OutHits, ExplosionLocation, ExplosionLocation, FQuat::Identity, ProfileName, GrenadeColSphere);
 
 	if (bIsHit)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Silver, TEXT("Grenade is Expluded!"));
-		
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Silver, FString::FromInt(OutHits.Num()));
+
 		for (auto& Hit : OutHits)
 		{
 			if (Hit.GetActor()->ActorHasTag("Player"))
 			{
-				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Silver, Hit.GetActor()->GetName());
-				
+				DrawDebugSolidBox(GetWorld(), Hit.GetActor()->GetActorLocation(), FVector(50.0f), FColor::Red, true, -1);
 				APro4Character* PlayerCharacter = Cast<APro4Character>(Hit.GetActor());
 
 				PlayerCharacter->GetDamaged(40.0f);
 			}
+
+			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Orange, Hit.GetActor()->GetName());
 		}
 	}
-	
-	GetWorldTimerManager().ClearTimer(SetExplosionTimer);
+
 	Destroy();
 }
 
@@ -193,7 +197,7 @@ void AAGrenade::SetSimulatePhysics(const FVector& ThrowDirection)
 	GrenadeProjectile->bSimulationEnabled = true;
 	GrenadeProjectile->Velocity = ThrowDirection * GrenadeProjectile->MaxSpeed;
 
-	GetWorldTimerManager().SetTimer(SetExplosionTimer, this, &AAGrenade::SetGrenadeExplosion, 1.0f, false, 5.0f);
+	GetWorldTimerManager().SetTimer(SetExplosionTimer, this, &AAGrenade::SetGrenadeExplosion, 5.0f);
 }
 
 void AAGrenade::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

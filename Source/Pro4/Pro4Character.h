@@ -43,6 +43,16 @@ struct FWeaponInfo
 	USkeletalMesh* Weapon = nullptr;
 };
 
+UENUM()
+enum class WeaponMode
+{
+	Main1,
+	Main2,
+	Sub,
+	ATW,
+	Disarming
+};
+
 UCLASS()
 class PRO4_API APro4Character : public ACharacter
 {
@@ -56,16 +66,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	enum class WeaponMode
-	{
-		Main1,
-		Main2,
-		Sub,
-		ATW,
-		Disarming
-	};
-
-	WeaponMode CurrentWeaponMode=WeaponMode::Disarming;
+	WeaponMode CurrentWeaponMode = WeaponMode::Disarming;
 
 	enum class CharacterState
 	{
@@ -194,6 +195,27 @@ public:
 	void UnEncroached()
 	{
 		IsEncroach = false;
+	}
+
+	/* ZombieSpawner Sector */
+	uint16 GetSpawnZombieCurCount()
+	{
+		return SpawnZombieCurCount;
+	}
+
+	void SetSpawnZombieMaxCount(uint16 _Count)
+	{
+		SpawnZombieMaxCount = _Count;
+	}
+
+	uint16 GetSpawnZombieMaxCount()
+	{
+		return SpawnZombieMaxCount;
+	}
+
+	void SetSpawnZombieCurCount(uint16 _Count)
+	{
+		SpawnZombieCurCount = _Count;
 	}
 
 #pragma region PlayerState
@@ -349,7 +371,7 @@ private:
 	/* Trace Sector */
 	void CheckFrontActorUsingTrace();
 
-	/* Spawn Projectile Section */
+	/* Spawn Section */
 	UFUNCTION(Server, Reliable, WithValidation)
 	void SpawnProjectileOnServer(FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner);
 
@@ -401,4 +423,10 @@ private:
 	UFUNCTION()
 	void ZombieSpawnerBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
+	/* Equip Player Weapon Sector */
+	UFUNCTION(Server, Reliable)
+	void EquipPlayerWeaponOnServer(const WeaponMode& _CurWeaponMode, UStaticMesh* GrenadeMesh = nullptr);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void EquipPlayerWeaponOnClient(const WeaponMode& _CurWeaponMode, UStaticMesh* GrenadeMesh = nullptr);
 };

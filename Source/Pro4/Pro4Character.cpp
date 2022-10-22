@@ -659,7 +659,6 @@ void APro4Character::EquipMain1()
 		UE_LOG(Pro4, Log, TEXT("Disarming."));
 		Equipflag = 0;
 		CurrentWeaponMode = WeaponMode::Disarming;
-		Weapon->SetSkeletalMesh(nullptr);
 	}
 	else
 	{
@@ -670,8 +669,9 @@ void APro4Character::EquipMain1()
 		IsMontagePlay = true;
 		IsEquipping = true;
 		CurrentWeaponMode = WeaponMode::Main1;
-		Weapon->SetSkeletalMesh(MainWeapon.Weapon);
 	}
+
+	EquipPlayerWeaponOnServer(CurrentWeaponMode);
 }
 
 void APro4Character::EquipMain2()
@@ -681,7 +681,6 @@ void APro4Character::EquipMain2()
 		UE_LOG(Pro4, Log, TEXT("Disarming."));
 		Equipflag = 0;
 		CurrentWeaponMode = WeaponMode::Disarming;
-		Weapon->SetSkeletalMesh(nullptr);
 	}
 	else
 	{
@@ -693,8 +692,9 @@ void APro4Character::EquipMain2()
 		IsMontagePlay = true;
 		IsEquipping = true;
 		CurrentWeaponMode = WeaponMode::Main2;
-		Weapon->SetSkeletalMesh(SubWeapon.Weapon);
 	}
+
+	EquipPlayerWeaponOnServer(CurrentWeaponMode);
 }
 
 void APro4Character::EquipSub()
@@ -703,7 +703,6 @@ void APro4Character::EquipSub()
 	{
 		UE_LOG(Pro4, Log, TEXT("Disarming."));
 		CurrentWeaponMode = WeaponMode::Disarming;
-		Weapon->SetSkeletalMesh(nullptr);
 	}
 	else
 	{
@@ -715,8 +714,9 @@ void APro4Character::EquipSub()
 		IsMontagePlay = true;
 		IsEquipping = true;
 		CurrentWeaponMode = WeaponMode::Sub;
-		Weapon->SetSkeletalMesh(Knife.Weapon);
 	}
+
+	EquipPlayerWeaponOnServer(CurrentWeaponMode);
 }
 
 void APro4Character::EquipATW()
@@ -730,8 +730,9 @@ void APro4Character::EquipATW()
 	{
 		UE_LOG(Pro4, Log, TEXT("ATW."));
 		CurrentWeaponMode = WeaponMode::ATW;
-		Grenade->SetStaticMesh(PlayerGrenade.SM_Grenade);
 	}
+
+	EquipPlayerWeaponOnServer(CurrentWeaponMode, PlayerGrenade.SM_Grenade);
 }
 
 void APro4Character::Reload()
@@ -982,6 +983,7 @@ bool APro4Character::SpawnProjectileOnServer_Validate(FVector Location, FRotator
 /* 플레이어가 서버에게 수류탄을 스폰해달라고 요청하는 함수 */
 void APro4Character::SpawnGrenadeOnServer_Implementation(FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner)
 {
+	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Cyan, TEXT("Server spawn Grenade"));
 	UWorld* World = GetWorld();
 
 	if (World)
@@ -1448,6 +1450,7 @@ bool APro4Character::RecoverPlayerHealthOnServer_Validate()
 
 void APro4Character::PlayerHealthGetDamagedOnServer_Implementation(float Damage)
 {
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue, "Processing Player get Damage On Server");
 	CurrentHP -= Damage;
 
 	if (CurrentHP < 0)
@@ -1473,7 +1476,6 @@ void APro4Character::PlayerHealthGetDamagedOnServer_Implementation(float Damage)
 
 bool APro4Character::PlayerHealthGetDamagedOnServer_Validate(float Damage)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, "Processing Player get Damage On Server");
 
 	if (Damage >= 100.0f || Damage < 0.0f)
 	{
@@ -1485,7 +1487,11 @@ bool APro4Character::PlayerHealthGetDamagedOnServer_Validate(float Damage)
 
 void APro4Character::GetDamaged(float Damage)
 {
-	PlayerHealthGetDamagedOnServer(Damage);
+	if (GetWorld()->IsServer())
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Player Get Damaged"));
+		PlayerHealthGetDamagedOnServer(Damage);
+	}
 }
 
 void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -1499,6 +1505,8 @@ void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 
 #pragma endregion
 
+#pragma region ZombieSpawner
+
 void APro4Character::ZombieSpawnerBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor->ActorHasTag("ZombieSpawner"))
@@ -1508,7 +1516,6 @@ void APro4Character::ZombieSpawnerBeginOverlap(UPrimitiveComponent* OverlappedCo
 		AZombieSpawner* ZombieSpawner = Cast<AZombieSpawner>(OtherActor);
 		if (SpawnZombieCurCount < SpawnZombieMaxCount)
 		{
-			SpawnZombieCurCount++;
 			ZombieSpawner->PlayerOverlapToZSpawner(GetInstigator());
 		}
 		else
@@ -1540,4 +1547,43 @@ void APro4Character::ZombieSpawnerEndOverlap(UPrimitiveComponent* OverlappedComp
 void APro4Character::DetectZombieSpawner(bool isNight)
 {
 	DetectZSpawnerCol->SetGenerateOverlapEvents(isNight);
+}
+
+#pragma endregion
+
+void APro4Character::EquipPlayerWeaponOnServer_Implementation(const WeaponMode& _CurWeaponMode, UStaticMesh* GrenadeMesh = nullptr)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("EquipPlayerWeaponOnServer"));
+	EquipPlayerWeaponOnClient(_CurWeaponMode, GrenadeMesh);
+}
+
+void APro4Character::EquipPlayerWeaponOnClient_Implementation(const WeaponMode& _CurWeaponMode, UStaticMesh* GrenadeMesh = nullptr)
+{
+	switch (_CurWeaponMode)
+	{
+	case WeaponMode::Main1:
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("MainWeapon"));
+		Weapon->SetSkeletalMesh(MainWeapon.Weapon);
+		break;
+	case WeaponMode::Main2:
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("SubWeapon"));
+		Weapon->SetSkeletalMesh(SubWeapon.Weapon);
+		break;
+	case WeaponMode::Sub:
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("Knife"));
+		Weapon->SetSkeletalMesh(Knife.Weapon);
+		break;
+	case WeaponMode::ATW:
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("ATW"));
+		Grenade->SetStaticMesh(GrenadeMesh);
+		break;
+	case WeaponMode::Disarming:
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("Disarming"));
+		Weapon->SetSkeletalMesh(nullptr);
+		Grenade->SetStaticMesh(nullptr);
+		break;
+	default:
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("_CurWeaponMode Variable has garbage value."));
+		break;
+	}
 }
