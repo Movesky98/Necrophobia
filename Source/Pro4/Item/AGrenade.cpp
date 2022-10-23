@@ -16,6 +16,7 @@ AAGrenade::AAGrenade()
 
 	ItemType = BaseItemType::Grenade;
 	GrenadeProjectile = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("GrenadeProjectile"));
+	GrenadeParticle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("GrenadeParticle"));
 	
 	GrenadeProjectile->SetUpdatedComponent(BoxMesh);
 	GrenadeProjectile->InitialSpeed = 0.0f;
@@ -25,6 +26,9 @@ AAGrenade::AAGrenade()
 	GrenadeProjectile->Bounciness = 0.3f;
 	GrenadeProjectile->bSimulationEnabled = false;
 
+	GrenadeParticle->SetupAttachment(BoxMesh);
+	GrenadeParticle->bAutoActivate = false;
+
 	uint32 RandomItemNum = FMath::RandRange(0, static_cast<int32>(GrenadeType::MAX) - 1);
 	RandomSpawn(RandomItemNum);
 
@@ -32,6 +36,14 @@ AAGrenade::AAGrenade()
 
 	NameWidget->InitWidget();
 	WBP_NameWidget = Cast<UItemNameWidget>(NameWidget->GetUserWidgetObject());
+
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> P_GrenadeExplosion(TEXT("/Game/Impacts/Particles/Explosion/Explosion_2/P_Explosion_2_CheapTrails"));
+	if (P_GrenadeExplosion.Succeeded())
+	{
+		UE_LOG(Pro4, Warning, TEXT("Grenade Particle has Succeeded"));
+		GrenadeParticle->SetTemplate(P_GrenadeExplosion.Object);
+		
+	}
 }
 
 void AAGrenade::BeginPlay()
@@ -161,6 +173,7 @@ void AAGrenade::SetGrenadeExplosion()
 	FCollisionQueryParams GrenadeColParams;
 
 	DrawDebugSphere(GetWorld(), ExplosionLocation, GrenadeColSphere.GetSphereRadius(), 30, FColor::Green, true, 5.0f);
+	GrenadeExplosion();
 
 	bool bIsHit = GetWorld()->SweepMultiByProfile(OutHits, ExplosionLocation, ExplosionLocation, FQuat::Identity, ProfileName, GrenadeColSphere);
 
@@ -186,9 +199,9 @@ void AAGrenade::SetGrenadeExplosion()
 	Destroy();
 }
 
-void AAGrenade::GrenadeExplosion(UPrimitiveComponent* Comp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void AAGrenade::GrenadeExplosion()
 {
-
+	GrenadeParticle->ToggleActive();
 }
 
 void AAGrenade::SetSimulatePhysics(const FVector& ThrowDirection)

@@ -31,7 +31,7 @@ public:
 	void ViewItemName();
 
 	UFUNCTION()
-	void GrenadeExplosion(UPrimitiveComponent* Comp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void GrenadeExplosion();
 
 	UFUNCTION(NetMulticast, Reliable)
 	void NetMulticast_SetUp(UStaticMesh* SM_Grenade, const FString& _ItemName, uint16 _ItemNum);
@@ -86,6 +86,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "GrenadeProejctile")
 	UProjectileMovementComponent* GrenadeProjectile;
+
+	UPROPERTY(VisibleAnywhere, Category = "GrenadeParticle")
+	UParticleSystemComponent* GrenadeParticle;
 
 	UPROPERTY(Replicated)
 	FString ItemName;

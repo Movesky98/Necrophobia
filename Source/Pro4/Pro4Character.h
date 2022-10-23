@@ -124,6 +124,9 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Player")
 	UStaticMeshComponent* Grenade;
 
+	UPROPERTY(VisibleAnywhere, Category = "Particle")
+	UParticleSystemComponent* MuzzleFlash;
+
 	bool IsProning()
 	{
 		if (CurrentCharacterState == CharacterState::Proning)

@@ -28,6 +28,17 @@ APro4Character::APro4Character()
 	Vest = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("VEST"));
 	Grenade = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GRENADE"));
 	DetectZSpawnerCol = CreateDefaultSubobject<UBoxComponent>(TEXT("DetectCollsion"));
+	MuzzleFlash = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("MuzzleFlash"));
+
+	MuzzleFlash->SetupAttachment(Weapon);
+	MuzzleFlash->bAutoActivate = false;
+	
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> MuzzleFlashAsset(TEXT("/Game/Impacts/Particles/MuzzleFlash/P_MuzzleFlash_3"));
+
+	if (MuzzleFlashAsset.Succeeded())
+	{
+		MuzzleFlash->SetTemplate(MuzzleFlashAsset.Object);
+	}
 
 	MapSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("MAPSPRINGARM"));
 	MapCapture = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("MAPCAPTURE"));
@@ -174,6 +185,7 @@ void APro4Character::SocketSetting()
 {
 	FName WeaponSocket(TEXT("Hand_rSocket"));
 	FName GrenadeSocket(TEXT("Hand_r_GrenadeSocket"));
+	FName MuzzleFlashSocket(TEXT("gunFireLocation"));
 	FName HeadSocket(TEXT("headSocket"));
 	FName VestSocket(TEXT("VestSocket"));
 
@@ -871,10 +883,12 @@ void APro4Character::Fire()
 		GetActorEyesViewPoint(CameraLocation, CameraRotation);
 
 		FVector MuzzleLocation;
+
 		if (Weapon != nullptr)
 		{
 			if (Weapon->DoesSocketExist("gunFireLocation"))
 			{
+				FTransform SocketTransform;
 				MuzzleLocation = Weapon->GetSocketLocation("gunFireLocation");
 			}
 
@@ -903,7 +917,8 @@ void APro4Character::Fire()
 					UE_LOG(Pro4, Log, TEXT("1"));
 				}
 			}
-
+			
+			MuzzleFlash->ToggleActive();
 			SpawnProjectileOnServer(MuzzleLocation, MuzzleRotation, MuzzleRotation.Vector(), this);
 
 			if (FireMod) // 연사 상태이면 함수 딜레이 후 다시 콜 (주무기 종류에 따라서 연사속도 변경)
@@ -1564,14 +1579,17 @@ void APro4Character::EquipPlayerWeaponOnClient_Implementation(const WeaponMode& 
 	case WeaponMode::Main1:
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("MainWeapon"));
 		Weapon->SetSkeletalMesh(MainWeapon.Weapon);
+		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
 		break;
 	case WeaponMode::Main2:
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("SubWeapon"));
 		Weapon->SetSkeletalMesh(SubWeapon.Weapon);
+		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
 		break;
 	case WeaponMode::Sub:
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("Knife"));
 		Weapon->SetSkeletalMesh(Knife.Weapon);
+		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
 		break;
 	case WeaponMode::ATW:
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("ATW"));
