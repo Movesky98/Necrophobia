@@ -314,7 +314,7 @@ void APro4Character::Tick(float DeltaTime)
 	// CheckFrontActorUsingTrace();
 	
 	// Character Role Test.
-	DrawDebugString(GetWorld(), FVector(0, 0, 150), GetEnumRole(GetLocalRole()), this, FColor::Green, DeltaTime);
+	// DrawDebugString(GetWorld(), FVector(0, 0, 150), GetEnumRole(GetLocalRole()), this, FColor::Green, DeltaTime);
 }
 
 // Character Role Test.
@@ -878,11 +878,8 @@ void APro4Character::Fire()
 {
 	if (IsFire)
 	{
-		FVector CameraLocation;
-		FRotator CameraRotation;
-		GetActorEyesViewPoint(CameraLocation, CameraRotation);
-
 		FVector MuzzleLocation;
+		FRotator MuzzleRotation;
 
 		if (Weapon != nullptr)
 		{
@@ -890,11 +887,10 @@ void APro4Character::Fire()
 			{
 				FTransform SocketTransform;
 				MuzzleLocation = Weapon->GetSocketLocation("gunFireLocation");
+				MuzzleRotation = Weapon->GetSocketRotation("gunFireLocation");
 			}
 
 		}
-		FRotator MuzzleRotation = CameraRotation;
-		MuzzleRotation.Pitch += 10.0f;
 
 		if (CurrentWeaponMode == WeaponMode::Main1 || CurrentWeaponMode == WeaponMode::Main2) // 주무기일 때의 총알 발사 (탄창 상태 반영 안함)
 		{

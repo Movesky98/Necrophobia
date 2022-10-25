@@ -46,6 +46,11 @@ APro4Zombie::APro4Zombie()
 	IsDowning = true;
 	IsMontagePlay = false;
 	IsDown = true;
+
+	CurrentHP = 100.0f;
+	Damage = 30.0f;
+	Velocity = 0.0f;
+	Tags.Add("Zombie");
 }
 
 // Called when the game starts or when spawned
@@ -152,7 +157,6 @@ void APro4Zombie::OnWakeUpMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 	IsDowning = false;
 }
 
-
 void APro4Zombie::ZombieEndOverlapToSpawner(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	if (OtherActor->ActorHasTag("ZombieSpawner"))
@@ -163,5 +167,23 @@ void APro4Zombie::ZombieEndOverlapToSpawner(UPrimitiveComponent* OverlappedComp,
 		{
 			ZombieSpawner->SetIsSpawn(false);
 		}
+	}
+}
+
+void APro4Zombie::ZombieGetDamaged(float _Damage)
+{
+	if (GetWorld()->IsServer())
+	{
+		ZombieGetDamagedOnServer(_Damage);
+	}
+}
+
+void APro4Zombie::ZombieGetDamagedOnServer_Implementation(float _Damage)
+{
+	CurrentHP -= _Damage;
+
+	if (CurrentHP <= 0.0f)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Zombie is dead."));
 	}
 }

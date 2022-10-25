@@ -173,7 +173,7 @@ void AAGrenade::SetGrenadeExplosion()
 	FCollisionQueryParams GrenadeColParams;
 
 	DrawDebugSphere(GetWorld(), ExplosionLocation, GrenadeColSphere.GetSphereRadius(), 30, FColor::Green, true, 5.0f);
-	GrenadeExplosion();
+	GrenadeParticle->ToggleActive();
 
 	bool bIsHit = GetWorld()->SweepMultiByProfile(OutHits, ExplosionLocation, ExplosionLocation, FQuat::Identity, ProfileName, GrenadeColSphere);
 
@@ -196,12 +196,13 @@ void AAGrenade::SetGrenadeExplosion()
 		}
 	}
 
-	Destroy();
+	GetWorldTimerManager().SetTimer(SetExplosionTimer, this, &AAGrenade::GrenadeExplosion, 2.5f);
 }
 
 void AAGrenade::GrenadeExplosion()
 {
-	GrenadeParticle->ToggleActive();
+	GetWorldTimerManager().ClearTimer(SetExplosionTimer);
+	Destroy();
 }
 
 void AAGrenade::SetSimulatePhysics(const FVector& ThrowDirection)
