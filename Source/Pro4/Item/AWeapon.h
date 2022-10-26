@@ -61,6 +61,8 @@ public:
 	{
 		SK_WeaponItem = SK_Weapon;
 		SK_Mesh->SetSkeletalMesh(SK_WeaponItem);
+
+
 	}
 
 	USkeletalMesh* GetSKWeaponItem()

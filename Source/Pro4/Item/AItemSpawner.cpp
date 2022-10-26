@@ -53,7 +53,12 @@ void AAItemSpawner::Tick(float DeltaTime)
 
 void AAItemSpawner::Server_SpawnItem()
 {
-	UE_LOG(Pro4, Log, TEXT("Spawn Item"));
+	if (!GetWorld()->IsServer())
+	{
+		UE_LOG(Pro4, Warning, TEXT("You are not the server."));
+		return;
+	}
+
 	RandomSpawnNum = 1;
 		// FMath::RandRange(1, 3);
 	

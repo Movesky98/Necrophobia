@@ -81,11 +81,11 @@ void AInGameMode::PostLogin(APlayerController* NewPlayer)
     ++NumberOfPlayers;
     UE_LOG(Pro4, Warning, TEXT("Reached Player"));
 
-    if (NumberOfPlayers >= 3 && !isSetStartTimer)
+    if (NumberOfPlayers >= 3 && !isGameStart)
     {
         UE_LOG(Pro4, Warning, TEXT("Start Timer..."));
         GetWorldTimerManager().SetTimer(GameStartTimer, this, &AInGameMode::CountingTheSeconds, 1.0f, true, 5.0f);
-        isSetStartTimer = true;
+        isGameStart = true;
     }
 
 }
@@ -96,9 +96,9 @@ void AInGameMode::Logout(AController* Exiting)
     Super::Logout(Exiting);
     --NumberOfPlayers;
 
-    if (isSetStartTimer && NumberOfPlayers == 1)
+    if (isGameStart && NumberOfPlayers == 1)
     {
-        UE_LOG(Pro4, Warning, TEXT("Game Over."));
+        GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Game Over"));
     }
 
 }

@@ -15,6 +15,8 @@ public:
 	// Sets default values for this actor's properties
 	AAItemSpawner();
 
+	void Server_SpawnItem();
+
 	UPROPERTY(VisibleDefaultsOnly, Category = TimeSecond, meta = (AllowPrivateAccess = true))
 	float Seconds = 0.0f;
 
@@ -42,5 +44,5 @@ private:
 	UPROPERTY(Replicated)
 	int32 RandomSpawnNum = 0;
 
-	void Server_SpawnItem();
+	bool isSpawn = false;
 };
