@@ -51,6 +51,7 @@ void UPro4AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			IsZoom = Character->IsZooming();
 			Equipflag = Character->IsEquip();
 			Moveflag = Character->MoveMode();
+			CharacterRotationPitch = Character->CharacterPitch();
 		}
 	}
 }

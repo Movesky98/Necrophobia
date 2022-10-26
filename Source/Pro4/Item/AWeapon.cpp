@@ -13,6 +13,7 @@ AAWeapon::AAWeapon()
 	PrimaryActorTick.bCanEverTick = true;
 
 	ItemType = BaseItemType::Weapon;
+	AccMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Accesory"));
 
 	// 여기서 GetLocalRole()을 실행하게 될 경우, Authority를 획득하게 됨.
 	
@@ -45,7 +46,7 @@ void AAWeapon::BeginPlay()
 /* 클라이언트들에게 아이템 정보를 뿌려줌 */
 void AAWeapon::NetMulticast_SetUp_Implementation(USkeletalMesh* SK_Weapon, const FString& _ItemName, const FString& _IconPath, const FString& _ImagePath, uint16 _ItemNum)
 {
-	
+	// 스코프 메쉬와 무기 메쉬 설정
 	if (WBP_NameWidget == nullptr)
 	{
 		return;
@@ -57,6 +58,15 @@ void AAWeapon::NetMulticast_SetUp_Implementation(USkeletalMesh* SK_Weapon, const
 	ItemIconPath = _IconPath;
 	WeaponBoxImagePath = _ImagePath;
 	ItemNum = _ItemNum;
+
+	if (SK_WeaponSight != nullptr)
+	{
+		AccMesh->SetStaticMesh(SK_WeaponSight);
+		if (SK_Mesh->DoesSocketExist("b_gun_scopeSocket"))
+		{
+			AccMesh->AttachToComponent(SK_Mesh, FAttachmentTransformRules::SnapToTargetIncludingScale, "b_gun_scopeSocket");
+		}
+	}
 }
 
 void AAWeapon::ViewWeaponName()
@@ -101,6 +111,13 @@ void AAWeapon::RandomSpawn(int32 Random)
 		{
 			SK_WeaponItem = SK_Weapon.Object;
 		}
+
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SK_Scope(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/Accessories/SM_T4_Sight.SM_T4_Sight"));
+		if (SK_Scope.Succeeded())
+		{
+			SK_WeaponSight = SK_Scope.Object;
+		}
+
 		WeaponBoxImagePath = "/Game/UI/Sprites/Weapon_Icon/AR4_Image";
 		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/AR4_Icon_500x500";
 		TemporaryName = "AR";

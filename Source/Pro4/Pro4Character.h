@@ -29,6 +29,7 @@ struct FWeaponInfo
 	FString IconPath = "";
 	FString ImagePath = "";
 	USkeletalMesh* Weapon = nullptr;
+	UStaticMesh* Scope = nullptr;
 };
 
 UCLASS()
@@ -86,6 +87,9 @@ public:
 	UPROPERTY(VisibleAnywhere, Category=Camera)
 	UCameraComponent *Camera;
 
+	UPROPERTY(VisibleAnywhere, Category = Camera)
+	UCameraComponent* ScopeCamera;
+
 	UPROPERTY(VisibleAnywhere, Category = MapCam)
 	USpringArmComponent* MapSpringArm;
 
@@ -106,6 +110,12 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category= "Weapon")
 	USkeletalMeshComponent* Weapon;
+
+	UPROPERTY(VisibleAnywhere, Category = "Weapon")
+	UStaticMeshComponent* Scope;
+
+	UPROPERTY(VisibleAnywhere, Category = "Weapon")
+	float CharacterRotationPitch;
 
 	bool IsProning()
 	{
@@ -178,6 +188,11 @@ public:
 	void UnEncroached()
 	{
 		IsEncroach = false;
+	}
+
+	float CharacterPitch()
+	{
+		return CharacterRotationPitch;
 	}
 
 #pragma region PlayerState
@@ -270,6 +285,7 @@ private:
 	void ChangePlayerWidget();
 
 	float CameraRotationX;
+	//float CharacterRotationPitch;
 
 	// 상태플래그
 	bool IsRun;
@@ -290,7 +306,6 @@ private:
 	int32 HoldFlag;
 	int32 Moveflag;
 
-	
 	float EncroachTime;
 	int32 EncroachLevel;
 	bool IsEncroach;
@@ -353,10 +368,10 @@ private:
 
 	/* Spawn Weapon Section */
 	UFUNCTION(Server, Reliable, WithValidation)
-	void SpawnWeaponItemOnServer(FVector Location, USkeletalMesh* WeaponMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath);
+	void SpawnWeaponItemOnServer(FVector Location, USkeletalMesh* WeaponMesh, UStaticMesh* ScopeMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void SpawnWeaponItemOnClient(class AAWeapon* SpawnWeapon, USkeletalMesh* WeaponMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath);
+	void SpawnWeaponItemOnClient(class AAWeapon* SpawnWeapon, USkeletalMesh* WeaponMesh, UStaticMesh* ScopeMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath);
 
 	UFUNCTION(Server, Reliable)
 	void NoticePlayerWeaponOnServer(AAWeapon* _Weapon);
