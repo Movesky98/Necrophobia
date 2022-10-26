@@ -28,6 +28,7 @@ public:
 
 	void ChangePlayerWidget();
 
+	void AddItemToGrenade(const FString& GrenadeName, uint16 Num);
 	void AddItemToWeapon(FString _IconPath, FString _WeaponName);
 	void AddItemToInventory(AActor* ItemActor, uint16 Num);
 
@@ -77,6 +78,16 @@ private:
 	
 	UPROPERTY(meta = (BindWidget))
 	class UImage* KnifeBox;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* GrenadeNum;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* FlashNum;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* SmokeNum;
+
 #pragma endregion
 
 	UPROPERTY(meta = (BindWidget))

@@ -26,6 +26,7 @@ void APro4PlayerController::BeginPlay()
 	{
 		this->PlayerMenu = InGameInstance->PlayerMenu;
 	}
+
 }
 
 void APro4PlayerController::Tick(float DeltaTime)
@@ -45,7 +46,6 @@ void APro4PlayerController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
-	PlayerCharacter = Cast<APro4Character>(InPawn);
 }
 
 /* 인게임 내 시간을 출력해주는 함수. */

@@ -11,6 +11,18 @@
 #include "Pro4Character.generated.h"
 
 USTRUCT()
+struct FGrenadeInfo
+{
+	GENERATED_BODY()
+	UStaticMesh* SM_Grenade = nullptr;
+	uint16 GrenadeNum = 0;
+	UStaticMesh* SM_Smoke = nullptr;
+	uint16 SmokeNum = 0;
+	UStaticMesh* SM_Flash = nullptr;
+	uint16 FlashNum = 0;
+};
+
+USTRUCT()
 struct FArmorInfo
 {
 	GENERATED_BODY()
@@ -29,7 +41,16 @@ struct FWeaponInfo
 	FString IconPath = "";
 	FString ImagePath = "";
 	USkeletalMesh* Weapon = nullptr;
-	UStaticMesh* Scope = nullptr;
+};
+
+UENUM()
+enum class WeaponMode
+{
+	Main1,
+	Main2,
+	Sub,
+	ATW,
+	Disarming
 };
 
 UCLASS()
@@ -45,16 +66,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-	enum class WeaponMode
-	{
-		Main1,
-		Main2,
-		Sub,
-		ATW,
-		Disarming
-	};
-
-	WeaponMode CurrentWeaponMode=WeaponMode::Disarming;
+	WeaponMode CurrentWeaponMode = WeaponMode::Disarming;
 
 	enum class CharacterState
 	{
@@ -76,7 +88,8 @@ public:
 
 	void SetPlayerWeapon(class AAWeapon* SetWeapon);
 	void SetPlayerArmor(class AAArmor* Armor);
-	void AddPlayerGrenade(class AAGrenade* Grenade);
+	void AddPlayerGrenade(class AAGrenade* _Grenade);
+	void DetectZombieSpawner(bool isNight);
 	
 	APro4PlayerController* GetPlayerController();
 	void SetPlayerController(APro4PlayerController* PlayerController);
@@ -86,9 +99,6 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category=Camera)
 	UCameraComponent *Camera;
-
-	UPROPERTY(VisibleAnywhere, Category = Camera)
-	UCameraComponent* ScopeCamera;
 
 	UPROPERTY(VisibleAnywhere, Category = MapCam)
 	USpringArmComponent* MapSpringArm;
@@ -102,20 +112,20 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Projectile")
 	TSubclassOf<APro4Projectile> ProjectileClass;
 		
-	UPROPERTY(VisibleAnywhere, Category = "Weapon")
+	UPROPERTY(VisibleAnywhere, Category = "Player")
 	USkeletalMeshComponent* Helmet;
 
-	UPROPERTY(VisibleAnywhere, Category = "Weapon")
+	UPROPERTY(VisibleAnywhere, Category = "Player")
 	USkeletalMeshComponent* Vest;
 
-	UPROPERTY(VisibleAnywhere, Category= "Weapon")
+	UPROPERTY(VisibleAnywhere, Category= "Player")
 	USkeletalMeshComponent* Weapon;
 
-	UPROPERTY(VisibleAnywhere, Category = "Weapon")
-	UStaticMeshComponent* Scope;
+	UPROPERTY(VisibleAnywhere, Category = "Player")
+	UStaticMeshComponent* Grenade;
 
-	UPROPERTY(VisibleAnywhere, Category = "Weapon")
-	float CharacterRotationPitch;
+	UPROPERTY(VisibleAnywhere, Category = "Particle")
+	UParticleSystemComponent* MuzzleFlash;
 
 	bool IsProning()
 	{
@@ -190,9 +200,25 @@ public:
 		IsEncroach = false;
 	}
 
-	float CharacterPitch()
+	/* ZombieSpawner Sector */
+	uint16 GetSpawnZombieCurCount()
 	{
-		return CharacterRotationPitch;
+		return SpawnZombieCurCount;
+	}
+
+	void SetSpawnZombieMaxCount(uint16 _Count)
+	{
+		SpawnZombieMaxCount = _Count;
+	}
+
+	uint16 GetSpawnZombieMaxCount()
+	{
+		return SpawnZombieMaxCount;
+	}
+
+	void SetSpawnZombieCurCount(uint16 _Count)
+	{
+		SpawnZombieCurCount = _Count;
 	}
 
 #pragma region PlayerState
@@ -234,6 +260,7 @@ private:
 	FWeaponInfo SubWeapon;
 	FWeaponInfo Knife;
 
+	FGrenadeInfo PlayerGrenade;
 #pragma endregion
 
 
@@ -285,7 +312,6 @@ private:
 	void ChangePlayerWidget();
 
 	float CameraRotationX;
-	//float CharacterRotationPitch;
 
 	// 상태플래그
 	bool IsRun;
@@ -306,6 +332,7 @@ private:
 	int32 HoldFlag;
 	int32 Moveflag;
 
+	
 	float EncroachTime;
 	int32 EncroachLevel;
 	bool IsEncroach;
@@ -347,11 +374,12 @@ private:
 	/* Trace Sector */
 	void CheckFrontActorUsingTrace();
 
-	/* Spawn Projectile Section */
+	/* Spawn Section */
 	UFUNCTION(Server, Reliable, WithValidation)
 	void SpawnProjectileOnServer(FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner);
 
-
+	UFUNCTION(Server, Reliable, WithValidation)
+	void SpawnGrenadeOnServer(FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner);
 
 	/* Spawn Armor Section */
 	UFUNCTION(Server, Reliable, WithValidation)
@@ -368,10 +396,10 @@ private:
 
 	/* Spawn Weapon Section */
 	UFUNCTION(Server, Reliable, WithValidation)
-	void SpawnWeaponItemOnServer(FVector Location, USkeletalMesh* WeaponMesh, UStaticMesh* ScopeMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath);
+	void SpawnWeaponItemOnServer(FVector Location, USkeletalMesh* WeaponMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void SpawnWeaponItemOnClient(class AAWeapon* SpawnWeapon, USkeletalMesh* WeaponMesh, UStaticMesh* ScopeMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath);
+	void SpawnWeaponItemOnClient(class AAWeapon* SpawnWeapon, USkeletalMesh* WeaponMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath);
 
 	UFUNCTION(Server, Reliable)
 	void NoticePlayerWeaponOnServer(AAWeapon* _Weapon);
@@ -382,4 +410,26 @@ private:
 	/* 아이템 획득 시, 해당 아이템을 공통적으로 제거하는 함수 */
 	UFUNCTION(Server, Reliable)
 	void Server_DestroyItem(AActor* DestroyActor);
+
+	/* Detect Zombie Spawner Sector */
+	UPROPERTY(VisibleAnywhere, Category = DetectZSpawner)
+	UBoxComponent* DetectZSpawnerCol;
+	bool IsDayChanged = false;
+	FVector DetectExtent = FVector(1000.0f, 1000.0f, 1000.0f);
+
+	uint16 SpawnZombieCurCount = 0;
+	uint16 SpawnZombieMaxCount = 20;
+
+	UFUNCTION()
+	void ZombieSpawnerEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+	UFUNCTION()
+	void ZombieSpawnerBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
+	/* Equip Player Weapon Sector */
+	UFUNCTION(Server, Reliable)
+	void EquipPlayerWeaponOnServer(const WeaponMode& _CurWeaponMode, UStaticMesh* GrenadeMesh = nullptr);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void EquipPlayerWeaponOnClient(const WeaponMode& _CurWeaponMode, UStaticMesh* GrenadeMesh = nullptr);
 };

@@ -1,7 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "AGrenade.h"
+#include "../Pro4Character.h"
 
+#include "TimerManager.h"
 #include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "DrawDebugHelpers.h"
@@ -13,17 +15,41 @@ AAGrenade::AAGrenade()
 	PrimaryActorTick.bCanEverTick = true;
 
 	ItemType = BaseItemType::Grenade;
+	GrenadeProjectile = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("GrenadeProjectile"));
+	GrenadeParticle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("GrenadeParticle"));
+	
+	GrenadeProjectile->SetUpdatedComponent(BoxMesh);
+	GrenadeProjectile->InitialSpeed = 0.0f;
+	GrenadeProjectile->MaxSpeed = 1500.0f;
+	GrenadeProjectile->bRotationFollowsVelocity = true;
+	GrenadeProjectile->bShouldBounce = true;
+	GrenadeProjectile->Bounciness = 0.3f;
+	GrenadeProjectile->bSimulationEnabled = false;
+
+	GrenadeParticle->SetupAttachment(BoxMesh);
+	GrenadeParticle->bAutoActivate = false;
 
 	uint32 RandomItemNum = FMath::RandRange(0, static_cast<int32>(GrenadeType::MAX) - 1);
 	RandomSpawn(RandomItemNum);
 
+	BoxMesh->SetRelativeScale3D(FVector(2.0f));
+
 	NameWidget->InitWidget();
 	WBP_NameWidget = Cast<UItemNameWidget>(NameWidget->GetUserWidgetObject());
+
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> P_GrenadeExplosion(TEXT("/Game/Impacts/Particles/Explosion/Explosion_2/P_Explosion_2_CheapTrails"));
+	if (P_GrenadeExplosion.Succeeded())
+	{
+		UE_LOG(Pro4, Warning, TEXT("Grenade Particle has Succeeded"));
+		GrenadeParticle->SetTemplate(P_GrenadeExplosion.Object);
+		
+	}
 }
 
 void AAGrenade::BeginPlay()
 {
 	Super::BeginPlay();
+
 	if (GetWorld()->IsServer())
 	{
 		NetMulticast_SetUp(SM_GrenadeItem, TemporaryName, 1);
@@ -133,6 +159,59 @@ void AAGrenade::RandomSpawn(int32 Random)
 	}
 		break;
 	}
+}
+
+/* 수류탄이 폭발했을 때 실행되는 함수 */
+void AAGrenade::SetGrenadeExplosion()
+{
+	GetWorldTimerManager().ClearTimer(SetExplosionTimer);
+	TArray<FHitResult> OutHits;
+
+	FVector ExplosionLocation = GetActorLocation();
+	FName ProfileName = "Grenade";
+	FCollisionShape GrenadeColSphere = FCollisionShape::MakeSphere(500.0f);
+	FCollisionQueryParams GrenadeColParams;
+
+	DrawDebugSphere(GetWorld(), ExplosionLocation, GrenadeColSphere.GetSphereRadius(), 30, FColor::Green, true, 5.0f);
+	GrenadeParticle->ToggleActive();
+
+	bool bIsHit = GetWorld()->SweepMultiByProfile(OutHits, ExplosionLocation, ExplosionLocation, FQuat::Identity, ProfileName, GrenadeColSphere);
+
+	if (bIsHit)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Silver, TEXT("Grenade is Expluded!"));
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Silver, FString::FromInt(OutHits.Num()));
+
+		for (auto& Hit : OutHits)
+		{
+			if (Hit.GetActor()->ActorHasTag("Player"))
+			{
+				DrawDebugSolidBox(GetWorld(), Hit.GetActor()->GetActorLocation(), FVector(50.0f), FColor::Red, true, -1);
+				APro4Character* PlayerCharacter = Cast<APro4Character>(Hit.GetActor());
+
+				PlayerCharacter->GetDamaged(40.0f);
+			}
+
+			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Orange, Hit.GetActor()->GetName());
+		}
+	}
+
+	GetWorldTimerManager().SetTimer(SetExplosionTimer, this, &AAGrenade::GrenadeExplosion, 2.5f);
+}
+
+void AAGrenade::GrenadeExplosion()
+{
+	GetWorldTimerManager().ClearTimer(SetExplosionTimer);
+	Destroy();
+}
+
+void AAGrenade::SetSimulatePhysics(const FVector& ThrowDirection)
+{
+	BoxMesh->SetRelativeScale3D(FVector(10.0f));
+	GrenadeProjectile->bSimulationEnabled = true;
+	GrenadeProjectile->Velocity = ThrowDirection * GrenadeProjectile->MaxSpeed;
+
+	GetWorldTimerManager().SetTimer(SetExplosionTimer, this, &AAGrenade::SetGrenadeExplosion, 5.0f);
 }
 
 void AAGrenade::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

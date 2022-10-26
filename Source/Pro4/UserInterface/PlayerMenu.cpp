@@ -15,6 +15,7 @@
 #include "Components/ProgressBar.h"
 #include "Components/EditableText.h"
 #include "Components/WidgetSwitcher.h"
+#include "Components/TextBlock.h"
 #include "Components/WrapBox.h"
 #include "Components/Image.h"
 #include "Components/SizeBox.h"
@@ -229,6 +230,24 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 void UPlayerMenu::SetImage(UTexture2D* InTexture)
 {
 	TimeImage->SetBrushFromTexture(InTexture);
+}
+
+void UPlayerMenu::AddItemToGrenade(const FString& GrenadeName, uint16 Num)
+{
+	FString GrenadeNumber = FString::FromInt(Num);
+
+	if (!GrenadeName.Compare("Grenade"))
+	{
+		GrenadeNum->SetText(FText::FromString(GrenadeNumber));
+	}
+	else if (!GrenadeName.Compare("Smoke"))
+	{
+		SmokeNum->SetText(FText::FromString(GrenadeNumber));
+	}
+	else if (!GrenadeName.Compare("Flash"))
+	{
+		FlashNum->SetText(FText::FromString(GrenadeNumber));
+	}
 }
 
 void UPlayerMenu::AddItemToWeapon(FString _IconPath, FString _WeaponName) 

@@ -2,6 +2,8 @@
 
 
 #include "InGameState.h"
+#include "InGamePlayerState.h"
+#include "Pro4Character.h"
 
 #include "Net/UnrealNetwork.h"
 
@@ -82,11 +84,23 @@ void AInGameState::AddInGameSeconds() {
 			UE_LOG(Pro4, Warning, TEXT("The day has passed."));
 			AddInGameDay();
 			SetIsNight(false);
+			for (APlayerState* _PlayerState : PlayerArray)
+			{
+				AInGamePlayerState* Player = Cast<AInGamePlayerState>(_PlayerState);
+				APro4Character* PlayerCharacter = Cast<APro4Character>(Player->GetPawn());
+				PlayerCharacter->DetectZombieSpawner(false);
+			}
 		}
 		else
 		{
 			UE_LOG(Pro4, Warning, TEXT("The night has come."));
 			SetIsNight(true);
+			for (APlayerState* _PlayerState : PlayerArray)
+			{
+				AInGamePlayerState* Player = Cast<AInGamePlayerState>(_PlayerState);
+				APro4Character* PlayerCharacter = Cast<APro4Character>(Player->GetPawn());
+				PlayerCharacter->DetectZombieSpawner(true);
+			}
 		}
 	}
 

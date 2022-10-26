@@ -4,6 +4,11 @@
 #include "Pro4Zombie.h"
 #include "Pro4ZombieAI.h"
 #include "ZombieAnimInstance.h"
+#include "ZombieSpawner.h"
+
+/*
+* 나중에 좀비 죽었을 때, 플레이어가 소환한 좀비의 수를 줄이도록 구현해야합니다.
+*/
 
 // Sets default values
 APro4Zombie::APro4Zombie()
@@ -11,7 +16,15 @@ APro4Zombie::APro4Zombie()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	
+	ZombieCollision = CreateDefaultSubobject<UCapsuleComponent>(TEXT("ZombieCollision"));
+
+	ZombieCollision->SetupAttachment(RootComponent);
+	ZombieCollision->SetCollisionProfileName(TEXT("Detect_ZSpawner"));
+	ZombieCollision->SetCapsuleHalfHeight(150.0f);
+	ZombieCollision->SetCapsuleRadius(150.0f);
+
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Zombie"));
+
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh>SK_Zombie(TEXT("/Game/Character_Animation/Zombie/NormalMaleZombie/attack.attack"));
 	if (SK_Zombie.Succeeded())
 	{
@@ -33,12 +46,19 @@ APro4Zombie::APro4Zombie()
 	IsDowning = true;
 	IsMontagePlay = false;
 	IsDown = true;
+
+	CurrentHP = 100.0f;
+	Damage = 30.0f;
+	Velocity = 0.0f;
+	Tags.Add("Zombie");
 }
 
 // Called when the game starts or when spawned
 void APro4Zombie::BeginPlay()
 {
 	Super::BeginPlay();
+
+	ZombieCollision->OnComponentEndOverlap.AddDynamic(this, &APro4Zombie::ZombieEndOverlapToSpawner);
 	
 }
 
@@ -135,4 +155,35 @@ void APro4Zombie::OnWakeUpMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	IsMontagePlay = false;
 	IsDowning = false;
+}
+
+void APro4Zombie::ZombieEndOverlapToSpawner(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (OtherActor->ActorHasTag("ZombieSpawner"))
+	{
+		AZombieSpawner* ZombieSpawner = Cast<AZombieSpawner>(OtherActor);
+
+		if (ZombieSpawner->GetIsSpawn())
+		{
+			ZombieSpawner->SetIsSpawn(false);
+		}
+	}
+}
+
+void APro4Zombie::ZombieGetDamaged(float _Damage)
+{
+	if (GetWorld()->IsServer())
+	{
+		ZombieGetDamagedOnServer(_Damage);
+	}
+}
+
+void APro4Zombie::ZombieGetDamagedOnServer_Implementation(float _Damage)
+{
+	CurrentHP -= _Damage;
+
+	if (CurrentHP <= 0.0f)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Zombie is dead."));
+	}
 }

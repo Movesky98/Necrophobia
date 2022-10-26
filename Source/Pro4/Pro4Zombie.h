@@ -24,6 +24,12 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+#pragma region ZombieState
+	float CurrentHP;
+	float Damage;
+	float Velocity;
+
+#pragma endregion
 	bool IsFind;
 	bool IsAttacking;
 	bool IsDowning;
@@ -44,6 +50,13 @@ private:
 	UFUNCTION()
 		void OnWakeUpMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
+	/* Zombie Spanwer Collision */
+	UPROPERTY(VisibleAnywhere, Category = "ZombieCollision")
+	UCapsuleComponent* ZombieCollision;
+
+	UFUNCTION()
+	void ZombieEndOverlapToSpawner(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -53,7 +66,43 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	virtual void PostInitializeComponents() override;
 	void MovementSetting();
+
+	/* Zombie Get Damaged */
+	void ZombieGetDamaged(float _Damage);
+
+	UFUNCTION(Server, Reliable)
+	void ZombieGetDamagedOnServer(float _Damage);
+
+	float GetCurrentHP()
+	{
+		return CurrentHP;
+	}
+
+	void SetCurrentHP(float _CurrentHP)
+	{
+		CurrentHP = _CurrentHP;
+	}
+
+	float GetZombieDamage()
+	{
+		return Damage;
+	}
+
+	void SetZombieDamage(float _Damage)
+	{
+		Damage = _Damage;
+	}
+
+	float GetZombieVelocity()
+	{
+		return Velocity;
+	}
 	
+	void SetZombieVelocity(float _Velocity)
+	{
+		Velocity = _Velocity;
+	}
+
 	void ZombieRun()
 	{
 		IsRun = true;

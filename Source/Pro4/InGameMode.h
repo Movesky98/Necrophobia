@@ -36,7 +36,7 @@ private:
 	void StartGame();
 
 	uint32 NumberOfPlayers = 0;
-	bool isSetStartTimer = false;
+	bool isGameStart = false;
 	int CountSeconds = 30;
 
 	float Time = 0;

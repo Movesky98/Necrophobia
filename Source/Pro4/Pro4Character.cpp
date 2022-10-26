@@ -8,6 +8,7 @@
 #include "Item/AWeapon.h"
 #include "Item/AArmor.h"
 #include "Item/AGrenade.h"
+#include "ZombieSpawner.h"
 #include "Door.h"
 
 #include "DrawDebugHelpers.h"
@@ -22,26 +23,39 @@ APro4Character::APro4Character()
  
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("CAMERA"));
-	ScopeCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("SCOPECAMERA"));
 	Weapon = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WEAPON"));
 	Helmet = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HELMET"));
 	Vest = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("VEST"));
-	Scope = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SCOPE"));
+	Grenade = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GRENADE"));
+	DetectZSpawnerCol = CreateDefaultSubobject<UBoxComponent>(TEXT("DetectCollsion"));
+	MuzzleFlash = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("MuzzleFlash"));
+
+	MuzzleFlash->SetupAttachment(Weapon);
+	MuzzleFlash->bAutoActivate = false;
+	
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> MuzzleFlashAsset(TEXT("/Game/Impacts/Particles/MuzzleFlash/P_MuzzleFlash_3"));
+
+	if (MuzzleFlashAsset.Succeeded())
+	{
+		MuzzleFlash->SetTemplate(MuzzleFlashAsset.Object);
+	}
 
 	MapSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("MAPSPRINGARM"));
 	MapCapture = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("MAPCAPTURE"));
 
 	RootComponent = GetCapsuleComponent();
+	DetectZSpawnerCol->SetupAttachment(GetCapsuleComponent());
+	DetectZSpawnerCol->SetIsReplicated(true);
+	DetectZSpawnerCol->SetBoxExtent(DetectExtent);
+	DetectZSpawnerCol->SetCollisionProfileName(TEXT("Detect_ZSpawner"));
+	DetectZSpawnerCol->SetGenerateOverlapEvents(false);
 
 	SpringArm->SetupAttachment(GetCapsuleComponent());
 	Camera->SetupAttachment(SpringArm);
-	ScopeCamera->SetupAttachment(Weapon);
 
 	MapSpringArm->SetupAttachment(GetCapsuleComponent());
 	MapCapture->SetupAttachment(MapSpringArm);
 	MapSpringArm->SetRelativeRotation(FRotator(-90.0f, 0.0f, 0.0f));
-
-	Scope->SetupAttachment(Weapon);
 
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f));
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("PCharacter"));
@@ -74,13 +88,13 @@ APro4Character::APro4Character()
 void APro4Character::BeginPlay()
 {
 	Super::BeginPlay();
-	FString IsServer = "False";
-	if (GetWorld()->IsServer())
-	{
-		IsServer = "True";
-	}
+	
+	DetectZSpawnerCol->OnComponentBeginOverlap.AddDynamic(this, &APro4Character::ZombieSpawnerBeginOverlap);
+	DetectZSpawnerCol->OnComponentEndOverlap.AddDynamic(this, &APro4Character::ZombieSpawnerEndOverlap);
 
-	DrawDebugString(GetWorld(), FVector(0, 0, 150), (TEXT("Is server? : %s"), *IsServer), this, FColor::Red, 15.0f);
+	GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, GetActorLocation().ToString());
+
+	PlayerController = Cast<APro4PlayerController>(GetWorld()->GetFirstPlayerController());
 }
 
 /// <summary>
@@ -93,11 +107,10 @@ void APro4Character::CameraSetting()
 	SpringArm->SetRelativeRotation(FRotator::ZeroRotator);
 	SpringArm->bUsePawnControlRotation = true;
 	SpringArm->bInheritPitch = true;
-	SpringArm->bInheritRoll = false;
+	SpringArm->bInheritRoll = true;
 	SpringArm->bInheritYaw = true;
 	SpringArm->bDoCollisionTest = true;
 	//bUseControllerRotationYaw = false;
-	//bUseControllerRotationPitch = true;
 	//GetCharacterMovement()->bOrientRotationToMovement = true;
 	//GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
 
@@ -132,6 +145,24 @@ void APro4Character::WeaponSetting()
 	IsEquipping = false;
 	IsReloading = false;
 	FireMod = false;
+
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Grenade(TEXT("/Game/Weapon/Granade/granade"));
+	if (SM_Grenade.Succeeded())
+	{
+		PlayerGrenade.SM_Grenade = SM_Grenade.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Flash(TEXT("/Game/Weapon/Granade/flashbang"));
+	if (SM_Flash.Succeeded())
+	{
+		PlayerGrenade.SM_Flash = SM_Flash.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Smoke(TEXT("/Game/Weapon/Granade/smoke"));
+	if (SM_Smoke.Succeeded())
+	{
+		PlayerGrenade.SM_Smoke = SM_Smoke.Object;
+	}
 }
 
 
@@ -153,6 +184,8 @@ void APro4Character::StateSetting()
 void APro4Character::SocketSetting()
 {
 	FName WeaponSocket(TEXT("Hand_rSocket"));
+	FName GrenadeSocket(TEXT("Hand_r_GrenadeSocket"));
+	FName MuzzleFlashSocket(TEXT("gunFireLocation"));
 	FName HeadSocket(TEXT("headSocket"));
 	FName VestSocket(TEXT("VestSocket"));
 
@@ -188,6 +221,18 @@ void APro4Character::SocketSetting()
 	else
 	{
 		UE_LOG(Pro4, Error, TEXT("VestSocket has not exist."));
+	}
+
+	if (GetMesh()->DoesSocketExist(GrenadeSocket)) {
+		UE_LOG(Pro4, Warning, TEXT("GrenadeSocket has exist."));
+
+		Grenade->SetupAttachment(GetMesh(), GrenadeSocket);
+		Grenade->SetRelativeScale3D(FVector(2.0f));
+		Grenade->SetIsReplicated(true);
+	}
+	else
+	{
+		UE_LOG(Pro4, Error, TEXT("GrenadeSocket has not exist."));
 	}
 }
 
@@ -236,13 +281,6 @@ void APro4Character::Tick(float DeltaTime)
 		SpringArm->SetRelativeRotation(FRotator::ZeroRotator);
 	}
 
-	/* Player HealthPoint Section */
-	/*CurrentHP += 1.0f;
-	if (CurrentHP >= 90.0f) 
-	{
-		CurrentHP = 10.0f;
-	}*/
-
 	if (IsEncroach)
 	{
 		EncroachTime += DeltaTime;
@@ -275,10 +313,8 @@ void APro4Character::Tick(float DeltaTime)
 	/* Trace하는 함수 */
 	// CheckFrontActorUsingTrace();
 	
-
 	// Character Role Test.
-	DrawDebugString(GetWorld(), FVector(0, 0, 150), GetEnumRole(GetLocalRole()), this, FColor::Green, DeltaTime);
-	CharacterRotationPitch = GetControlRotation().Pitch;
+	// DrawDebugString(GetWorld(), FVector(0, 0, 150), GetEnumRole(GetLocalRole()), this, FColor::Green, DeltaTime);
 }
 
 // Character Role Test.
@@ -635,7 +671,6 @@ void APro4Character::EquipMain1()
 		UE_LOG(Pro4, Log, TEXT("Disarming."));
 		Equipflag = 0;
 		CurrentWeaponMode = WeaponMode::Disarming;
-		Weapon->SetSkeletalMesh(nullptr);
 	}
 	else
 	{
@@ -646,8 +681,9 @@ void APro4Character::EquipMain1()
 		IsMontagePlay = true;
 		IsEquipping = true;
 		CurrentWeaponMode = WeaponMode::Main1;
-		Weapon->SetSkeletalMesh(MainWeapon.Weapon);
 	}
+
+	EquipPlayerWeaponOnServer(CurrentWeaponMode);
 }
 
 void APro4Character::EquipMain2()
@@ -657,7 +693,6 @@ void APro4Character::EquipMain2()
 		UE_LOG(Pro4, Log, TEXT("Disarming."));
 		Equipflag = 0;
 		CurrentWeaponMode = WeaponMode::Disarming;
-		Weapon->SetSkeletalMesh(nullptr);
 	}
 	else
 	{
@@ -669,8 +704,9 @@ void APro4Character::EquipMain2()
 		IsMontagePlay = true;
 		IsEquipping = true;
 		CurrentWeaponMode = WeaponMode::Main2;
-		Weapon->SetSkeletalMesh(SubWeapon.Weapon);
 	}
+
+	EquipPlayerWeaponOnServer(CurrentWeaponMode);
 }
 
 void APro4Character::EquipSub()
@@ -679,7 +715,6 @@ void APro4Character::EquipSub()
 	{
 		UE_LOG(Pro4, Log, TEXT("Disarming."));
 		CurrentWeaponMode = WeaponMode::Disarming;
-		Weapon->SetSkeletalMesh(nullptr);
 	}
 	else
 	{
@@ -691,8 +726,9 @@ void APro4Character::EquipSub()
 		IsMontagePlay = true;
 		IsEquipping = true;
 		CurrentWeaponMode = WeaponMode::Sub;
-		Weapon->SetSkeletalMesh(Knife.Weapon);
 	}
+
+	EquipPlayerWeaponOnServer(CurrentWeaponMode);
 }
 
 void APro4Character::EquipATW()
@@ -707,6 +743,8 @@ void APro4Character::EquipATW()
 		UE_LOG(Pro4, Log, TEXT("ATW."));
 		CurrentWeaponMode = WeaponMode::ATW;
 	}
+
+	EquipPlayerWeaponOnServer(CurrentWeaponMode, PlayerGrenade.SM_Grenade);
 }
 
 void APro4Character::Reload()
@@ -813,29 +851,9 @@ void APro4Character::Attack()
 
 void APro4Character::Zoom() // �� ��, �� �ƿ�(�ѵ����������)
 {
-	FVector Temp;
-	if (Weapon != nullptr)
+	if (CurrentWeaponMode == WeaponMode::Main1 || CurrentWeaponMode == WeaponMode::Main2 || CurrentWeaponMode == WeaponMode::Sub)
 	{
-		if (CurrentWeaponMode == WeaponMode::Main1 || CurrentWeaponMode == WeaponMode::Main2 || CurrentWeaponMode == WeaponMode::Sub)
-		{
-			if (IsZoom)
-			{
-				IsZoom = false;
-				//Camera->Activate();
-				//ScopeCamera->Deactivate();
-			}
-			else
-			{
-				IsZoom = true;
-				//Camera->Deactivate();
-				//ScopeCamera->Activate();
-				SpringArm->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetIncludingScale, "b_gun_scopeCamera");
-				SpringArm->TargetArmLength = 0.0f;
-				SpringArm->SocketOffset = FVector(0.0f, 0.0f, 0.0f);
-				//ScopeCamera->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetIncludingScale, "b_gun_scopeCamera");
-				//GetCharacterMovement()->bOrientRotationToMovement = true;
-			}
-		}
+		IsZoom = !IsZoom;
 	}
 }
 
@@ -860,21 +878,19 @@ void APro4Character::Fire()
 {
 	if (IsFire)
 	{
-		FVector CameraLocation;
-		FRotator CameraRotation;
-		GetActorEyesViewPoint(CameraLocation, CameraRotation);
-
 		FVector MuzzleLocation;
+		FRotator MuzzleRotation;
+
 		if (Weapon != nullptr)
 		{
 			if (Weapon->DoesSocketExist("gunFireLocation"))
 			{
+				FTransform SocketTransform;
 				MuzzleLocation = Weapon->GetSocketLocation("gunFireLocation");
+				MuzzleRotation = Weapon->GetSocketRotation("gunFireLocation");
 			}
 
 		}
-		FRotator MuzzleRotation = CameraRotation;
-		MuzzleRotation.Pitch += 10.0f;
 
 		if (CurrentWeaponMode == WeaponMode::Main1 || CurrentWeaponMode == WeaponMode::Main2) // 주무기일 때의 총알 발사 (탄창 상태 반영 안함)
 		{
@@ -897,7 +913,8 @@ void APro4Character::Fire()
 					UE_LOG(Pro4, Log, TEXT("1"));
 				}
 			}
-
+			
+			MuzzleFlash->ToggleActive();
 			SpawnProjectileOnServer(MuzzleLocation, MuzzleRotation, MuzzleRotation.Vector(), this);
 
 			if (FireMod) // 연사 상태이면 함수 딜레이 후 다시 콜 (주무기 종류에 따라서 연사속도 변경)
@@ -919,6 +936,27 @@ void APro4Character::Throw() // 투척무기 던지기
 	* 던지는 애니메이션
 	*/
 	UE_LOG(Pro4, Log, TEXT("ATW Throw"));
+
+	if (Grenade->GetStaticMesh() != nullptr)
+	{
+		FVector CameraLocation;
+		FRotator CameraRotation;
+		GetActorEyesViewPoint(CameraLocation, CameraRotation);
+
+		FVector ThrowLocation;
+
+		if (GetMesh()->DoesSocketExist("Hand_r_GrenadeSocket"))
+		{
+			ThrowLocation = GetMesh()->GetSocketLocation("Hand_r_GrenadeSocket");
+			ThrowLocation.X += 200.0f;
+		}
+
+		FRotator ThrowRotation = CameraRotation;
+		ThrowRotation.Pitch += 10.0f;
+
+		DrawDebugSolidBox(GetWorld(), ThrowLocation, FVector(5.0f), FColor::Blue, true, 5.0f);
+		SpawnGrenadeOnServer(ThrowLocation, ThrowRotation, ThrowRotation.Vector(), this);
+	}
 }
 
 void APro4Character::Punch() // 주먹질
@@ -952,13 +990,38 @@ bool APro4Character::SpawnProjectileOnServer_Validate(FVector Location, FRotator
 {
 	return true;
 }
+
+/* 플레이어가 서버에게 수류탄을 스폰해달라고 요청하는 함수 */
+void APro4Character::SpawnGrenadeOnServer_Implementation(FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Cyan, TEXT("Server spawn Grenade"));
+	UWorld* World = GetWorld();
+
+	if (World)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = _Owner;
+		SpawnParams.Instigator = GetInstigator();
+
+		AAGrenade* SpawnGrenade = World->SpawnActor<AAGrenade>(AAGrenade::StaticClass(), Location, Rotation, SpawnParams);
+
+		if (SpawnGrenade)
+		{
+			FString GrenadeName = "Grenade";
+			SpawnGrenade->NetMulticast_SetUp(Grenade->GetStaticMesh(), GrenadeName, 1);
+			SpawnGrenade->SetSimulatePhysics(LaunchDirection);
+		}
+	}
+}
+
+bool APro4Character::SpawnGrenadeOnServer_Validate(FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner)
+{
+	return true;
+}
+
 #pragma endregion
 
-
-
-/// <summary>
-/// F 버튼을 눌렀을 때 아이템, 문 등 상호작용을 하기위한 함수
-/// </summary>
+/* F 버튼을 눌렀을 때 아이템, 문 등 상호작용을 하기위한 함수 */
 void APro4Character::InteractPressed()
 {
 	UE_LOG(Pro4, Log, TEXT("Interact Pressed."));
@@ -1054,7 +1117,7 @@ void APro4Character::SetPlayerWeapon(AAWeapon* SetWeapon)
 		if (MainWeapon.bHaveWeapon)
 		{
 
-			SpawnWeaponItemOnServer(GetActorLocation(), MainWeapon.Weapon, MainWeapon.Scope, MainWeapon.Name, MainWeapon.IconPath, MainWeapon.ImagePath);
+			SpawnWeaponItemOnServer(GetActorLocation(), MainWeapon.Weapon, MainWeapon.Name, MainWeapon.IconPath, MainWeapon.ImagePath);
 		}
 
 		NoticePlayerWeaponOnServer(SetWeapon);
@@ -1063,7 +1126,7 @@ void APro4Character::SetPlayerWeapon(AAWeapon* SetWeapon)
 	{
 		if (SubWeapon.bHaveWeapon)
 		{
-			SpawnWeaponItemOnServer(GetActorLocation(), SubWeapon.Weapon, nullptr, SubWeapon.Name, SubWeapon.IconPath, SubWeapon.ImagePath);
+			SpawnWeaponItemOnServer(GetActorLocation(), SubWeapon.Weapon, SubWeapon.Name, SubWeapon.IconPath, SubWeapon.ImagePath);
 		}
 
 		NoticePlayerWeaponOnServer(SetWeapon);
@@ -1072,7 +1135,7 @@ void APro4Character::SetPlayerWeapon(AAWeapon* SetWeapon)
 	{
 		if (Knife.bHaveWeapon)
 		{
-			SpawnWeaponItemOnServer(GetActorLocation(), Knife.Weapon, nullptr, Knife.Name, Knife.IconPath, Knife.ImagePath);
+			SpawnWeaponItemOnServer(GetActorLocation(), Knife.Weapon, Knife.Name, Knife.IconPath, Knife.ImagePath);
 		}
 
 		NoticePlayerWeaponOnServer(SetWeapon);
@@ -1082,7 +1145,7 @@ void APro4Character::SetPlayerWeapon(AAWeapon* SetWeapon)
 }
 
 /* 클라이언트가 서버에게 드랍된 아이템의 상태를 설정하라고 알리는 함수. */
-void APro4Character::SpawnWeaponItemOnServer_Implementation(FVector Location, USkeletalMesh* WeaponMesh, UStaticMesh* ScopeMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath)
+void APro4Character::SpawnWeaponItemOnServer_Implementation(FVector Location, USkeletalMesh* WeaponMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath)
 {
 	UWorld* World = GetWorld();
 
@@ -1092,18 +1155,18 @@ void APro4Character::SpawnWeaponItemOnServer_Implementation(FVector Location, US
 
 	AAWeapon* DropItem = World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), Location, Rotation, SpawnParams);
 
-	SpawnWeaponItemOnClient(DropItem, WeaponMesh, ScopeMesh, WeaponName, IconPath, ImagePath);
+	SpawnWeaponItemOnClient(DropItem, WeaponMesh, WeaponName, IconPath, ImagePath);
 }
 
-bool APro4Character::SpawnWeaponItemOnServer_Validate(FVector Location, USkeletalMesh* WeaponMesh, UStaticMesh* ScopeMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath)
+bool APro4Character::SpawnWeaponItemOnServer_Validate(FVector Location, USkeletalMesh* WeaponMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath)
 {
 	return true;
 }
 
 /* NetMulticast로 호출됨. 서버가 클라이언트들에게 드랍된 무기 아이템의 설정을 뿌리는 함수. */
-void APro4Character::SpawnWeaponItemOnClient_Implementation(AAWeapon* SpawnWeapon, USkeletalMesh* WeaponMesh, UStaticMesh* ScopeMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath)
+void APro4Character::SpawnWeaponItemOnClient_Implementation(AAWeapon* SpawnWeapon, USkeletalMesh* WeaponMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath)
 {
-	SpawnWeapon->SetSKWeaponItem(WeaponMesh, ScopeMesh);
+	SpawnWeapon->SetSKWeaponItem(WeaponMesh);
 	SpawnWeapon->SetItemName(WeaponName);
 	SpawnWeapon->SetIconPath(IconPath);
 	SpawnWeapon->SetBoxImagePath(ImagePath);
@@ -1124,16 +1187,9 @@ void APro4Character::NoticePlayerWeaponOnClient_Implementation(AAWeapon* _Weapon
 	if (_Weapon->GetItemName() == "AR" || _Weapon->GetItemName() == "SR")
 	{
 		MainWeapon.Weapon = _Weapon->GetSKWeaponItem();
-		MainWeapon.Scope = _Weapon->GetSKScopeItem();
 		MainWeapon.Name = _Weapon->GetItemName();
 		MainWeapon.IconPath = _Weapon->GetIconPath();
 		MainWeapon.ImagePath = _Weapon->GetBoxImagePath();
-
-		if (Weapon->DoesSocketExist("b_gun_scopeSocket"))
-		{
-			Scope->SetStaticMesh(_Weapon->GetSKScopeItem());
-			Scope->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetIncludingScale, "b_gun_scopeSocket");
-		}
 
 		if (!MainWeapon.bHaveWeapon)
 		{
@@ -1271,9 +1327,30 @@ void APro4Character::NoticePlayerArmorOnClient_Implementation(AAArmor* _Armor, c
 	}
 }
 
-void APro4Character::AddPlayerGrenade(AAGrenade* Grenade)
+void APro4Character::AddPlayerGrenade(AAGrenade* _Grenade)
 {
-	Server_DestroyItem(Grenade);
+	UNecrophobiaGameInstance* Instance = Cast<UNecrophobiaGameInstance>(GetGameInstance());
+
+	if (!_Grenade->GetItemName().Compare("Grenade"))
+	{
+		PlayerGrenade.GrenadeNum++;
+
+		Instance->PlayerMenu->AddItemToGrenade(_Grenade->GetItemName(), PlayerGrenade.GrenadeNum);
+	}
+	else if(!_Grenade->GetItemName().Compare("Smoke"))
+	{
+		PlayerGrenade.SmokeNum++;
+
+		Instance->PlayerMenu->AddItemToGrenade(_Grenade->GetItemName(), PlayerGrenade.SmokeNum);
+	}
+	else if (!_Grenade->GetItemName().Compare("Flash"))
+	{
+		PlayerGrenade.FlashNum++;
+
+		Instance->PlayerMenu->AddItemToGrenade(_Grenade->GetItemName(), PlayerGrenade.FlashNum);
+	}
+
+	Server_DestroyItem(_Grenade);
 }
 #pragma endregion
 
@@ -1384,6 +1461,7 @@ bool APro4Character::RecoverPlayerHealthOnServer_Validate()
 
 void APro4Character::PlayerHealthGetDamagedOnServer_Implementation(float Damage)
 {
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue, "Processing Player get Damage On Server");
 	CurrentHP -= Damage;
 
 	if (CurrentHP < 0)
@@ -1409,7 +1487,6 @@ void APro4Character::PlayerHealthGetDamagedOnServer_Implementation(float Damage)
 
 bool APro4Character::PlayerHealthGetDamagedOnServer_Validate(float Damage)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, "Processing Player get Damage On Server");
 
 	if (Damage >= 100.0f || Damage < 0.0f)
 	{
@@ -1421,7 +1498,11 @@ bool APro4Character::PlayerHealthGetDamagedOnServer_Validate(float Damage)
 
 void APro4Character::GetDamaged(float Damage)
 {
-	PlayerHealthGetDamagedOnServer(Damage);
+	if (GetWorld()->IsServer())
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Player Get Damaged"));
+		PlayerHealthGetDamagedOnServer(Damage);
+	}
 }
 
 void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -1434,3 +1515,89 @@ void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 
 
 #pragma endregion
+
+#pragma region ZombieSpawner
+
+void APro4Character::ZombieSpawnerBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor->ActorHasTag("ZombieSpawner"))
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, TEXT("ZombieSpawner is Detected."));
+
+		AZombieSpawner* ZombieSpawner = Cast<AZombieSpawner>(OtherActor);
+		if (SpawnZombieCurCount < SpawnZombieMaxCount)
+		{
+			ZombieSpawner->PlayerOverlapToZSpawner(GetInstigator());
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, TEXT("20 zombies have already been spawned."));
+		}
+	}
+
+
+	/* Draw Player's ZombieSpawner Detection Extent */
+	DrawDebugBox(GetWorld(), GetActorLocation(), DetectExtent, FColor::Green, false, 5.0f, 0, 10.0f);
+}
+
+void APro4Character::ZombieSpawnerEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (OtherActor->ActorHasTag("ZombieSpawner"))
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, TEXT("ZombieSpawner is Detected."));
+
+		AZombieSpawner* ZombieSpawner = Cast<AZombieSpawner>(OtherActor);
+		ZombieSpawner->PlayerAwayFromSpawner(GetInstigator());
+	}
+
+	/* Draw Player's ZombieSpawner Detection Extent */
+	DrawDebugBox(GetWorld(), GetActorLocation(), DetectExtent, FColor::Red, false, 5.0f, 0, 10.0f);
+}
+
+
+void APro4Character::DetectZombieSpawner(bool isNight)
+{
+	DetectZSpawnerCol->SetGenerateOverlapEvents(isNight);
+}
+
+#pragma endregion
+
+void APro4Character::EquipPlayerWeaponOnServer_Implementation(const WeaponMode& _CurWeaponMode, UStaticMesh* GrenadeMesh = nullptr)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("EquipPlayerWeaponOnServer"));
+	EquipPlayerWeaponOnClient(_CurWeaponMode, GrenadeMesh);
+}
+
+void APro4Character::EquipPlayerWeaponOnClient_Implementation(const WeaponMode& _CurWeaponMode, UStaticMesh* GrenadeMesh = nullptr)
+{
+	switch (_CurWeaponMode)
+	{
+	case WeaponMode::Main1:
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("MainWeapon"));
+		Weapon->SetSkeletalMesh(MainWeapon.Weapon);
+		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
+		break;
+	case WeaponMode::Main2:
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("SubWeapon"));
+		Weapon->SetSkeletalMesh(SubWeapon.Weapon);
+		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
+		break;
+	case WeaponMode::Sub:
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("Knife"));
+		Weapon->SetSkeletalMesh(Knife.Weapon);
+		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
+		break;
+	case WeaponMode::ATW:
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("ATW"));
+		Grenade->SetStaticMesh(GrenadeMesh);
+		break;
+	case WeaponMode::Disarming:
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("Disarming"));
+		Weapon->SetSkeletalMesh(nullptr);
+		Grenade->SetStaticMesh(nullptr);
+		break;
+	default:
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("_CurWeaponMode Variable has garbage value."));
+		break;
+	}
+}

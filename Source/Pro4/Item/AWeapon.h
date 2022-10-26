@@ -18,9 +18,6 @@ public:
 
 	AAWeapon();
 
-	UPROPERTY(VisibleDefaultsOnly, Category = Accesory)
-	UStaticMeshComponent* AccMesh;
-
 	enum class WeaponType : int32
 	{
 		AR,
@@ -60,24 +57,17 @@ public:
 	}
 
 	/* SK_WeaponItem */
-	void SetSKWeaponItem(USkeletalMesh* SK_Weapon, UStaticMesh* SK_Scope)
+	void SetSKWeaponItem(USkeletalMesh* SK_Weapon)
 	{
 		SK_WeaponItem = SK_Weapon;
 		SK_Mesh->SetSkeletalMesh(SK_WeaponItem);
-		if (SK_WeaponSight != nullptr)
-		{
-			AccMesh->SetStaticMesh(SK_WeaponSight);
-		}
+
+
 	}
 
 	USkeletalMesh* GetSKWeaponItem()
 	{
 		return SK_Mesh->SkeletalMesh;
-	}
-
-	UStaticMesh* GetSKScopeItem()
-	{
-		return AccMesh->GetStaticMesh();
 	}
 
 	/* ItemName */
@@ -135,7 +125,6 @@ private:
 
 	USkeletalMesh* SK_WeaponItem;
 	UStaticMesh* SM_WeaponItem;
-	UStaticMesh* SK_WeaponSight;
 
 	class UItemNameWidget* WBP_NameWidget;
 	
