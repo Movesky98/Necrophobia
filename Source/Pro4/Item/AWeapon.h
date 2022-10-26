@@ -57,17 +57,24 @@ public:
 	}
 
 	/* SK_WeaponItem */
-	void SetSKWeaponItem(USkeletalMesh* SK_Weapon)
+	void SetSKWeaponItem(USkeletalMesh* SK_Weapon, UStaticMesh* SK_Scope)
 	{
 		SK_WeaponItem = SK_Weapon;
 		SK_Mesh->SetSkeletalMesh(SK_WeaponItem);
-
-
+		if (SK_WeaponSight != nullptr)
+		{
+			AccMesh->SetStaticMesh(SK_WeaponSight);
+		}
 	}
 
 	USkeletalMesh* GetSKWeaponItem()
 	{
 		return SK_Mesh->SkeletalMesh;
+	}
+
+	UStaticMesh* GetSKScopeItem()
+	{
+		return AccMesh->GetStaticMesh();
 	}
 
 	/* ItemName */
@@ -123,8 +130,10 @@ private:
 	UPROPERTY(Replicated)
 	FString WeaponBoxImagePath;
 
+	UStaticMeshComponent* AccMesh;
 	USkeletalMesh* SK_WeaponItem;
 	UStaticMesh* SM_WeaponItem;
+	UStaticMesh* SK_WeaponSight;
 
 	class UItemNameWidget* WBP_NameWidget;
 	

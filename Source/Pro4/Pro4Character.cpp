@@ -26,6 +26,7 @@ APro4Character::APro4Character()
 	Weapon = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WEAPON"));
 	Helmet = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HELMET"));
 	Vest = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("VEST"));
+	Scope = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SCOPE"));
 	Grenade = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GRENADE"));
 	DetectZSpawnerCol = CreateDefaultSubobject<UBoxComponent>(TEXT("DetectCollsion"));
 	MuzzleFlash = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("MuzzleFlash"));
@@ -113,7 +114,6 @@ void APro4Character::CameraSetting()
 	//bUseControllerRotationYaw = false;
 	//GetCharacterMovement()->bOrientRotationToMovement = true;
 	//GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
-
 	SpringArm->SocketOffset = FVector(0.0f, 100.0f, 50.0f);
 
 	MapSpringArm->bInheritPitch = true;
@@ -310,6 +310,8 @@ void APro4Character::Tick(float DeltaTime)
 		}
 	}
 
+
+	CharacterRotationPitch = GetControlRotation().Pitch;
 	/* Trace하는 함수 */
 	// CheckFrontActorUsingTrace();
 	
@@ -851,9 +853,25 @@ void APro4Character::Attack()
 
 void APro4Character::Zoom() // �� ��, �� �ƿ�(�ѵ����������)
 {
-	if (CurrentWeaponMode == WeaponMode::Main1 || CurrentWeaponMode == WeaponMode::Main2 || CurrentWeaponMode == WeaponMode::Sub)
+	if (Weapon != nullptr)
 	{
-		IsZoom = !IsZoom;
+		if (CurrentWeaponMode == WeaponMode::Main1 || CurrentWeaponMode == WeaponMode::Main2 || CurrentWeaponMode == WeaponMode::Sub)
+		{
+			if (IsZoom)
+			{
+				IsZoom = false;
+				SpringArm->AttachToComponent(GetCapsuleComponent(), FAttachmentTransformRules::SnapToTargetIncludingScale);
+				SpringArm->TargetArmLength = 450.0f;
+				SpringArm->SocketOffset = FVector(0.0f, 100.0f, 50.0f);
+			}
+			else
+			{
+				IsZoom = true;
+				SpringArm->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetIncludingScale, "b_gun_scopeCamera");
+				SpringArm->TargetArmLength = 0.0f;
+				SpringArm->SocketOffset = FVector(0.0f, 0.0f, 0.0f);
+			}
+		}
 	}
 }
 
@@ -1117,7 +1135,7 @@ void APro4Character::SetPlayerWeapon(AAWeapon* SetWeapon)
 		if (MainWeapon.bHaveWeapon)
 		{
 
-			SpawnWeaponItemOnServer(GetActorLocation(), MainWeapon.Weapon, MainWeapon.Name, MainWeapon.IconPath, MainWeapon.ImagePath);
+			SpawnWeaponItemOnServer(GetActorLocation(), MainWeapon.Weapon, MainWeapon.Scope, MainWeapon.Name, MainWeapon.IconPath, MainWeapon.ImagePath);
 		}
 
 		NoticePlayerWeaponOnServer(SetWeapon);
@@ -1126,7 +1144,7 @@ void APro4Character::SetPlayerWeapon(AAWeapon* SetWeapon)
 	{
 		if (SubWeapon.bHaveWeapon)
 		{
-			SpawnWeaponItemOnServer(GetActorLocation(), SubWeapon.Weapon, SubWeapon.Name, SubWeapon.IconPath, SubWeapon.ImagePath);
+			SpawnWeaponItemOnServer(GetActorLocation(), SubWeapon.Weapon, nullptr, SubWeapon.Name, SubWeapon.IconPath, SubWeapon.ImagePath);
 		}
 
 		NoticePlayerWeaponOnServer(SetWeapon);
@@ -1135,7 +1153,7 @@ void APro4Character::SetPlayerWeapon(AAWeapon* SetWeapon)
 	{
 		if (Knife.bHaveWeapon)
 		{
-			SpawnWeaponItemOnServer(GetActorLocation(), Knife.Weapon, Knife.Name, Knife.IconPath, Knife.ImagePath);
+			SpawnWeaponItemOnServer(GetActorLocation(), Knife.Weapon, nullptr, Knife.Name, Knife.IconPath, Knife.ImagePath);
 		}
 
 		NoticePlayerWeaponOnServer(SetWeapon);
@@ -1145,7 +1163,7 @@ void APro4Character::SetPlayerWeapon(AAWeapon* SetWeapon)
 }
 
 /* 클라이언트가 서버에게 드랍된 아이템의 상태를 설정하라고 알리는 함수. */
-void APro4Character::SpawnWeaponItemOnServer_Implementation(FVector Location, USkeletalMesh* WeaponMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath)
+void APro4Character::SpawnWeaponItemOnServer_Implementation(FVector Location, USkeletalMesh* WeaponMesh, UStaticMesh* ScopeMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath)
 {
 	UWorld* World = GetWorld();
 
@@ -1155,18 +1173,18 @@ void APro4Character::SpawnWeaponItemOnServer_Implementation(FVector Location, US
 
 	AAWeapon* DropItem = World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), Location, Rotation, SpawnParams);
 
-	SpawnWeaponItemOnClient(DropItem, WeaponMesh, WeaponName, IconPath, ImagePath);
+	SpawnWeaponItemOnClient(DropItem, WeaponMesh, ScopeMesh, WeaponName, IconPath, ImagePath);
 }
 
-bool APro4Character::SpawnWeaponItemOnServer_Validate(FVector Location, USkeletalMesh* WeaponMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath)
+bool APro4Character::SpawnWeaponItemOnServer_Validate(FVector Location, USkeletalMesh* WeaponMesh, UStaticMesh* ScopeMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath)
 {
 	return true;
 }
 
 /* NetMulticast로 호출됨. 서버가 클라이언트들에게 드랍된 무기 아이템의 설정을 뿌리는 함수. */
-void APro4Character::SpawnWeaponItemOnClient_Implementation(AAWeapon* SpawnWeapon, USkeletalMesh* WeaponMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath)
+void APro4Character::SpawnWeaponItemOnClient_Implementation(AAWeapon* SpawnWeapon, USkeletalMesh* WeaponMesh, UStaticMesh* ScopeMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath)
 {
-	SpawnWeapon->SetSKWeaponItem(WeaponMesh);
+	SpawnWeapon->SetSKWeaponItem(WeaponMesh, ScopeMesh);
 	SpawnWeapon->SetItemName(WeaponName);
 	SpawnWeapon->SetIconPath(IconPath);
 	SpawnWeapon->SetBoxImagePath(ImagePath);
@@ -1187,6 +1205,7 @@ void APro4Character::NoticePlayerWeaponOnClient_Implementation(AAWeapon* _Weapon
 	if (_Weapon->GetItemName() == "AR" || _Weapon->GetItemName() == "SR")
 	{
 		MainWeapon.Weapon = _Weapon->GetSKWeaponItem();
+		MainWeapon.Scope = _Weapon->GetSKScopeItem();
 		MainWeapon.Name = _Weapon->GetItemName();
 		MainWeapon.IconPath = _Weapon->GetIconPath();
 		MainWeapon.ImagePath = _Weapon->GetBoxImagePath();
@@ -1194,6 +1213,12 @@ void APro4Character::NoticePlayerWeaponOnClient_Implementation(AAWeapon* _Weapon
 		if (!MainWeapon.bHaveWeapon)
 		{
 			MainWeapon.bHaveWeapon = true;
+		}
+
+		if (Weapon->DoesSocketExist("b_gun_scopeSocket"))
+		{
+			Scope->SetStaticMesh(_Weapon->GetSKScopeItem());
+			Scope->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetIncludingScale, "b_gun_scopeSocket");
 		}
 	}
 	else if (_Weapon->GetItemName() == "Pistol")

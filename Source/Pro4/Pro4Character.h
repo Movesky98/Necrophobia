@@ -41,6 +41,7 @@ struct FWeaponInfo
 	FString IconPath = "";
 	FString ImagePath = "";
 	USkeletalMesh* Weapon = nullptr;
+	UStaticMesh* Scope = nullptr;
 };
 
 UENUM()
@@ -121,6 +122,9 @@ public:
 	UPROPERTY(VisibleAnywhere, Category= "Player")
 	USkeletalMeshComponent* Weapon;
 
+	UPROPERTY(VisibleAnywhere, Category = "Palyer")
+		UStaticMeshComponent* Scope;
+
 	UPROPERTY(VisibleAnywhere, Category = "Player")
 	UStaticMeshComponent* Grenade;
 
@@ -198,6 +202,11 @@ public:
 	void UnEncroached()
 	{
 		IsEncroach = false;
+	}
+
+	float CharacterPitch()
+	{
+		return CharacterRotationPitch;
 	}
 
 	/* ZombieSpawner Sector */
@@ -336,6 +345,7 @@ private:
 	float EncroachTime;
 	int32 EncroachLevel;
 	bool IsEncroach;
+	float CharacterRotationPitch;
 
 	FTimerHandle FireDelay;
 
@@ -396,10 +406,10 @@ private:
 
 	/* Spawn Weapon Section */
 	UFUNCTION(Server, Reliable, WithValidation)
-	void SpawnWeaponItemOnServer(FVector Location, USkeletalMesh* WeaponMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath);
+	void SpawnWeaponItemOnServer(FVector Location, USkeletalMesh* WeaponMesh, UStaticMesh* ScopeMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void SpawnWeaponItemOnClient(class AAWeapon* SpawnWeapon, USkeletalMesh* WeaponMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath);
+	void SpawnWeaponItemOnClient(class AAWeapon* SpawnWeapon, USkeletalMesh* WeaponMesh, UStaticMesh* ScopeMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath);
 
 	UFUNCTION(Server, Reliable)
 	void NoticePlayerWeaponOnServer(AAWeapon* _Weapon);
