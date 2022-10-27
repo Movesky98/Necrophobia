@@ -586,6 +586,8 @@ void APro4Character::Run()
 {
 	if(CurrentCharacterState==CharacterState::Standing)
 	IsRun = !IsRun;
+	if (IsZoom)
+		Zoom();
 }
 
 void APro4Character::Jump()
@@ -608,6 +610,9 @@ void APro4Character::Jump()
 			CurrentCharacterState = CharacterState::Standing;
 			break;
 		}
+
+		if (IsZoom)
+			Zoom();
 	}
 
 }
@@ -638,6 +643,9 @@ void APro4Character::beCrouch()
 				break;
 			}
 		}
+
+		if (IsZoom)
+			Zoom();
 	}
 }
 
@@ -664,6 +672,9 @@ void APro4Character::Prone()
 			CurrentCharacterState = CharacterState::Standing;
 			break;
 		}
+
+		if (IsZoom)
+			Zoom();
 	}
 }
 /// <summary>
