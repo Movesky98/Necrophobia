@@ -9,6 +9,7 @@
 #include "Item/AArmor.h"
 #include "Item/AGrenade.h"
 #include "ZombieSpawner.h"
+#include "Heli_AH64D.h"
 #include "Door.h"
 
 #include "DrawDebugHelpers.h"
@@ -80,6 +81,13 @@ APro4Character::APro4Character()
 		GetMesh()->SetAnimInstanceClass(SK_ANIM.Class);
 	}
 
+	/* Helicopter 클래스를 찾아옴 */
+	static ConstructorHelpers::FObjectFinder<UBlueprint> Helicopter(TEXT("/Game/VigilanteContent/Vehicles/West_Heli_AH64D/BP_TESTHeli"));
+	if(Helicopter.Succeeded())
+	{
+		BP_Helicopter = Helicopter.Object;
+	}
+
 	SocketSetting();
 
 	Tags.Add("Player");
@@ -114,7 +122,7 @@ void APro4Character::CameraSetting()
 	//bUseControllerRotationYaw = false;
 	//GetCharacterMovement()->bOrientRotationToMovement = true;
 	//GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
-	SpringArm->SocketOffset = FVector(0.0f, 100.0f, 50.0f);
+	SpringArm->SocketOffset = FVector(0.0f, 0.0f, 50.0f);
 
 	MapSpringArm->bInheritPitch = true;
 	MapSpringArm->bInheritRoll = true;
@@ -1625,4 +1633,26 @@ void APro4Character::EquipPlayerWeaponOnClient_Implementation(const WeaponMode& 
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("_CurWeaponMode Variable has garbage value."));
 		break;
 	}
+}
+
+void APro4Character::CallHelicopterToEscape()
+{
+	if (!BP_Helicopter)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("CANT FIND BP_Helicopter"));
+	}
+
+	DrawDebugSolidBox(GetWorld(), GetActorLocation(), FVector(20.0f), FColor::Blue, true);
+
+	FActorSpawnParameters SpawnParams;
+	FVector SpawnLocation = FVector::ZeroVector;
+	FVector ToPlayerVector = GetActorLocation() - SpawnLocation;
+	ToPlayerVector.Normalize();
+	FRotator SpawnRotation = ToPlayerVector.Rotation();
+	SpawnParams.Owner = this;
+
+	AHeli_AH64D* SpawnHelicopter = Cast<AHeli_AH64D>(GetWorld()->SpawnActor(BP_Helicopter->GeneratedClass));
+
+	SpawnHelicopter->SetActorLocation(SpawnLocation);
+	SpawnHelicopter->SetActorRotation(SpawnRotation);
 }

@@ -39,9 +39,29 @@ public:
 	bool GetIsStateChanged();
 	void SetIsStateChanged(bool StateChanged_);
 
+	bool GetIsBossSpawn()
+	{
+		return isBossSpawn;
+	}
+
+	void SetIsBossSpawn(bool BossSpawn)
+	{
+		isBossSpawn = BossSpawn;
+	}
+
+	bool GetIsTimeToSpawnBoss()
+	{
+		return isTimeToSpawnBoss;
+	}
+
+	void SetIsTimeToSpawnBoss(bool TimetoSpawnBoss)
+	{
+		isTimeToSpawnBoss = TimetoSpawnBoss;
+	}
+
 private:
 	UPROPERTY(Replicated)
-	uint8 InGameDay = 0;
+	uint8 InGameDay = 1;
 	UPROPERTY(Replicated)
 	uint8 InGameMin = 0;
 	UPROPERTY(Replicated)
@@ -50,4 +70,8 @@ private:
 	bool isNight = false;
 	UPROPERTY(Replicated)
 	bool isStateChanged = false;
+	UPROPERTY(Replicated)
+	bool isBossSpawn = false;
+	UPROPERTY(Replicated)
+	bool isTimeToSpawnBoss = false;
 };

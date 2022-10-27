@@ -277,6 +277,13 @@ private:
 	void NotifyActorBeginOverlap(AActor* Act) override;
 	void NotifyActorEndOverlap(AActor* Act) override;
 
+	/* Helicopter */
+	UFUNCTION(Exec)
+	void CallHelicopterToEscape();
+
+	UPROPERTY(EditAnywhere)
+	UBlueprint* BP_Helicopter;
+
 	// 주요 클래스
 	APro4PlayerController* PlayerController;
 	

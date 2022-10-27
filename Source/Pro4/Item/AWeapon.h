@@ -130,6 +130,7 @@ private:
 	UPROPERTY(Replicated)
 	FString WeaponBoxImagePath;
 
+	UPROPERTY(VisibleDefaultsOnly, Category = "Scope")
 	UStaticMeshComponent* AccMesh;
 	USkeletalMesh* SK_WeaponItem;
 	UStaticMesh* SM_WeaponItem;
