@@ -2,6 +2,7 @@
 
 
 #include "Heli_AH64D.h"
+#include "Pro4Character.h"
 
 #include "Particles/ParticleSystemComponent.h"
 #include "Net/UnrealNetwork.h"
@@ -17,6 +18,7 @@ AHeli_AH64D::AHeli_AH64D()
 	MachineGunFX = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("MachineGunFX"));
 	Damaged = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Damaged"));
 	DamagedSmoke = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("DamagedSmoke"));
+	EscapeCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("EscapeCollision"));
 
 	RootComponent = SkeletalMesh;
 	MachineGunFX->SetupAttachment(SkeletalMesh);
@@ -26,6 +28,11 @@ AHeli_AH64D::AHeli_AH64D()
 	Damaged->SetVisibility(false);
 	MachineGunFX->bAutoActivate = false;
 	DamagedSmoke->bAutoActivate = false;
+
+	EscapeCollision->SetGenerateOverlapEvents(false);
+	EscapeCollision->SetBoxExtent(FVector(100.0f));
+	EscapeCollision->SetIsReplicated(true);
+	EscapeCollision->SetCollisionProfileName(TEXT("Escape"));
 
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_Heli(TEXT("/Game/VigilanteContent/Vehicles/West_Heli_AH64D/SK_West_Heli_AH64D"));
 	if (SK_Heli.Succeeded())
@@ -70,6 +77,7 @@ void AHeli_AH64D::BeginPlay()
 	Super::BeginPlay();
 	
 	CallEscape();
+	EscapeCollision->OnComponentBeginOverlap.AddDynamic(this, &AHeli_AH64D::CheckEscapeCollision);
 }
 
 // Called every frame
@@ -77,6 +85,45 @@ void AHeli_AH64D::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	AddActorWorldOffset(GetActorRotation().Vector() * 100.0f);
+	if (!IsReachPlayer)
+	{
+		AddActorWorldOffset(GetActorRotation().Vector() * 30.0f);
+
+		if (FVector::Dist2D(GetActorLocation(), GetTargetPlayerLocation()) <= 100.0f)
+		{
+			IsReachPlayer = true;
+			ActiveEscapeCollision();
+		}
+	}
 }
 
+void AHeli_AH64D::ActiveEscapeCollision()
+{
+	FHitResult HitResult;
+
+	FVector Start = GetActorLocation();
+	FVector End = Start + (-FVector::ZAxisVector * 2000);
+	
+	FCollisionQueryParams TraceParams;
+
+	bool IsHit = GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, TraceParams);
+
+	if (IsHit)
+	{
+		if (HitResult.Actor != nullptr)
+		{
+			DrawDebugSolidBox(GetWorld(), HitResult.ImpactPoint, FVector(10.0f), FColor::Green, true);
+			EscapeCollision->SetWorldLocation(HitResult.ImpactPoint);
+			EscapeCollision->SetGenerateOverlapEvents(true);
+		}
+	}
+}
+
+void AHeli_AH64D::CheckEscapeCollision(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor->ActorHasTag("Player"))
+	{
+		APro4Character* PlayerChracter = Cast<APro4Character>(OtherActor);
+		PlayerChracter->PlayerEscape();
+	}
+}

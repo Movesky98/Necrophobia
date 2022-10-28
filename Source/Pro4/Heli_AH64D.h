@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Components/BoxComponent.h"
 #include "Heli_AH64D.generated.h"
 
 UCLASS()
@@ -33,6 +34,16 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void SetDoorsAngle(float DoorsAngle);
 
+	void SetTargetPlayerLocation(FVector Location)
+	{
+		TargetPlayerLocation = Location;
+	}
+
+	FVector GetTargetPlayerLocation()
+	{
+		return TargetPlayerLocation;
+	}
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -42,15 +53,26 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 private:
+	void ActiveEscapeCollision();
+	UFUNCTION()
+	void CheckEscapeCollision(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Helicopter, meta = (AllowPrivateAccess = "true"))
-		USkeletalMeshComponent* SkeletalMesh;
+	USkeletalMeshComponent* SkeletalMesh;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Helicopter, meta = (AllowPrivateAccess = "true"))
-		UParticleSystemComponent* MachineGunFX;
+	UParticleSystemComponent* MachineGunFX;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Helicopter, meta = (AllowPrivateAccess = "true"))
-		UStaticMeshComponent* Damaged;
+	UStaticMeshComponent* Damaged;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Helicopter, meta = (AllowPrivateAccess = "true"))
-		UParticleSystemComponent* DamagedSmoke;
+	UParticleSystemComponent* DamagedSmoke;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Helicopter, meta = (AllowPrivateAccess = "true"))
+	UBoxComponent* EscapeCollision;
+
+	FVector TargetPlayerLocation;
+
+	bool IsReachPlayer = false;
 };

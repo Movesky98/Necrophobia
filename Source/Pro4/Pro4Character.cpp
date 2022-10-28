@@ -122,7 +122,7 @@ void APro4Character::CameraSetting()
 	//bUseControllerRotationYaw = false;
 	//GetCharacterMovement()->bOrientRotationToMovement = true;
 	//GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
-	SpringArm->SocketOffset = FVector(0.0f, 0.0f, 50.0f);
+	SpringArm->SocketOffset = FVector(0.0f, 50.0f, 100.0f);
 
 	MapSpringArm->bInheritPitch = true;
 	MapSpringArm->bInheritRoll = true;
@@ -1398,6 +1398,7 @@ void APro4Character::AddPlayerGrenade(AAGrenade* _Grenade)
 }
 #pragma endregion
 
+/* 플레리어 앞에있는 물건 확인하는 함수 */
 void APro4Character::CheckFrontActorUsingTrace()
 {
 	FVector CharacterLoc;
@@ -1454,7 +1455,7 @@ void APro4Character::CheckFrontActorUsingTrace()
 
 				}
 					break;
-				case AABaseItem::BaseItemType::Parts:
+				case AABaseItem::BaseItemType::Vaccine:
 				{
 
 				}
@@ -1651,19 +1652,36 @@ void APro4Character::CallHelicopterToEscape()
 	if (!BP_Helicopter)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("CANT FIND BP_Helicopter"));
+		return;
+	}
+
+	if (!GetIsPossibleEscape())
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("This Player can't Escape."));
+		return;
 	}
 
 	DrawDebugSolidBox(GetWorld(), GetActorLocation(), FVector(20.0f), FColor::Blue, true);
 
 	FActorSpawnParameters SpawnParams;
 	FVector SpawnLocation = FVector::ZeroVector;
+	SpawnLocation.Z = 1000.0f;
+
 	FVector ToPlayerVector = GetActorLocation() - SpawnLocation;
+	ToPlayerVector.Z = 0.0f;
 	ToPlayerVector.Normalize();
 	FRotator SpawnRotation = ToPlayerVector.Rotation();
 	SpawnParams.Owner = this;
 
 	AHeli_AH64D* SpawnHelicopter = Cast<AHeli_AH64D>(GetWorld()->SpawnActor(BP_Helicopter->GeneratedClass));
 
+	SpawnHelicopter->SetTargetPlayerLocation(GetActorLocation());
 	SpawnHelicopter->SetActorLocation(SpawnLocation);
 	SpawnHelicopter->SetActorRotation(SpawnRotation);
+}
+
+/* 플레이어가 탈출에 성공했을 때 실행되는 함수 */
+void APro4Character::PlayerEscape()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Purple, TEXT("Player Escape"));
 }

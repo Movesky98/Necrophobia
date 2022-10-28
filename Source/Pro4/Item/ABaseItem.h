@@ -23,7 +23,7 @@ public:
 		Grenade,	// 투척무기
 		Recovery,	// 회복 아이템
 		Ammo,		// 탄창
-		Parts,		// 파츠, 부품
+		Vaccine,	// 탈출용 백신
 		MAX
 	};
 	

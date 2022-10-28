@@ -91,6 +91,7 @@ public:
 	void SetPlayerArmor(class AAArmor* Armor);
 	void AddPlayerGrenade(class AAGrenade* _Grenade);
 	void DetectZombieSpawner(bool isNight);
+	void PlayerEscape();
 	
 	APro4PlayerController* GetPlayerController();
 	void SetPlayerController(APro4PlayerController* PlayerController);
@@ -130,6 +131,16 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = "Particle")
 	UParticleSystemComponent* MuzzleFlash;
+
+	bool GetIsPossibleEscape()
+	{
+		return IsPossibleEscape;
+	}
+
+	void SetIsPossibleEscape(bool Escape)
+	{
+		IsPossibleEscape = Escape;
+	}
 
 	bool IsProning()
 	{
@@ -230,6 +241,9 @@ public:
 		SpawnZombieCurCount = _Count;
 	}
 
+	/* Helicopter */
+	void CallHelicopterToEscape();
+
 #pragma region PlayerState
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=State)
@@ -272,14 +286,9 @@ private:
 	FGrenadeInfo PlayerGrenade;
 #pragma endregion
 
-
 private:
 	void NotifyActorBeginOverlap(AActor* Act) override;
 	void NotifyActorEndOverlap(AActor* Act) override;
-
-	/* Helicopter */
-	UFUNCTION(Exec)
-	void CallHelicopterToEscape();
 
 	UPROPERTY(EditAnywhere)
 	UBlueprint* BP_Helicopter;
@@ -339,6 +348,7 @@ private:
 	bool IsForward;
 	bool IsFire;
 	bool IsMontagePlay;
+	bool IsPossibleEscape;
 
 	int32 Updownflag;
 	int32 LeftRightflag;
