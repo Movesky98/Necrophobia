@@ -17,15 +17,36 @@ class PRO4_API UPlayerMenu : public UWidgetMenu
 	GENERATED_BODY()
 	
 public:
+	UPlayerMenu(const FObjectInitializer& ObjectInitializer);
+
 	void SetUp();
+	void SetPlayerHP(float CurHP, float MaxHP);
+	void SetPlayerAP(float CurAP, float MaxAP);
 
 	virtual bool Initialize();
 
-	void SetTimeText(uint16 min, uint16 sec);
+	void SetTimeText(uint16 min_, uint16 sec_);
+	void SetImage(UTexture2D* InTexture);
 
 	void ChangePlayerWidget();
 
+	void AddItemToGrenade(const FString& GrenadeName, uint16 Num);
+	void AddItemToWeapon(FString _IconPath, FString _WeaponName);
+	void AddItemToInventory(AActor* ItemActor, uint16 Num);
+
+	class UTexture2D* Day;
+	class UTexture2D* Night;
+
 private:
+
+	UFUNCTION(Client, Reliable)
+	void Client_SetTimeText(uint16 min_, uint16 sec_);
+
+	TSubclassOf<class UInventorySlot> InventorySlot;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* TimeImage;
+
 	UPROPERTY(meta = (BindWidget))
 	class UEditableText* InGameTimeText;
 
@@ -37,6 +58,39 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	class UProgressBar* Armor_ProgressBar;
+
+#pragma region InventoryField
+	UPROPERTY(meta = (BindWidget))
+	class UWrapBox* InventoryBox;
+
+	UPROPERTY(meta = (BindWidget))
+	class USizeBox* MainWeaponSizeBox;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* MainWeaponBox;
+	
+	UPROPERTY(meta = (BindWidget))
+	class USizeBox* SubWeaponSizeBox;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* SubWeaponBox;
+
+	UPROPERTY(meta = (BindWidget))
+	class USizeBox* KnifeSizeBox;
+	
+	UPROPERTY(meta = (BindWidget))
+	class UImage* KnifeBox;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* GrenadeNum;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* FlashNum;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* SmokeNum;
+
+#pragma endregion
 
 	UPROPERTY(meta = (BindWidget))
 	class UWidgetSwitcher* UISwitcher;

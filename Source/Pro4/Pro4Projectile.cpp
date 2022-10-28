@@ -2,6 +2,10 @@
 
 
 #include "Pro4Projectile.h"
+#include "Pro4Character.h"
+#include "Pro4Zombie.h"
+
+#include "DrawDebugHelpers.h"
 
 // Sets default values
 APro4Projectile::APro4Projectile()
@@ -9,37 +13,74 @@ APro4Projectile::APro4Projectile()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	SetReplicates(true);
+	bReplicates = true;
 
-	CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("COLLISION"));
+	// CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("COLLISION"));
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MESH"));
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
+	ProjectileParticle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("PARTICLE")); 
 
+	RootComponent = Mesh;
+	ProjectileParticle->SetupAttachment(Mesh);
+
+	Mesh->SetCollisionProfileName(TEXT("Projectile"));
+	Mesh->SetUseCCD(true);
+
+	/*CollisionComponent->SetCollisionProfileName(TEXT("Projectile"));
 	CollisionComponent->InitSphereRadius(15.0f);
-	RootComponent = CollisionComponent;
-	Mesh->SetupAttachment(CollisionComponent);
-	CollisionComponent->BodyInstance.SetCollisionProfileName(TEXT("Projectile"));
+	CollisionComponent->SetUseCCD(true);
+	CollisionComponent->CanCharacterStepUpOn = ECB_No;*/
 
-	ProjectileMovementComponent->SetUpdatedComponent(CollisionComponent);
+	ProjectileMovementComponent->SetUpdatedComponent(Mesh);
 	ProjectileMovementComponent->InitialSpeed = 3000.0f;
 	ProjectileMovementComponent->MaxSpeed = 3000.0f;
 	ProjectileMovementComponent->bRotationFollowsVelocity = true;
 	ProjectileMovementComponent->bShouldBounce = false;
-	//ProjectileMovementComponent->Bounciness = 0.3f;
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh>SK_PROJECTILE(TEXT("/Game/Environment/Props/Tree/Tree_1/Tree_1-1.Tree_1-1"));
+	// ProjectileMovementComponent->Bounciness = 0.3f;
+	
+	// Bullet : /Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/Ammunition/SM_Shell_556x45
+	// Box : /Game/StarterContent/Shapes/Shape_Cube
+
+	ProjectileParticle->bAutoActivate = false;
+
+	static ConstructorHelpers::FObjectFinder<UStaticMesh>SK_PROJECTILE(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/Ammunition/SM_Shell_556x45"));
 	if (SK_PROJECTILE.Succeeded())
 	{
 		Mesh->SetStaticMesh(SK_PROJECTILE.Object);
 	}
 
-	InitialLifeSpan = 3.0f;
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> P_GroundDirt(TEXT("/Game/Impacts/Particles/Ground_Dirt/P_Ground_Dirt_2"));
+	if (P_GroundDirt.Succeeded())
+	{
+		Particle_GroundDirt = P_GroundDirt.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> P_Ceramic(TEXT("/Game/Impacts/Particles/Ceramic/P_Ceramic_2"));
+	if (P_Ceramic.Succeeded())
+	{
+		Particle_Ceramic = P_Ceramic.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> P_Wood(TEXT("/Game/Impacts/Particles/Wood/Wood_2/P_Wood2_2"));
+	if (P_Wood.Succeeded())
+	{
+		Particle_Wood = P_Wood.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> P_Blood(TEXT("/Game/Impacts/Particles/Blood/P_Blood_2"));
+	if (P_Blood.Succeeded())
+	{
+		Particle_Blood = P_Blood.Object;
+	}
 }
 
 // Called when the game starts or when spawned
 void APro4Projectile::BeginPlay()
 {
 	Super::BeginPlay();
+
+	Mesh->OnComponentBeginOverlap.AddDynamic(this, &APro4Projectile::ProjectileBeginOverlap);
 
 }
 
@@ -53,4 +94,41 @@ void APro4Projectile::Tick(float DeltaTime)
 void APro4Projectile::FireInDirection(const FVector& ShootDirection)
 {
 	ProjectileMovementComponent->Velocity = ShootDirection * ProjectileMovementComponent->InitialSpeed;
+}
+
+void APro4Projectile::ProjectileBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, OtherActor->GetName());
+	ProjectileMovementComponent->bSimulationEnabled = false;
+	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	FRotator NewRotation = SweepResult.ImpactNormal.Rotation();
+
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue , Mesh->GetRelativeRotation().ToString());
+	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, NewRotation.ToString());
+
+	if (OtherActor->ActorHasTag("Player"))
+	{
+		ProjectileParticle->SetTemplate(Particle_Blood);
+		Mesh->SetRelativeRotation(NewRotation);
+		
+		APro4Character* PlayerCharacter = Cast<APro4Character>(OtherActor);
+		PlayerCharacter->GetDamaged(30.0f);
+	}
+	else if(OtherActor->ActorHasTag("Zombie"))
+	{
+		ProjectileParticle->SetTemplate(Particle_Blood);
+		Mesh->SetRelativeRotation(NewRotation);
+
+		APro4Zombie* Zombie = Cast<APro4Zombie>(OtherActor);
+		Zombie->ZombieGetDamaged(30.0f);
+	}
+	else
+	{
+		ProjectileParticle->SetTemplate(Particle_Ceramic);
+		Mesh->SetRelativeRotation(NewRotation);
+	}
+
+	ProjectileParticle->ToggleActive();
+	SetLifeSpan(1.0f);
 }

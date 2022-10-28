@@ -36,7 +36,7 @@ void UZombie_BTService_SearchTarget::TickNode(UBehaviorTreeComponent& OwnerComp,
 		OverlapResults,
 		Center,
 		FQuat::Identity,
-		ECollisionChannel::ECC_GameTraceChannel4,
+		ECollisionChannel::ECC_GameTraceChannel1,
 		FCollisionShape::MakeSphere(SearchRadius),
 		QueryParams);
 
@@ -52,6 +52,10 @@ void UZombie_BTService_SearchTarget::TickNode(UBehaviorTreeComponent& OwnerComp,
 				DrawDebugSphere(World, Center, SearchRadius, 16, FColor::Green, false, 0.2f);
 
 				CurrentPawn->ZombieRun();
+				if (!CurrentPawn->ZombieDowning())
+				{
+					OwnerComp.GetBlackboardComponent()->SetValueAsBool(FName(TEXT("Sleep")), true);
+				}
 				return;
 			}
 		}

@@ -3,75 +3,183 @@
 
 #include "AWeapon.h"
 
+#include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "DrawDebugHelpers.h"
 
-AAWeapon::AAWeapon() 
+AAWeapon::AAWeapon()
 {
-	ItemType = BaseItemType::Weapon;
-	bReplicates = true;
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
 
-	// 서버만 아이템을 스폰하도록 설정
-	if (HasAuthority()) 
+	ItemType = BaseItemType::Weapon;
+	AccMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Accesory"));
+
+	AccMesh->SetCollisionProfileName(TEXT("BaseItem"));
+	AccMesh->SetIsReplicated(true);
+
+	// 여기서 GetLocalRole()을 실행하게 될 경우, Authority를 획득하게 됨.
+	
+	int32 RandomNum = FMath::RandRange(0, static_cast<int32>(WeaponType::MAX) - 1);
+	RandomSpawn(RandomNum);
+
+	/* Widget Component에서 아이템의 이름을 가진 Widget을 가져옴 */
+	NameWidget->InitWidget();
+	WBP_NameWidget = Cast<UItemNameWidget>(NameWidget->GetUserWidgetObject());
+}
+
+void AAWeapon::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	// ItemName Draw
+	DrawDebugString(GetWorld(), FVector(0, 0, 50), ItemName, this, FColor::Green, DeltaTime);
+}
+
+void AAWeapon::BeginPlay()
+{
+	Super::BeginPlay();
+	
+	if (GetWorld()->IsServer())
 	{
-		int32 Random = FMath::RandRange(0, 3);
-		RandomSpawn(Random);
+		NetMulticast_SetUp(SK_WeaponItem, TemporaryName, ItemIconPath, WeaponBoxImagePath, 1);
 	}
+}
+
+/* 클라이언트들에게 아이템 정보를 뿌려줌 */
+void AAWeapon::NetMulticast_SetUp_Implementation(USkeletalMesh* SK_Weapon, const FString& _ItemName, const FString& _IconPath, const FString& _ImagePath, uint16 _ItemNum)
+{
+	// 스코프 메쉬와 무기 메쉬 설정
+	if (WBP_NameWidget == nullptr)
+	{
+		return;
+	}
+
+	SK_Mesh->SetSkeletalMesh(SK_Weapon);
+	ItemName = _ItemName;
+	WBP_NameWidget->SetItemName(ItemName);
+	ItemIconPath = _IconPath;
+	WeaponBoxImagePath = _ImagePath;
+	ItemNum = _ItemNum;
+
+	if (SK_WeaponSight != nullptr)
+	{
+		AccMesh->SetStaticMesh(SK_WeaponSight);
+		if (SK_Mesh->DoesSocketExist("b_gun_scopeSocket"))
+		{
+			AccMesh->AttachToComponent(SK_Mesh, FAttachmentTransformRules::SnapToTargetIncludingScale, "b_gun_scopeSocket");
+		}
+	}
+}
+
+void AAWeapon::ViewWeaponName()
+{
+	bIsObservable = !bIsObservable;
+	WBP_NameWidget->ToggleVisibility();
 }
 
 void AAWeapon::NotifyActorBeginOverlap(AActor* OtherActor)
 {
-	UE_LOG(Pro4, Log, TEXT("Weapon is overlapping."));
+	if (OtherActor->ActorHasTag("Player"))
+	{
+		ViewWeaponName();
+
+		UE_LOG(Pro4, Log, TEXT("Player is overlapping."));
+	}
 }
 
-void AAWeapon::RandomSpawn_Implementation(int32 Random)
+void AAWeapon::NotifyActorEndOverlap(AActor* OtherActor)
 {
-	CurrentWeapon = static_cast<WeaponType>(Random);
+	if (OtherActor->ActorHasTag("Player"))
+	{
+		ViewWeaponName();
+
+
+		UE_LOG(Pro4, Log, TEXT("Player Overlap End."));
+	}
+}
+
+void AAWeapon::RandomSpawn(int32 Random)
+{
+	CurrentWeapon = static_cast<WeaponType>(Random); 
 
 	switch (CurrentWeapon)
 	{
-	case AAWeapon::WeaponType::AR:
+	case WeaponType::AR:
 	{
 		UE_LOG(Pro4, Log, TEXT("AR is spawned."));
 
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/AR4/SM_AR4_X.SM_AR4_X"));
-		if (SM_Weapon.Succeeded())
+		static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/AR4/SK_AR4"));
+		if (SK_Weapon.Succeeded())
 		{
-			BoxMesh->SetStaticMesh(SM_Weapon.Object);
+			SK_WeaponItem = SK_Weapon.Object;
 		}
+
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SK_Scope(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/Accessories/SM_T4_Sight.SM_T4_Sight"));
+		if (SK_Scope.Succeeded())
+		{
+			SK_WeaponSight = SK_Scope.Object;
+		}
+
+		WeaponBoxImagePath = "/Game/UI/Sprites/Weapon_Icon/AR4_Image";
+		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/AR4_Icon_500x500";
+		TemporaryName = "AR";
 	}
 		break;
-	case AAWeapon::WeaponType::SR:
+	case WeaponType::SR:
 	{
 		UE_LOG(Pro4, Log, TEXT("SR is spawned."));
 
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/KA_Val/SM_KA_Val.SM_KA_Val"));
-		if (SM_Weapon.Succeeded())
+		static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/KA_Val/SK_KA_Val_Y"));
+		if (SK_Weapon.Succeeded())
 		{
-			BoxMesh->SetStaticMesh(SM_Weapon.Object);
+			SK_WeaponItem = SK_Weapon.Object;
 		}
+
+		WeaponBoxImagePath = "/Game/UI/Sprites/Weapon_Icon/KA_val_Image";
+		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/KA_val_Icon_500x500";
+		TemporaryName = "SR";
 	}
 		break;
-	case AAWeapon::WeaponType::Pistol:
+	case WeaponType::Pistol:
 	{
 		UE_LOG(Pro4, Log, TEXT("Pistol is spawned."));
 
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/SMG11/SM_SMG11.SM_SMG11"));
-		if (SM_Weapon.Succeeded())
+		static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/SMG11/SK_SMG11_Y"));
+		if (SK_Weapon.Succeeded())
 		{
-			BoxMesh->SetStaticMesh(SM_Weapon.Object);
+			SK_WeaponItem = SK_Weapon.Object;
 		}
+
+		WeaponBoxImagePath = "/Game/UI/Sprites/Weapon_Icon/SMG11_Image";
+		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/SMG11_Icon_500x500";
+		TemporaryName = "Pistol";
 	}
 		break;
-	case AAWeapon::WeaponType::Knife:
+	case WeaponType::Knife:
 	{
 		UE_LOG(Pro4, Log, TEXT("Knife is spawned."));
 
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/M9_Knife/SM_M9_Knife.SM_M9_Knife"));
-		if (SM_Weapon.Succeeded())
+		static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/M9_Knife/SK_M9_Knife_X"));
+		if (SK_Weapon.Succeeded())
 		{
-			BoxMesh->SetStaticMesh(SM_Weapon.Object);
+			SK_WeaponItem = SK_Weapon.Object;
 		}
+
+		WeaponBoxImagePath = "/Game/UI/Sprites/Weapon_Icon/M9_Knife_Image";
+		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/M9_Knife_Icon_500x500";
+		TemporaryName = "Knife";
 	}
 		break;
 	}
+}
+
+void AAWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME(AAWeapon, WeaponBoxImagePath);
+	DOREPLIFETIME(AAWeapon, ItemIconPath);
+	DOREPLIFETIME(AAWeapon, ItemNum);
+	DOREPLIFETIME(AAWeapon, ItemName);
 }

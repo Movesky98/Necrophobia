@@ -57,5 +57,8 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 		int32 Moveflag;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
+		float CharacterRotationPitch;
+
 	FName GetEquipMontageSectionName(int32 Section);
 };

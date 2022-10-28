@@ -3,9 +3,12 @@
 #include "InGameMode.h"
 #include "Pro4PlayerController.h"
 #include "Pro4Character.h"
+#include "Pro4Boss.h"
 #include "NecrophobiaGameInstance.h"
 #include "InGameState.h"
+#include "InGamePlayerState.h"
 #include "UserInterface/PlayerMenu.h"
+
 
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
@@ -23,9 +26,24 @@ AInGameMode::AInGameMode()
 {
     PrimaryActorTick.bCanEverTick = true;
     // set default pawn class to our Blueprinted character
+
+    // static ConstructorHelpers::FClassFinder<APro4Character> BP_PlayerCharacter(TEXT("/Game/BLUEPRINT(JunJae)/BP_Pro4Character"));
+
+    /*if (BP_PlayerCharacter.Succeeded())   BP_PlayerCharacter은 아예 C++로 구현해놓겠음.
+    {
+        DefaultPawnClass = BP_PlayerCharacter.Class;
+        UE_LOG(Pro4, Warning, TEXT("Set PawnClass : BP_PlayerCharacter"));
+    }
+    else
+    {
+    
+    }*/
+
     DefaultPawnClass = APro4Character::StaticClass();
+    UE_LOG(Pro4, Warning, TEXT("Set PawnClass : APro4Character"));
     PlayerControllerClass = APro4PlayerController::StaticClass();
     GameStateClass = AInGameState::StaticClass();
+    PlayerStateClass = AInGamePlayerState::StaticClass();
 }
 
 void AInGameMode::BeginPlay()
@@ -54,7 +72,11 @@ void AInGameMode::Tick(float DeltaTime)
     {
         Time--;
         InGameState->AddInGameSeconds();
-        InGameInstance->PlayerMenu->SetTimeText(InGameState->GetInGameMinutes(), InGameState->GetInGameSeconds());
+
+        if (InGameState->GetIsTimeToSpawnBoss())
+        {
+            SpawnBossZombie();
+        }
     }
 }
 
@@ -66,11 +88,11 @@ void AInGameMode::PostLogin(APlayerController* NewPlayer)
     ++NumberOfPlayers;
     UE_LOG(Pro4, Warning, TEXT("Reached Player"));
 
-    if (NumberOfPlayers >= 3 && !isSetStartTimer)
+    if (NumberOfPlayers >= 3 && !isGameStart)
     {
         UE_LOG(Pro4, Warning, TEXT("Start Timer..."));
         GetWorldTimerManager().SetTimer(GameStartTimer, this, &AInGameMode::CountingTheSeconds, 1.0f, true, 5.0f);
-        isSetStartTimer = true;
+        isGameStart = true;
     }
 
 }
@@ -81,9 +103,9 @@ void AInGameMode::Logout(AController* Exiting)
     Super::Logout(Exiting);
     --NumberOfPlayers;
 
-    if (isSetStartTimer && NumberOfPlayers == 1)
+    if (isGameStart && NumberOfPlayers == 1)
     {
-        UE_LOG(Pro4, Warning, TEXT("Game Over."));
+        GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Game Over"));
     }
 
 }
@@ -110,4 +132,17 @@ void AInGameMode::CountingTheSeconds()
         StartGame();
         GetWorldTimerManager().ClearTimer(GameStartTimer);
     }
+}
+
+void AInGameMode::SpawnBossZombie()
+{
+    FVector SpawnLocation = FVector(-47632.0f, 19246.0f, 40.0f);
+    FRotator SpawnRotation = FRotator(0.0f);
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.Owner = this;
+
+    GetWorld()->SpawnActor<APro4Boss>(APro4Boss::StaticClass(), SpawnLocation, SpawnRotation, SpawnParams);
+
+    InGameState->SetIsBossSpawn(true);
+    InGameState->SetIsTimeToSpawnBoss(false);
 }

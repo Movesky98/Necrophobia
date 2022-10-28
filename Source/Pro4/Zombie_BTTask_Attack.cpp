@@ -20,6 +20,7 @@ EBTNodeResult::Type UZombie_BTTask_Attack::ExecuteTask(UBehaviorTreeComponent& O
 
 	CurrentZombie->Attack();
 	IsAttacking = true;
+
 	CurrentZombie->OnAttackEnd.AddLambda([this]() -> void
 	{
 		IsAttacking = false;

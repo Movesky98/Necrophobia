@@ -1,6 +1,9 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "ABaseItem.h"
+#include "../UserInterface/ItemNameWidget.h"
+
+#include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values
@@ -9,17 +12,46 @@ AABaseItem::AABaseItem()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
-	BoxMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BoxMesh"));
-	SphereCollision = CreateDefaultSubobject<USphereComponent>(TEXT("SphereCollision"));
-	
-	RootComponent = BoxMesh;
-	SphereCollision->SetupAttachment(BoxMesh);
+	SK_Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMeshItem"));
+	BoxMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshItem"));
+	NameWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("ItemNameWidget"));
 
-	BoxMesh->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f));
+	SphereCollision = CreateDefaultSubobject<USphereComponent>(TEXT("SphereCollision"));
+
+	bReplicates = true;
+	bNetLoadOnClient = true;
+
+	RootComponent = BoxMesh;
+	SK_Mesh->SetupAttachment(BoxMesh);
+	SphereCollision->SetupAttachment(BoxMesh);
+	NameWidget->SetupAttachment(BoxMesh);
+
+	static ConstructorHelpers::FClassFinder<UItemNameWidget> BP_ItemNameWidget(TEXT("/Game/UI/Item/BP_ItemName"));
+
+	if (BP_ItemNameWidget.Succeeded())
+	{
+		NameWidget->SetWidgetClass(BP_ItemNameWidget.Class);
+	}
+
+	NameWidget->SetWidgetSpace(EWidgetSpace::Screen);
+	NameWidget->SetIsReplicated(true);
+
+	FVector2D DrawSize;
+	DrawSize.Set(100.0f, 50.0f);
+
+	NameWidget->SetDrawSize(DrawSize);
+	NameWidget->SetRelativeLocation(FVector(0.0, 0.0, 30.0f));
+
 	BoxMesh->SetCollisionProfileName(TEXT("BaseItem"));
-	SphereCollision->InitSphereRadius(200.0f);
+	BoxMesh->SetIsReplicated(true);
+
+	SK_Mesh->SetRelativeLocation(FVector(0.0f, 0.0f, 30.0f));
+	SK_Mesh->SetCollisionProfileName(TEXT("BaseItem"));
+	SK_Mesh->SetIsReplicated(true);
+
+	SphereCollision->InitSphereRadius(15.0f);
 	SphereCollision->SetCollisionProfileName(TEXT("BaseItem"));
+	SphereCollision->SetSimulatePhysics(false);
 
 	Tags.Add("Item");
 }
-

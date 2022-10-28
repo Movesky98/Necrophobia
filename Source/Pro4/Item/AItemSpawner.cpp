@@ -18,6 +18,8 @@ AAItemSpawner::AAItemSpawner()
 	ItemSpawnerComponent = CreateDefaultSubobject<USphereComponent>(TEXT("ItemSpawner"));
 
 	ItemSpawnerComponent->InitSphereRadius(50.0f);
+	ItemSpawnerComponent->SetCollisionProfileName(TEXT("BaseItem"));
+	
 	RootComponent = ItemSpawnerComponent;
 	
 	Weapon = AAWeapon::StaticClass();
@@ -37,29 +39,31 @@ void AAItemSpawner::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (HasAuthority())
+	if (GetWorld()->IsServer())
 	{
-		if (5.0f < Seconds)
+		if (3.0f < Seconds)
 		{
 			Seconds = 0.0f;
-			ReportSpawnItem();
+			Server_SpawnItem();
 		}
 
 		Seconds += DeltaTime;
 	}
 }
 
-void AAItemSpawner::ReportSpawnItem_Implementation()
+void AAItemSpawner::Server_SpawnItem()
 {
-	RPCSpawnItem();
-}
+	if (!GetWorld()->IsServer())
+	{
+		UE_LOG(Pro4, Warning, TEXT("You are not the server."));
+		return;
+	}
 
-void AAItemSpawner::RPCSpawnItem_Implementation()
-{
-	UE_LOG(Pro4, Log, TEXT("Spawn Item"));
-
-	int32 Random = FMath::RandRange(1, 3);
+	RandomSpawnNum = 1;
+		// FMath::RandRange(1, 3);
+	
 	UWorld* World = GetWorld();
+
 	if (World)
 	{
 		FActorSpawnParameters SpawnParams;
@@ -71,20 +75,20 @@ void AAItemSpawner::RPCSpawnItem_Implementation()
 		SpawnLocation.X += FMath::RandRange(500, 1000);
 		SpawnLocation.Y += FMath::RandRange(500, 1000);
 
-		switch (Random) {
+		switch (RandomSpawnNum) {
 		case 1:
 		{
-			AAWeapon* InstanceItem = World->SpawnActor<AAWeapon>(Weapon, SpawnLocation, Rot, SpawnParams);
+			AAWeapon* InstanceItem = World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), SpawnLocation, Rot, SpawnParams);
 		}
 		break;
 		case 2:
 		{
-			AAArmor* InstanceItem = World->SpawnActor<AAArmor>(Armor, SpawnLocation, Rot, SpawnParams);
+			AAArmor* InstanceItem = World->SpawnActor<AAArmor>(AAArmor::StaticClass(), SpawnLocation, Rot, SpawnParams);
 		}
 		break;
 		case 3:
 		{
-			AAGrenade* InstanceItem = World->SpawnActor<AAGrenade>(Grenade, SpawnLocation, Rot, SpawnParams);
+			AAGrenade* InstanceItem = World->SpawnActor<AAGrenade>(AAGrenade::StaticClass(), SpawnLocation, Rot, SpawnParams);
 		}
 		break;
 		case 4:
@@ -94,10 +98,19 @@ void AAItemSpawner::RPCSpawnItem_Implementation()
 			// InstanceItem->ItemType = AABaseItem::BaseItemType::Ammo;
 			break;
 		case 6:
-			// InstanceItem->ItemType = AABaseItem::BaseItemType::Parts;
+			// InstanceItem->ItemType = AABaseItem::BaseItemType::Vaccine;
 			break;
 		default:
+			UE_LOG(Pro4, Warning, TEXT("Spawn Item ERROR."));
+			return;
 			break;
 		}
 	}
+}
+
+void AAItemSpawner::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AAItemSpawner, RandomSpawnNum);
 }

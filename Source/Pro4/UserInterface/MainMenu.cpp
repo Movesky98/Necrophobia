@@ -8,6 +8,7 @@
 
 bool UMainMenu::Initialize()
 {
+	// UI Commit Test.
 	bool Success = Super::Initialize();
 	if (!Success) return false;
 
