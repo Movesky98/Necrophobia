@@ -19,10 +19,11 @@ bool UInventorySlot::Initialize()
 	return true;
 }
 
-void UInventorySlot::SetUp(FString Name, uint16 Num, FString Path)
+void UInventorySlot::SetUp(FString Type, FString Name, uint16 Num, FString Path)
 {
 	SetItemName(Name);
 	SetItemNum(Num);
+	SetItemType(Type);
 	
 	// Image¸¦ ±×¸²
 	UTexture2D* ItemImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *Path), NULL, LOAD_None, NULL);
@@ -30,6 +31,16 @@ void UInventorySlot::SetUp(FString Name, uint16 Num, FString Path)
 	InventorySlotImage->SetBrushFromTexture(ItemImage);
 
 	UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *InventorySlotImage->Brush.GetResourceName().ToString());
+}
+
+FString UInventorySlot::GetItemType()
+{
+	return ItemType;
+}
+
+void UInventorySlot::SetItemType(FString _ItemType)
+{
+	ItemType = _ItemType;
 }
 
 FString UInventorySlot::GetItemName()
@@ -56,7 +67,13 @@ void UInventorySlot::SetItemNum(uint16 Num)
 void UInventorySlot::UseInventoryItem()
 {
 	APro4Character* PlayerCharacter = Cast<APro4Character>(GetWorld()->GetFirstPlayerController()->GetPawn());
-	
-	PlayerCharacter->CallHelicopterToEscape();
 
+	if (GetItemType() == "Vaccine")
+	{
+		PlayerCharacter->CallHelicopterToEscape();
+	}
+	else if (GetItemType() == "Recovery")
+	{
+		PlayerCharacter->RecoveryEncroach();
+	}
 }

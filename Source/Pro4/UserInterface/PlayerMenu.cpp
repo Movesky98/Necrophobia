@@ -3,11 +3,14 @@
 
 #include "PlayerMenu.h"
 #include "InventorySlot.h"
+
 #include "../Item/ABaseItem.h"
 #include "../Item/AGrenade.h"
 #include "../Item/AArmor.h"
 #include "../Item/AWeapon.h"
 #include "../Item/Vaccine.h"
+#include "../Item/Recovery.h"
+
 #include "../Pro4PlayerController.h"
 #include "../Pro4Character.h"
 
@@ -195,16 +198,18 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		if (!ensure(Grenade != nullptr)) return;
 
 		MyPawn->AddPlayerGrenade(Grenade);
-		/*
-		* AAGrenade* Grenade = Cast<AAGrenade>(BaseItem);
-		* InventoryItem->SetUp(Grenade->ItemName, Grenade->ItemNum, "Hello");
-		* InventoryBox->AddChildToWrapBox(InventoryItem);
-		* GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
-		*/
 	}
 		break;
 	case AABaseItem::BaseItemType::Recovery:
+	{
 		// TO DO : Implement Item of Recovery
+		ARecovery* Recovery = Cast<ARecovery>(BaseItem);
+
+		UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
+		InventoryItem->SetUp("Recovery", Recovery->GetItemName(), Recovery->GetItemNum(), Recovery->GetIconPath());
+		InventoryBox->AddChildToWrapBox(InventoryItem);
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
+	}
 		break;
 	case AABaseItem::BaseItemType::Ammo:
 		// TO DO : Implement Item of Ammo
@@ -216,7 +221,7 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		MyPawn->SetIsPossibleEscape(true);
 
 		UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
-		InventoryItem->SetUp(Vaccine->GetItemName(), Vaccine->GetItemNum(), Vaccine->GetIconPath());
+		InventoryItem->SetUp("Vaccine", Vaccine->GetItemName(), Vaccine->GetItemNum(), Vaccine->GetIconPath());
 		InventoryBox->AddChildToWrapBox(InventoryItem);
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
 		
@@ -280,4 +285,14 @@ void UPlayerMenu::AddItemToWeapon(FString _IconPath, FString _WeaponName)
 
 		UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *MainWeaponBox->Brush.GetResourceName().ToString());
 	}
+}
+
+void UPlayerMenu::SetPlayerHP(float CurHP, float MaxHP)
+{
+	HP_ProgressBar->Percent = CurHP / MaxHP;
+}
+
+void UPlayerMenu::SetPlayerAP(float CurAP, float MaxAP)
+{
+	Armor_ProgressBar->Percent = CurAP / MaxAP;
 }

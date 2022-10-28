@@ -20,6 +20,8 @@ public:
 	UPlayerMenu(const FObjectInitializer& ObjectInitializer);
 
 	void SetUp();
+	void SetPlayerHP(float CurHP, float MaxHP);
+	void SetPlayerAP(float CurAP, float MaxAP);
 
 	virtual bool Initialize();
 

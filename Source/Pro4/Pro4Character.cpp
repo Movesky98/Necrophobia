@@ -100,7 +100,7 @@ void APro4Character::BeginPlay()
 	
 	DetectZSpawnerCol->OnComponentBeginOverlap.AddDynamic(this, &APro4Character::ZombieSpawnerBeginOverlap);
 	DetectZSpawnerCol->OnComponentEndOverlap.AddDynamic(this, &APro4Character::ZombieSpawnerEndOverlap);
-
+	NecGameInstance = Cast<UNecrophobiaGameInstance>(GetGameInstance());
 	GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, GetActorLocation().ToString());
 
 	PlayerController = Cast<APro4PlayerController>(GetWorld()->GetFirstPlayerController());
@@ -289,40 +289,7 @@ void APro4Character::Tick(float DeltaTime)
 		SpringArm->SetRelativeRotation(FRotator::ZeroRotator);
 	}
 
-	if (IsEncroach)
-	{
-		EncroachTime += DeltaTime;
-		if (EncroachTime > 5.0f)
-		{
-			EncroachLevel++;
-			switch (EncroachLevel)
-			{
-			case 1:
-				MaxHP = 90;
-				if (CurrentHP > 90)
-				{
-					CurrentHP = 90;
-				}
-				break;
-			case 2:
-				MaxHP = 80;
-				if (CurrentHP > 80)
-				{
-					CurrentHP = 80;
-				}
-				break;
-			default:
-				break;
-			}
-			EncroachTime = 0.0f;
-		}
-	}
-
-
 	CharacterRotationPitch = GetControlRotation().Pitch;
-	/* Trace하는 함수 */
-	// CheckFrontActorUsingTrace();
-	
 	// Character Role Test.
 	// DrawDebugString(GetWorld(), FVector(0, 0, 150), GetEnumRole(GetLocalRole()), this, FColor::Green, DeltaTime);
 }
@@ -1090,10 +1057,9 @@ void APro4Character::InteractPressed()
 			// Actor가 가지고 있는 Tag가 Item이라면.
 			if (Interactable->ActorHasTag(TEXT("Item")))
 			{
-				UNecrophobiaGameInstance* Instance = Cast<UNecrophobiaGameInstance>(GetGameInstance());
 				UE_LOG(Pro4, Log, TEXT("Get %s"), *Interactable->GetName());
 				
-				Instance->PlayerMenu->AddItemToInventory(Interactable, 1);
+				NecGameInstance->PlayerMenu->AddItemToInventory(Interactable, 1);
 			}
 			else if (Interactable->ActorHasTag(TEXT("Door")))
 			{
@@ -1111,11 +1077,13 @@ void APro4Character::InteractPressed()
 
 void APro4Character::ChangePlayerWidget()
 {
-	UNecrophobiaGameInstance* Instance = Cast<UNecrophobiaGameInstance>(GetGameInstance());
-
+	if (!NecGameInstance)
+	{
+		return;
+	}
 	UE_LOG(Pro4, Warning, TEXT("Change PlayerWidget."));
 
-	Instance->PlayerMenu->ChangePlayerWidget();
+	NecGameInstance->PlayerMenu->ChangePlayerWidget();
 
 }
 
@@ -1373,25 +1341,28 @@ void APro4Character::NoticePlayerArmorOnClient_Implementation(AAArmor* _Armor, c
 
 void APro4Character::AddPlayerGrenade(AAGrenade* _Grenade)
 {
-	UNecrophobiaGameInstance* Instance = Cast<UNecrophobiaGameInstance>(GetGameInstance());
+	if (NecGameInstance == nullptr)
+	{
+		return;
+	}
 
 	if (!_Grenade->GetItemName().Compare("Grenade"))
 	{
 		PlayerGrenade.GrenadeNum++;
 
-		Instance->PlayerMenu->AddItemToGrenade(_Grenade->GetItemName(), PlayerGrenade.GrenadeNum);
+		NecGameInstance->PlayerMenu->AddItemToGrenade(_Grenade->GetItemName(), PlayerGrenade.GrenadeNum);
 	}
 	else if(!_Grenade->GetItemName().Compare("Smoke"))
 	{
 		PlayerGrenade.SmokeNum++;
 
-		Instance->PlayerMenu->AddItemToGrenade(_Grenade->GetItemName(), PlayerGrenade.SmokeNum);
+		NecGameInstance->PlayerMenu->AddItemToGrenade(_Grenade->GetItemName(), PlayerGrenade.SmokeNum);
 	}
 	else if (!_Grenade->GetItemName().Compare("Flash"))
 	{
 		PlayerGrenade.FlashNum++;
 
-		Instance->PlayerMenu->AddItemToGrenade(_Grenade->GetItemName(), PlayerGrenade.FlashNum);
+		NecGameInstance->PlayerMenu->AddItemToGrenade(_Grenade->GetItemName(), PlayerGrenade.FlashNum);
 	}
 
 	Server_DestroyItem(_Grenade);
@@ -1492,8 +1463,9 @@ void APro4Character::RecoverPlayerHealthOnServer_Implementation()
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, "Recovery Player HP On Server");
 	CurrentHP += 10.0f;
 
-	if (CurrentHP >= 100)
+	if (CurrentHP >= MaxHP)
 	{
+		CurrentHP = MaxHP;
 		bIsPlayerGetAttacked = false;
 		GetWorldTimerManager().ClearTimer(HealthRecoveryTimer);
 	}
@@ -1520,14 +1492,10 @@ void APro4Character::PlayerHealthGetDamagedOnServer_Implementation(float Damage)
 	{
 		// 회복을 하기위해 타이머를 설정, 현재 플레이어의 상태 : 피격상태
 		bIsPlayerGetAttacked = true;
-		GetWorldTimerManager().SetTimer(HealthRecoveryTimer, this, &APro4Character::RecoverPlayerHealthOnServer, 1.0f, true, 5.0f);
 	}
-	else
-	{
-		// 다시 공격받았을 경우, 타이머를 리셋하고 다시 설정. 현재 플레이어의 상태 : 피격상태
-		GetWorldTimerManager().ClearTimer(HealthRecoveryTimer);
-		GetWorldTimerManager().SetTimer(HealthRecoveryTimer, this, &APro4Character::RecoverPlayerHealthOnServer, 1.0f, true, 5.0f);
-	}
+
+	GetWorldTimerManager().ClearTimer(HealthRecoveryTimer);
+	GetWorldTimerManager().SetTimer(HealthRecoveryTimer, this, &APro4Character::RecoverPlayerHealthOnServer, 1.0f, true, 5.0f);
 }
 
 bool APro4Character::PlayerHealthGetDamagedOnServer_Validate(float Damage)
@@ -1549,15 +1517,6 @@ void APro4Character::GetDamaged(float Damage)
 		PlayerHealthGetDamagedOnServer(Damage);
 	}
 }
-
-void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	
-	DOREPLIFETIME(APro4Character, CurrentHP);
-	DOREPLIFETIME(APro4Character, CurrentAP);
-}
-
 
 #pragma endregion
 
@@ -1607,6 +1566,8 @@ void APro4Character::DetectZombieSpawner(bool isNight)
 
 #pragma endregion
 
+#pragma region EquipPlayerWeapon
+
 void APro4Character::EquipPlayerWeaponOnServer_Implementation(const WeaponMode& _CurWeaponMode, UStaticMesh* GrenadeMesh = nullptr)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("EquipPlayerWeaponOnServer"));
@@ -1647,6 +1608,9 @@ void APro4Character::EquipPlayerWeaponOnClient_Implementation(const WeaponMode& 
 	}
 }
 
+#pragma endregion
+
+/* 백신을 가졌을 때, 탈출하기 위한 헬리콥터를 부르는 함수 */
 void APro4Character::CallHelicopterToEscape()
 {
 	if (!BP_Helicopter)
@@ -1684,4 +1648,65 @@ void APro4Character::CallHelicopterToEscape()
 void APro4Character::PlayerEscape()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Purple, TEXT("Player Escape"));
+}
+
+/* 잠식 치료제를 사용했을 때, 플레이어의 잠식도를 치료하는 함수 */
+void APro4Character::RecoveryEncroach_Implementation()
+{
+	if (EncroachLevel > 0)
+	{
+		EncroachLevel--;
+	}
+	else
+	{
+		return;
+	}
+
+	if (MaxHP >= 50 && MaxHP < 100)
+	{
+		MaxHP = 100 - 10 * EncroachLevel;
+
+		GetWorldTimerManager().ClearTimer(HealthRecoveryTimer);
+		GetWorldTimerManager().SetTimer(HealthRecoveryTimer, this, &APro4Character::RecoverPlayerHealthOnServer, 1.0f, true, 5.0f);
+	}
+}
+
+void APro4Character::StartEncroachTimer()
+{
+	if (IsEncroach && GetWorld()->IsServer())
+	{
+		GetWorldTimerManager().SetTimer(EncroachTimer, this, &APro4Character::SetPlayerEncroach, 5.0f, true);
+	}
+}
+
+void APro4Character::SetPlayerEncroach_Implementation() 
+{
+	if (EncroachLevel < 5)
+	{
+		EncroachLevel++;
+	}
+	
+	MaxHP = 100 - 10 * EncroachLevel;
+
+	if (CurrentHP >= MaxHP)
+	{
+		CurrentHP = MaxHP;
+	}
+}
+
+void APro4Character::StopEncroachTimer()
+{
+	if (!IsEncroach && GetWorld()->IsServer())
+	{
+		GetWorldTimerManager().ClearTimer(EncroachTimer);
+	}
+}
+
+void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APro4Character, CurrentHP);
+	DOREPLIFETIME(APro4Character, MaxHP);
+	DOREPLIFETIME(APro4Character, CurrentAP);
 }

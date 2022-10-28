@@ -74,6 +74,7 @@ void AAItemSpawner::Server_SpawnItem()
 
 		SpawnLocation.X += FMath::RandRange(500, 1000);
 		SpawnLocation.Y += FMath::RandRange(500, 1000);
+
 		switch (RandomSpawnNum) {
 		case 1:
 		{

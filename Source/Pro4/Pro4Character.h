@@ -91,6 +91,12 @@ public:
 	void SetPlayerArmor(class AAArmor* Armor);
 	void AddPlayerGrenade(class AAGrenade* _Grenade);
 	void DetectZombieSpawner(bool isNight);
+	void StartEncroachTimer();
+	UFUNCTION(Server, Reliable)
+	void SetPlayerEncroach();
+	void StopEncroachTimer();
+	UFUNCTION(Server, Reliable)
+	void RecoveryEncroach();
 	void PlayerEscape();
 	
 	APro4PlayerController* GetPlayerController();
@@ -246,7 +252,7 @@ public:
 
 #pragma region PlayerState
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=State)
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category=State)
 	float MaxHP;
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category=State)
@@ -284,6 +290,8 @@ private:
 	FWeaponInfo Knife;
 
 	FGrenadeInfo PlayerGrenade;
+
+	class UNecrophobiaGameInstance* NecGameInstance;
 #pragma endregion
 
 private:
@@ -360,7 +368,8 @@ private:
 
 	
 	float EncroachTime;
-	int32 EncroachLevel;
+	FTimerHandle EncroachTimer;
+	int32 EncroachLevel = 0;
 	bool IsEncroach;
 	float CharacterRotationPitch;
 
