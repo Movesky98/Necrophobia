@@ -248,7 +248,8 @@ public:
 	}
 
 	/* Helicopter */
-	void CallHelicopterToEscape();
+	UFUNCTION(Server, Reliable)
+	void CallHelicopterToEscapeOnServer();
 
 #pragma region PlayerState
 public:

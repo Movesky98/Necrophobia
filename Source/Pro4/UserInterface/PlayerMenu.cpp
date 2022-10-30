@@ -8,6 +8,7 @@
 #include "../Item/AGrenade.h"
 #include "../Item/AArmor.h"
 #include "../Item/AWeapon.h"
+#include "../Item/Ammo.h"
 #include "../Item/Vaccine.h"
 #include "../Item/Recovery.h"
 
@@ -212,16 +213,23 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 	}
 		break;
 	case AABaseItem::BaseItemType::Ammo:
+	{
 		// TO DO : Implement Item of Ammo
+		ARecovery* Recovery = Cast<ARecovery>(BaseItem);
+
+		UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
+		InventoryItem->SetUp("Recovery", Recovery->GetItemName(), Recovery->GetItemNum(), Recovery->GetIconPath());
+		InventoryBox->AddChildToWrapBox(InventoryItem);
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
+	}
 		break;
 	case AABaseItem::BaseItemType::Vaccine:
 	{
 		// TO DO : Implement Item of Vaccine
-		AVaccine* Vaccine = Cast<AVaccine>(BaseItem);
-		MyPawn->SetIsPossibleEscape(true);
+		AAmmo* Ammo = Cast<AAmmo>(BaseItem);
 
 		UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
-		InventoryItem->SetUp("Vaccine", Vaccine->GetItemName(), Vaccine->GetItemNum(), Vaccine->GetIconPath());
+		InventoryItem->SetUp("Ammo", Ammo->GetItemName(), Ammo->GetItemNum(), Ammo->GetIconPath());
 		InventoryBox->AddChildToWrapBox(InventoryItem);
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
 		

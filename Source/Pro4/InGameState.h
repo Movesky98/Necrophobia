@@ -59,6 +59,8 @@ public:
 		isTimeToSpawnBoss = TimetoSpawnBoss;
 	}
 
+	void SpawnPlayerToStartLocation(TArray<FVector> SpawnArray);
+
 private:
 	UPROPERTY(Replicated)
 	uint8 InGameDay = 1;

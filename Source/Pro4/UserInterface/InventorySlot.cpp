@@ -70,7 +70,7 @@ void UInventorySlot::UseInventoryItem()
 
 	if (GetItemType() == "Vaccine")
 	{
-		PlayerCharacter->CallHelicopterToEscape();
+		PlayerCharacter->CallHelicopterToEscapeOnServer();
 	}
 	else if (GetItemType() == "Recovery")
 	{

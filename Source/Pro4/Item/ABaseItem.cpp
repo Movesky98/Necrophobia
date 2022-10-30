@@ -40,7 +40,6 @@ AABaseItem::AABaseItem()
 	DrawSize.Set(100.0f, 50.0f);
 
 	NameWidget->SetDrawSize(DrawSize);
-	NameWidget->SetRelativeLocation(FVector(0.0, 0.0, 30.0f));
 
 	BoxMesh->SetCollisionProfileName(TEXT("BaseItem"));
 	BoxMesh->SetIsReplicated(true);

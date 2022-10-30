@@ -1610,8 +1610,10 @@ void APro4Character::EquipPlayerWeaponOnClient_Implementation(const WeaponMode& 
 
 #pragma endregion
 
+#pragma region Escape
+
 /* 백신을 가졌을 때, 탈출하기 위한 헬리콥터를 부르는 함수 */
-void APro4Character::CallHelicopterToEscape()
+void APro4Character::CallHelicopterToEscapeOnServer_Implementation()
 {
 	if (!BP_Helicopter)
 	{
@@ -1628,14 +1630,17 @@ void APro4Character::CallHelicopterToEscape()
 	DrawDebugSolidBox(GetWorld(), GetActorLocation(), FVector(20.0f), FColor::Blue, true);
 
 	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+
+	// 헬리콥터가 생성될 좌표
 	FVector SpawnLocation = FVector::ZeroVector;
 	SpawnLocation.Z = 1000.0f;
 
 	FVector ToPlayerVector = GetActorLocation() - SpawnLocation;
 	ToPlayerVector.Z = 0.0f;
 	ToPlayerVector.Normalize();
+
 	FRotator SpawnRotation = ToPlayerVector.Rotation();
-	SpawnParams.Owner = this;
 
 	AHeli_AH64D* SpawnHelicopter = Cast<AHeli_AH64D>(GetWorld()->SpawnActor(BP_Helicopter->GeneratedClass));
 
@@ -1649,6 +1654,9 @@ void APro4Character::PlayerEscape()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Purple, TEXT("Player Escape"));
 }
+#pragma endregion
+
+#pragma region EncroachField
 
 /* 잠식 치료제를 사용했을 때, 플레이어의 잠식도를 치료하는 함수 */
 void APro4Character::RecoveryEncroach_Implementation()
@@ -1701,6 +1709,7 @@ void APro4Character::StopEncroachTimer()
 		GetWorldTimerManager().ClearTimer(EncroachTimer);
 	}
 }
+#pragma endregion
 
 void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {

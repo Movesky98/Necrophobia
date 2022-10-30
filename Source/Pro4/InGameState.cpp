@@ -141,6 +141,20 @@ void AInGameState::SetIsStateChanged(bool StateChanged_)
 	isStateChanged = StateChanged_;
 }
 
+void AInGameState::SpawnPlayerToStartLocation(TArray<FVector> SpawnArray)
+{
+	int i = 0;
+
+	for (APlayerState* PlayerState : PlayerArray)
+	{
+		AInGamePlayerState* InGamePlayerState = Cast<AInGamePlayerState>(PlayerState);
+		APro4Character* PlayerCharacter = Cast<APro4Character>(InGamePlayerState->GetPawn());
+
+		PlayerCharacter->SetActorLocation(SpawnArray[i]);
+		i++;
+	}
+}
+
 void AInGameState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

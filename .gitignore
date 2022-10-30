@@ -1,8 +1,9 @@
 # Visual Studio 2015 user specific files
 .vs/
 
-# Sky Assets files
+# Assets files
 Content/MOUT_Fabrication/Textures/Sky/*
+Content/Downtown_West/*
 
 # Compiled Object files
 *.slo
