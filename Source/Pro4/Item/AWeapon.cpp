@@ -15,6 +15,9 @@ AAWeapon::AAWeapon()
 	ItemType = BaseItemType::Weapon;
 	AccMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Accesory"));
 
+	AccMesh->SetCollisionProfileName(TEXT("BaseItem"));
+	AccMesh->SetIsReplicated(true);
+
 	// 여기서 GetLocalRole()을 실행하게 될 경우, Authority를 획득하게 됨.
 	
 	int32 RandomNum = FMath::RandRange(0, static_cast<int32>(WeaponType::MAX) - 1);

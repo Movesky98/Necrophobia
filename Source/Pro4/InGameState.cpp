@@ -84,6 +84,7 @@ void AInGameState::AddInGameSeconds() {
 			UE_LOG(Pro4, Warning, TEXT("The day has passed."));
 			AddInGameDay();
 			SetIsNight(false);
+
 			for (APlayerState* _PlayerState : PlayerArray)
 			{
 				AInGamePlayerState* Player = Cast<AInGamePlayerState>(_PlayerState);
@@ -95,11 +96,17 @@ void AInGameState::AddInGameSeconds() {
 		{
 			UE_LOG(Pro4, Warning, TEXT("The night has come."));
 			SetIsNight(true);
+
 			for (APlayerState* _PlayerState : PlayerArray)
 			{
 				AInGamePlayerState* Player = Cast<AInGamePlayerState>(_PlayerState);
 				APro4Character* PlayerCharacter = Cast<APro4Character>(Player->GetPawn());
 				PlayerCharacter->DetectZombieSpawner(true);
+			}
+
+			if (InGameDay == 2)
+			{
+				isTimeToSpawnBoss = true;
 			}
 		}
 	}
@@ -134,10 +141,26 @@ void AInGameState::SetIsStateChanged(bool StateChanged_)
 	isStateChanged = StateChanged_;
 }
 
+void AInGameState::SpawnPlayerToStartLocation(TArray<FVector> SpawnArray)
+{
+	int i = 0;
+
+	for (APlayerState* PlayerState : PlayerArray)
+	{
+		AInGamePlayerState* InGamePlayerState = Cast<AInGamePlayerState>(PlayerState);
+		APro4Character* PlayerCharacter = Cast<APro4Character>(InGamePlayerState->GetPawn());
+
+		PlayerCharacter->SetActorLocation(SpawnArray[i]);
+		i++;
+	}
+}
+
 void AInGameState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	DOREPLIFETIME(AInGameState, isBossSpawn);
+	DOREPLIFETIME(AInGameState, isTimeToSpawnBoss);
 	DOREPLIFETIME(AInGameState, isNight);
 	DOREPLIFETIME(AInGameState, InGameSec);
 	DOREPLIFETIME(AInGameState, InGameMin);

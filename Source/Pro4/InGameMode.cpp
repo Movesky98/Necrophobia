@@ -3,10 +3,12 @@
 #include "InGameMode.h"
 #include "Pro4PlayerController.h"
 #include "Pro4Character.h"
+#include "Pro4Boss.h"
 #include "NecrophobiaGameInstance.h"
 #include "InGameState.h"
 #include "InGamePlayerState.h"
 #include "UserInterface/PlayerMenu.h"
+
 
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
@@ -70,6 +72,11 @@ void AInGameMode::Tick(float DeltaTime)
     {
         Time--;
         InGameState->AddInGameSeconds();
+
+        if (InGameState->GetIsTimeToSpawnBoss())
+        {
+            SpawnBossZombie();
+        }
     }
 }
 
@@ -114,6 +121,15 @@ void AInGameMode::StartGame()
     UEngine* Engine = GameInstance->GetEngine();
     if (Engine == nullptr) return;
     Engine->AddOnScreenDebugMessage(0, 10.0f, FColor::Red, TEXT("Game Start!"));
+
+    TArray<FVector> SpawnArray;
+    SpawnArray.Add(FVector(-45470.0f, 19260.0f, -840.0f));
+    SpawnArray.Add(FVector(0.0f, 0.0f, 100.0f));
+    SpawnArray.Add(FVector(100.0f, 0.0f, 100.0f));
+    SpawnArray.Add(FVector(0.0f, 100.0f, 100.0f));
+    SpawnArray.Add(FVector(100.0f, 100.0f, 100.0f));
+
+    InGameState->SpawnPlayerToStartLocation(SpawnArray);
 }
 
 /* 충분한 인원이 모이고 시간초를 세는 함수 */
@@ -125,4 +141,17 @@ void AInGameMode::CountingTheSeconds()
         StartGame();
         GetWorldTimerManager().ClearTimer(GameStartTimer);
     }
+}
+
+void AInGameMode::SpawnBossZombie()
+{
+    FVector SpawnLocation = FVector(-47632.0f, 19246.0f, 40.0f);
+    FRotator SpawnRotation = FRotator(0.0f);
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.Owner = this;
+
+    GetWorld()->SpawnActor<APro4Boss>(APro4Boss::StaticClass(), SpawnLocation, SpawnRotation, SpawnParams);
+
+    InGameState->SetIsBossSpawn(true);
+    InGameState->SetIsTimeToSpawnBoss(false);
 }

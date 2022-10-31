@@ -91,6 +91,13 @@ public:
 	void SetPlayerArmor(class AAArmor* Armor);
 	void AddPlayerGrenade(class AAGrenade* _Grenade);
 	void DetectZombieSpawner(bool isNight);
+	void StartEncroachTimer();
+	UFUNCTION(Server, Reliable)
+	void SetPlayerEncroach();
+	void StopEncroachTimer();
+	UFUNCTION(Server, Reliable)
+	void RecoveryEncroach();
+	void PlayerEscape();
 	
 	APro4PlayerController* GetPlayerController();
 	void SetPlayerController(APro4PlayerController* PlayerController);
@@ -128,11 +135,18 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Player")
 	UStaticMeshComponent* Grenade;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = State)
-	float CharacterRotationYaw;
-
 	UPROPERTY(VisibleAnywhere, Category = "Particle")
 	UParticleSystemComponent* MuzzleFlash;
+
+	bool GetIsPossibleEscape()
+	{
+		return IsPossibleEscape;
+	}
+
+	void SetIsPossibleEscape(bool Escape)
+	{
+		IsPossibleEscape = Escape;
+	}
 
 	bool IsProning()
 	{
@@ -212,11 +226,6 @@ public:
 		return CharacterRotationPitch;
 	}
 
-
-	float CharacterYaw()
-	{
-		return CharacterRotationYaw;
-	}
 	/* ZombieSpawner Sector */
 	uint16 GetSpawnZombieCurCount()
 	{
@@ -238,9 +247,13 @@ public:
 		SpawnZombieCurCount = _Count;
 	}
 
+	/* Helicopter */
+	UFUNCTION(Server, Reliable)
+	void CallHelicopterToEscapeOnServer();
+
 #pragma region PlayerState
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=State)
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category=State)
 	float MaxHP;
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category=State)
@@ -278,12 +291,16 @@ private:
 	FWeaponInfo Knife;
 
 	FGrenadeInfo PlayerGrenade;
-#pragma endregion
 
+	class UNecrophobiaGameInstance* NecGameInstance;
+#pragma endregion
 
 private:
 	void NotifyActorBeginOverlap(AActor* Act) override;
 	void NotifyActorEndOverlap(AActor* Act) override;
+
+	UPROPERTY(EditAnywhere)
+	UBlueprint* BP_Helicopter;
 
 	// 주요 클래스
 	APro4PlayerController* PlayerController;
@@ -340,7 +357,7 @@ private:
 	bool IsForward;
 	bool IsFire;
 	bool IsMontagePlay;
-	bool CanZoom;
+	bool IsPossibleEscape;
 
 	int32 Updownflag;
 	int32 LeftRightflag;
@@ -352,10 +369,10 @@ private:
 
 	
 	float EncroachTime;
-	int32 EncroachLevel;
+	FTimerHandle EncroachTimer;
+	int32 EncroachLevel = 0;
 	bool IsEncroach;
 	float CharacterRotationPitch;
-	//float CharacterRotationYaw;
 
 	FTimerHandle FireDelay;
 

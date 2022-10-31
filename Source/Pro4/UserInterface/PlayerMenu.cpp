@@ -3,10 +3,15 @@
 
 #include "PlayerMenu.h"
 #include "InventorySlot.h"
+
 #include "../Item/ABaseItem.h"
 #include "../Item/AGrenade.h"
 #include "../Item/AArmor.h"
 #include "../Item/AWeapon.h"
+#include "../Item/Ammo.h"
+#include "../Item/Vaccine.h"
+#include "../Item/Recovery.h"
+
 #include "../Pro4PlayerController.h"
 #include "../Pro4Character.h"
 
@@ -177,16 +182,6 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 				KnifeBox->SetVisibility(ESlateVisibility::Visible);
 			}
 		}
-
-		/*
-		* UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
-		* Weapon Item의 경우 인벤토리에 무기를 저장하지 않음.
-		* 아래는 무기를 제외한 아이템(총알, 수류탄, 연막탄과 같은 여러가지를 가질 수 있는 아이템)을 위한 코드임.
-		* InventoryItem->SetUp(Weapon->ItemName, Weapon->ItemNum, Weapon->GetIconPath());
-		* UE_LOG(Pro4, Warning, TEXT("Icon Path : %s"), *Weapon->GetIconPath());
-		* InventoryBox->AddChildToWrapBox(InventoryItem);
-		* GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
-		*/
 	}
 		break;
 	case AABaseItem::BaseItemType::Armor:
@@ -204,22 +199,41 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		if (!ensure(Grenade != nullptr)) return;
 
 		MyPawn->AddPlayerGrenade(Grenade);
-		/*
-		* AAGrenade* Grenade = Cast<AAGrenade>(BaseItem);
-		* InventoryItem->SetUp(Grenade->ItemName, Grenade->ItemNum, "Hello");
-		* InventoryBox->AddChildToWrapBox(InventoryItem);
-		* GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
-		*/
 	}
 		break;
 	case AABaseItem::BaseItemType::Recovery:
+	{
 		// TO DO : Implement Item of Recovery
+		ARecovery* Recovery = Cast<ARecovery>(BaseItem);
+
+		UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
+		InventoryItem->SetUp("Recovery", Recovery->GetItemName(), Recovery->GetItemNum(), Recovery->GetIconPath());
+		InventoryBox->AddChildToWrapBox(InventoryItem);
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
+	}
 		break;
 	case AABaseItem::BaseItemType::Ammo:
+	{
 		// TO DO : Implement Item of Ammo
+		ARecovery* Recovery = Cast<ARecovery>(BaseItem);
+
+		UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
+		InventoryItem->SetUp("Recovery", Recovery->GetItemName(), Recovery->GetItemNum(), Recovery->GetIconPath());
+		InventoryBox->AddChildToWrapBox(InventoryItem);
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
+	}
 		break;
-	case AABaseItem::BaseItemType::Parts:
-		// TO DO : Implement Item of Parts
+	case AABaseItem::BaseItemType::Vaccine:
+	{
+		// TO DO : Implement Item of Vaccine
+		AAmmo* Ammo = Cast<AAmmo>(BaseItem);
+
+		UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
+		InventoryItem->SetUp("Ammo", Ammo->GetItemName(), Ammo->GetItemNum(), Ammo->GetIconPath());
+		InventoryBox->AddChildToWrapBox(InventoryItem);
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
+		
+	}
 		break;
 	default:
 		UE_LOG(Pro4, Warning, TEXT("Add item to Inventory ERROR"));
@@ -250,7 +264,7 @@ void UPlayerMenu::AddItemToGrenade(const FString& GrenadeName, uint16 Num)
 	}
 }
 
-void UPlayerMenu::AddItemToWeapon(FString _IconPath, FString _WeaponName) 
+void UPlayerMenu::AddItemToWeapon(FString _IconPath, FString _WeaponName)
 {
 	if (_WeaponName == "Pistol")
 	{
@@ -261,7 +275,7 @@ void UPlayerMenu::AddItemToWeapon(FString _IconPath, FString _WeaponName)
 
 		UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *SubWeaponBox->Brush.GetResourceName().ToString());
 	}
-	else if(_WeaponName == "Knife")
+	else if (_WeaponName == "Knife")
 	{
 		// Image를 그림
 		UTexture2D* ItemImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *_IconPath), NULL, LOAD_None, NULL);
@@ -279,4 +293,14 @@ void UPlayerMenu::AddItemToWeapon(FString _IconPath, FString _WeaponName)
 
 		UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *MainWeaponBox->Brush.GetResourceName().ToString());
 	}
+}
+
+void UPlayerMenu::SetPlayerHP(float CurHP, float MaxHP)
+{
+	HP_ProgressBar->Percent = CurHP / MaxHP;
+}
+
+void UPlayerMenu::SetPlayerAP(float CurAP, float MaxAP)
+{
+	Armor_ProgressBar->Percent = CurAP / MaxAP;
 }

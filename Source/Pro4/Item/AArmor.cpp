@@ -59,7 +59,7 @@ void AAArmor::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	// ItemName Draw
-	DrawDebugString(GetWorld(), FVector(0, 0, 100), ItemName, this, FColor::Green, DeltaTime);
+	// DrawDebugString(GetWorld(), FVector(0, 0, 100), ItemName, this, FColor::Green, DeltaTime);
 }
 
 void AAArmor::ViewItemName()

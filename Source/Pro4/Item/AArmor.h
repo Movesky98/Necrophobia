@@ -116,7 +116,7 @@ private:
 
 	USkeletalMesh* SK_ArmorItem;
 
-	class UItemNameWidget* WBP_NameWidget;
+	UItemNameWidget* WBP_NameWidget;
 
 	bool bIsObservable;
 };

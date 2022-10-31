@@ -9,6 +9,7 @@
 #include "Item/AArmor.h"
 #include "Item/AGrenade.h"
 #include "ZombieSpawner.h"
+#include "Heli_AH64D.h"
 #include "Door.h"
 
 #include "DrawDebugHelpers.h"
@@ -80,6 +81,13 @@ APro4Character::APro4Character()
 		GetMesh()->SetAnimInstanceClass(SK_ANIM.Class);
 	}
 
+	/* Helicopter 클래스를 찾아옴 */
+	static ConstructorHelpers::FObjectFinder<UBlueprint> Helicopter(TEXT("/Game/VigilanteContent/Vehicles/West_Heli_AH64D/BP_TESTHeli"));
+	if(Helicopter.Succeeded())
+	{
+		BP_Helicopter = Helicopter.Object;
+	}
+
 	SocketSetting();
 
 	Tags.Add("Player");
@@ -92,7 +100,7 @@ void APro4Character::BeginPlay()
 	
 	DetectZSpawnerCol->OnComponentBeginOverlap.AddDynamic(this, &APro4Character::ZombieSpawnerBeginOverlap);
 	DetectZSpawnerCol->OnComponentEndOverlap.AddDynamic(this, &APro4Character::ZombieSpawnerEndOverlap);
-
+	NecGameInstance = Cast<UNecrophobiaGameInstance>(GetGameInstance());
 	GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, GetActorLocation().ToString());
 
 	PlayerController = Cast<APro4PlayerController>(GetWorld()->GetFirstPlayerController());
@@ -112,9 +120,9 @@ void APro4Character::CameraSetting()
 	SpringArm->bInheritYaw = true;
 	SpringArm->bDoCollisionTest = true;
 	//bUseControllerRotationYaw = false;
-	GetCharacterMovement()->bOrientRotationToMovement = true;
+	//GetCharacterMovement()->bOrientRotationToMovement = true;
 	//GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
-	SpringArm->SocketOffset = FVector(0.0f, 100.0f, 50.0f);
+	SpringArm->SocketOffset = FVector(0.0f, 50.0f, 100.0f);
 
 	MapSpringArm->bInheritPitch = true;
 	MapSpringArm->bInheritRoll = true;
@@ -179,8 +187,6 @@ void APro4Character::StateSetting()
 	EncroachLevel = 0;
 	IsEncroach = false;
 	EncroachTime = 0.0f;
-
-	CanZoom = true;
 }
 
 void APro4Character::SocketSetting()
@@ -257,7 +263,6 @@ void APro4Character::Tick(float DeltaTime)
 				IsHold = false;
 				HoldTime = 0.0f;
 				HoldFlag = 0;
-				CanZoom = true;
 			}
 			break;
 		case 2:
@@ -266,15 +271,9 @@ void APro4Character::Tick(float DeltaTime)
 				IsHold = false;
 				HoldTime = 0.0f;
 				HoldFlag = 0;
-				CanZoom = true;
 			}
 			break;
 		}
-	}
-
-	if (!GetMovementComponent()->IsFalling())
-	{
-		CanZoom = true;
 	}
 
 	if (Updownflag == 1 && LeftRightflag != 0)
@@ -290,47 +289,7 @@ void APro4Character::Tick(float DeltaTime)
 		SpringArm->SetRelativeRotation(FRotator::ZeroRotator);
 	}
 
-	if (IsEncroach)
-	{
-		EncroachTime += DeltaTime;
-		if (EncroachTime > 5.0f)
-		{
-			EncroachLevel++;
-			switch (EncroachLevel)
-			{
-			case 1:
-				MaxHP = 90;
-				if (CurrentHP > 90)
-				{
-					CurrentHP = 90;
-				}
-				break;
-			case 2:
-				MaxHP = 80;
-				if (CurrentHP > 80)
-				{
-					CurrentHP = 80;
-				}
-				break;
-			default:
-				break;
-			}
-			EncroachTime = 0.0f;
-		}
-	}
-
-	if (IsZoom)
-	{
-		CharacterRotationPitch = GetControlRotation().Pitch;
-	}
-
-	if ((GetControlRotation().Yaw >= 325.0f && GetControlRotation().Yaw < 360.0) || (GetControlRotation().Yaw >= 0.0f && GetControlRotation().Yaw < 35.0))
-	{
-		CharacterRotationYaw = GetControlRotation().Yaw;
-	}
-	/* Trace하는 함수 */
-	// CheckFrontActorUsingTrace();
-	
+	CharacterRotationPitch = GetControlRotation().Pitch;
 	// Character Role Test.
 	// DrawDebugString(GetWorld(), FVector(0, 0, 150), GetEnumRole(GetLocalRole()), this, FColor::Green, DeltaTime);
 }
@@ -372,14 +331,12 @@ void APro4Character::OnEquipMontageEnded(UAnimMontage* Montage, bool bInterrupte
 {
 	IsMontagePlay = false;
 	IsEquipping = false;
-	CanZoom = true;
 }
 
 void APro4Character::OnReloadMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	IsMontagePlay = false;
 	IsReloading = false;
-	CanZoom = true;
 }
 
 void APro4Character::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
@@ -549,6 +506,7 @@ void APro4Character::UpDown(float NewAxisValue)
 			IsForward = false;
 			Updownflag = 0;
 		}
+
 		MoveRate = NewAxisValue * UpdownSpeed();
 		AddMovementInput(FRotationMatrix(FRotator(0.0f, GetControlRotation().Yaw, 0.0f)).GetUnitAxis(EAxis::X), MoveRate);
 	}
@@ -607,18 +565,16 @@ void APro4Character::Jump()
 		{
 		case CharacterState::Standing:
 			Super::Jump();
-			CanZoom = false;
 			break;
 		case CharacterState::Crouching:
 			HoldFlag = 1;
 			Super::UnCrouch();
 			CurrentCharacterState = CharacterState::Standing;
-			CanZoom = false;
 			break;
 		case CharacterState::Proning:
 			HoldFlag = 2;
+			UE_LOG(Pro4, Log, TEXT("Stand."));
 			CurrentCharacterState = CharacterState::Standing;
-			CanZoom = false;
 			break;
 		}
 
@@ -657,7 +613,6 @@ void APro4Character::beCrouch()
 
 		if (IsZoom)
 			Zoom();
-		CanZoom = false;
 	}
 }
 
@@ -687,7 +642,6 @@ void APro4Character::Prone()
 
 		if (IsZoom)
 			Zoom();
-		CanZoom = false;
 	}
 }
 /// <summary>
@@ -700,96 +654,68 @@ void APro4Character::Prone()
 
 void APro4Character::EquipMain1()
 {
-	if (MainWeapon.bHaveWeapon)
+	if (CurrentWeaponMode == WeaponMode::Main1)
 	{
-		if (IsMontagePlay)
-		{
-			Pro4Anim->Montage_Stop(0.0f);
-			IsMontagePlay = false;
-		}
-
-		if (CurrentWeaponMode == WeaponMode::Main1)
-		{
-			if (IsMontagePlay)
-			{
-				Pro4Anim->Montage_Stop(0.0f);
-				IsMontagePlay = false;
-			}
-			Equipflag = 0;
-			CurrentWeaponMode = WeaponMode::Disarming;
-		}
-		else
-		{
-			if (IsZoom)
-				Zoom();
-			Equipflag = 1;
-			Pro4Anim->PlayEquipMontage();
-			Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->EquipMontage);
-			IsMontagePlay = true;
-			IsEquipping = true;
-			CurrentWeaponMode = WeaponMode::Main1;
-		}
+		UE_LOG(Pro4, Log, TEXT("Disarming."));
+		Equipflag = 0;
+		CurrentWeaponMode = WeaponMode::Disarming;
 	}
+	else
+	{
+		if (IsEquipping) return;
+		Equipflag = 1;
+		Pro4Anim->PlayEquipMontage();
+		Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->EquipMontage);
+		IsMontagePlay = true;
+		IsEquipping = true;
+		CurrentWeaponMode = WeaponMode::Main1;
+	}
+
 	EquipPlayerWeaponOnServer(CurrentWeaponMode);
 }
 
 void APro4Character::EquipMain2()
 {
-	if (MainWeapon.bHaveWeapon)
+	if (CurrentWeaponMode == WeaponMode::Main2)
 	{
-		if (IsMontagePlay)
-		{
-			Pro4Anim->Montage_Stop(0.0f);
-			IsMontagePlay = false;
-		}
-
-		if (CurrentWeaponMode == WeaponMode::Main2)
-		{
-			Equipflag = 0;
-			CurrentWeaponMode = WeaponMode::Disarming;
-		}
-		else
-		{
-			if (IsZoom)
-				Zoom();
-			Equipflag = 1;
-			Pro4Anim->PlayEquipMontage();
-			Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->EquipMontage);
-			IsMontagePlay = true;
-			IsEquipping = true;
-			CurrentWeaponMode = WeaponMode::Main2;
-		}
+		UE_LOG(Pro4, Log, TEXT("Disarming."));
+		Equipflag = 0;
+		CurrentWeaponMode = WeaponMode::Disarming;
 	}
+	else
+	{
+		if (IsEquipping) return;
+		UE_LOG(Pro4, Log, TEXT("EquipMain2."));
+		Equipflag = 1;
+		Pro4Anim->PlayEquipMontage();
+		Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->EquipMontage);
+		IsMontagePlay = true;
+		IsEquipping = true;
+		CurrentWeaponMode = WeaponMode::Main2;
+	}
+
 	EquipPlayerWeaponOnServer(CurrentWeaponMode);
 }
 
 void APro4Character::EquipSub()
 {
-	if (SubWeapon.bHaveWeapon)
+	if (CurrentWeaponMode == WeaponMode::Sub)
 	{
-		if (IsMontagePlay)
-		{
-			Pro4Anim->Montage_Stop(0.0f);
-			IsMontagePlay = false;
-		}
-
-		if (CurrentWeaponMode == WeaponMode::Sub)
-		{
-			Equipflag = 0;
-			CurrentWeaponMode = WeaponMode::Disarming;
-		}
-		else
-		{
-			if (IsZoom)
-				Zoom();
-			Equipflag = 2;
-			Pro4Anim->PlayEquipMontage();
-			Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->EquipMontage);
-			IsMontagePlay = true;
-			IsEquipping = true;
-			CurrentWeaponMode = WeaponMode::Sub;
-		}
+		UE_LOG(Pro4, Log, TEXT("Disarming."));
+		CurrentWeaponMode = WeaponMode::Disarming;
 	}
+	else
+	{
+		if (IsEquipping) return;
+		UE_LOG(Pro4, Log, TEXT("EquipSub."));
+		Equipflag = 2;
+		Pro4Anim->PlayEquipMontage();
+		Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->EquipMontage);
+		IsMontagePlay = true;
+		IsEquipping = true;
+		CurrentWeaponMode = WeaponMode::Sub;
+	}
+
 	EquipPlayerWeaponOnServer(CurrentWeaponMode);
 }
 
@@ -875,9 +801,6 @@ void APro4Character::Reload()
 			UE_LOG(Pro4, Log, TEXT("Reload."));
 			break;
 		}
-
-		if (IsZoom)
-				Zoom();
 	}
 }
 /// <summary>
@@ -916,7 +839,7 @@ void APro4Character::Attack()
 
 void APro4Character::Zoom() // �� ��, �� �ƿ�(�ѵ����������)
 {
-	if (Weapon != nullptr && CanZoom==true && !IsEquipping && !IsReloading)
+	if (Weapon != nullptr)
 	{
 		if (CurrentWeaponMode == WeaponMode::Main1 || CurrentWeaponMode == WeaponMode::Main2 || CurrentWeaponMode == WeaponMode::Sub)
 		{
@@ -926,7 +849,6 @@ void APro4Character::Zoom() // �� ��, �� �ƿ�(�ѵ�����
 				SpringArm->AttachToComponent(GetCapsuleComponent(), FAttachmentTransformRules::SnapToTargetIncludingScale);
 				SpringArm->TargetArmLength = 450.0f;
 				SpringArm->SocketOffset = FVector(0.0f, 100.0f, 50.0f);
-				Camera->FieldOfView = 90.0f;
 			}
 			else
 			{
@@ -934,12 +856,6 @@ void APro4Character::Zoom() // �� ��, �� �ƿ�(�ѵ�����
 				SpringArm->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetIncludingScale, "b_gun_scopeCamera");
 				SpringArm->TargetArmLength = 0.0f;
 				SpringArm->SocketOffset = FVector(0.0f, 0.0f, 0.0f);
-				if (MainWeapon.Name == "SR")
-				{
-					Camera->FieldOfView = 22.5f;
-				}
-				if (IsRun)
-					IsRun = false;
 			}
 		}
 	}
@@ -1141,10 +1057,9 @@ void APro4Character::InteractPressed()
 			// Actor가 가지고 있는 Tag가 Item이라면.
 			if (Interactable->ActorHasTag(TEXT("Item")))
 			{
-				UNecrophobiaGameInstance* Instance = Cast<UNecrophobiaGameInstance>(GetGameInstance());
 				UE_LOG(Pro4, Log, TEXT("Get %s"), *Interactable->GetName());
 				
-				Instance->PlayerMenu->AddItemToInventory(Interactable, 1);
+				NecGameInstance->PlayerMenu->AddItemToInventory(Interactable, 1);
 			}
 			else if (Interactable->ActorHasTag(TEXT("Door")))
 			{
@@ -1162,11 +1077,13 @@ void APro4Character::InteractPressed()
 
 void APro4Character::ChangePlayerWidget()
 {
-	UNecrophobiaGameInstance* Instance = Cast<UNecrophobiaGameInstance>(GetGameInstance());
-
+	if (!NecGameInstance)
+	{
+		return;
+	}
 	UE_LOG(Pro4, Warning, TEXT("Change PlayerWidget."));
 
-	Instance->PlayerMenu->ChangePlayerWidget();
+	NecGameInstance->PlayerMenu->ChangePlayerWidget();
 
 }
 
@@ -1424,31 +1341,35 @@ void APro4Character::NoticePlayerArmorOnClient_Implementation(AAArmor* _Armor, c
 
 void APro4Character::AddPlayerGrenade(AAGrenade* _Grenade)
 {
-	UNecrophobiaGameInstance* Instance = Cast<UNecrophobiaGameInstance>(GetGameInstance());
+	if (NecGameInstance == nullptr)
+	{
+		return;
+	}
 
 	if (!_Grenade->GetItemName().Compare("Grenade"))
 	{
 		PlayerGrenade.GrenadeNum++;
 
-		Instance->PlayerMenu->AddItemToGrenade(_Grenade->GetItemName(), PlayerGrenade.GrenadeNum);
+		NecGameInstance->PlayerMenu->AddItemToGrenade(_Grenade->GetItemName(), PlayerGrenade.GrenadeNum);
 	}
 	else if(!_Grenade->GetItemName().Compare("Smoke"))
 	{
 		PlayerGrenade.SmokeNum++;
 
-		Instance->PlayerMenu->AddItemToGrenade(_Grenade->GetItemName(), PlayerGrenade.SmokeNum);
+		NecGameInstance->PlayerMenu->AddItemToGrenade(_Grenade->GetItemName(), PlayerGrenade.SmokeNum);
 	}
 	else if (!_Grenade->GetItemName().Compare("Flash"))
 	{
 		PlayerGrenade.FlashNum++;
 
-		Instance->PlayerMenu->AddItemToGrenade(_Grenade->GetItemName(), PlayerGrenade.FlashNum);
+		NecGameInstance->PlayerMenu->AddItemToGrenade(_Grenade->GetItemName(), PlayerGrenade.FlashNum);
 	}
 
 	Server_DestroyItem(_Grenade);
 }
 #pragma endregion
 
+/* 플레리어 앞에있는 물건 확인하는 함수 */
 void APro4Character::CheckFrontActorUsingTrace()
 {
 	FVector CharacterLoc;
@@ -1505,7 +1426,7 @@ void APro4Character::CheckFrontActorUsingTrace()
 
 				}
 					break;
-				case AABaseItem::BaseItemType::Parts:
+				case AABaseItem::BaseItemType::Vaccine:
 				{
 
 				}
@@ -1542,8 +1463,9 @@ void APro4Character::RecoverPlayerHealthOnServer_Implementation()
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, "Recovery Player HP On Server");
 	CurrentHP += 10.0f;
 
-	if (CurrentHP >= 100)
+	if (CurrentHP >= MaxHP)
 	{
+		CurrentHP = MaxHP;
 		bIsPlayerGetAttacked = false;
 		GetWorldTimerManager().ClearTimer(HealthRecoveryTimer);
 	}
@@ -1570,14 +1492,10 @@ void APro4Character::PlayerHealthGetDamagedOnServer_Implementation(float Damage)
 	{
 		// 회복을 하기위해 타이머를 설정, 현재 플레이어의 상태 : 피격상태
 		bIsPlayerGetAttacked = true;
-		GetWorldTimerManager().SetTimer(HealthRecoveryTimer, this, &APro4Character::RecoverPlayerHealthOnServer, 1.0f, true, 5.0f);
 	}
-	else
-	{
-		// 다시 공격받았을 경우, 타이머를 리셋하고 다시 설정. 현재 플레이어의 상태 : 피격상태
-		GetWorldTimerManager().ClearTimer(HealthRecoveryTimer);
-		GetWorldTimerManager().SetTimer(HealthRecoveryTimer, this, &APro4Character::RecoverPlayerHealthOnServer, 1.0f, true, 5.0f);
-	}
+
+	GetWorldTimerManager().ClearTimer(HealthRecoveryTimer);
+	GetWorldTimerManager().SetTimer(HealthRecoveryTimer, this, &APro4Character::RecoverPlayerHealthOnServer, 1.0f, true, 5.0f);
 }
 
 bool APro4Character::PlayerHealthGetDamagedOnServer_Validate(float Damage)
@@ -1599,15 +1517,6 @@ void APro4Character::GetDamaged(float Damage)
 		PlayerHealthGetDamagedOnServer(Damage);
 	}
 }
-
-void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	
-	DOREPLIFETIME(APro4Character, CurrentHP);
-	DOREPLIFETIME(APro4Character, CurrentAP);
-}
-
 
 #pragma endregion
 
@@ -1657,6 +1566,8 @@ void APro4Character::DetectZombieSpawner(bool isNight)
 
 #pragma endregion
 
+#pragma region EquipPlayerWeapon
+
 void APro4Character::EquipPlayerWeaponOnServer_Implementation(const WeaponMode& _CurWeaponMode, UStaticMesh* GrenadeMesh = nullptr)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("EquipPlayerWeaponOnServer"));
@@ -1695,4 +1606,116 @@ void APro4Character::EquipPlayerWeaponOnClient_Implementation(const WeaponMode& 
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("_CurWeaponMode Variable has garbage value."));
 		break;
 	}
+}
+
+#pragma endregion
+
+#pragma region Escape
+
+/* 백신을 가졌을 때, 탈출하기 위한 헬리콥터를 부르는 함수 */
+void APro4Character::CallHelicopterToEscapeOnServer_Implementation()
+{
+	if (!BP_Helicopter)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("CANT FIND BP_Helicopter"));
+		return;
+	}
+
+	if (!GetIsPossibleEscape())
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("This Player can't Escape."));
+		return;
+	}
+
+	DrawDebugSolidBox(GetWorld(), GetActorLocation(), FVector(20.0f), FColor::Blue, true);
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+
+	// 헬리콥터가 생성될 좌표
+	FVector SpawnLocation = FVector::ZeroVector;
+	SpawnLocation.Z = 1000.0f;
+
+	FVector ToPlayerVector = GetActorLocation() - SpawnLocation;
+	ToPlayerVector.Z = 0.0f;
+	ToPlayerVector.Normalize();
+
+	FRotator SpawnRotation = ToPlayerVector.Rotation();
+
+	AHeli_AH64D* SpawnHelicopter = Cast<AHeli_AH64D>(GetWorld()->SpawnActor(BP_Helicopter->GeneratedClass));
+
+	SpawnHelicopter->SetTargetPlayerLocation(GetActorLocation());
+	SpawnHelicopter->SetActorLocation(SpawnLocation);
+	SpawnHelicopter->SetActorRotation(SpawnRotation);
+}
+
+/* 플레이어가 탈출에 성공했을 때 실행되는 함수 */
+void APro4Character::PlayerEscape()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Purple, TEXT("Player Escape"));
+}
+#pragma endregion
+
+#pragma region EncroachField
+
+/* 잠식 치료제를 사용했을 때, 플레이어의 잠식도를 치료하는 함수 */
+void APro4Character::RecoveryEncroach_Implementation()
+{
+	if (EncroachLevel > 0)
+	{
+		EncroachLevel--;
+	}
+	else
+	{
+		return;
+	}
+
+	if (MaxHP >= 50 && MaxHP < 100)
+	{
+		MaxHP = 100 - 10 * EncroachLevel;
+
+		GetWorldTimerManager().ClearTimer(HealthRecoveryTimer);
+		GetWorldTimerManager().SetTimer(HealthRecoveryTimer, this, &APro4Character::RecoverPlayerHealthOnServer, 1.0f, true, 5.0f);
+	}
+}
+
+void APro4Character::StartEncroachTimer()
+{
+	if (IsEncroach && GetWorld()->IsServer())
+	{
+		GetWorldTimerManager().SetTimer(EncroachTimer, this, &APro4Character::SetPlayerEncroach, 5.0f, true);
+	}
+}
+
+void APro4Character::SetPlayerEncroach_Implementation() 
+{
+	if (EncroachLevel < 5)
+	{
+		EncroachLevel++;
+	}
+	
+	MaxHP = 100 - 10 * EncroachLevel;
+
+	if (CurrentHP >= MaxHP)
+	{
+		CurrentHP = MaxHP;
+	}
+}
+
+void APro4Character::StopEncroachTimer()
+{
+	if (!IsEncroach && GetWorld()->IsServer())
+	{
+		GetWorldTimerManager().ClearTimer(EncroachTimer);
+	}
+}
+#pragma endregion
+
+void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APro4Character, CurrentHP);
+	DOREPLIFETIME(APro4Character, MaxHP);
+	DOREPLIFETIME(APro4Character, CurrentAP);
 }

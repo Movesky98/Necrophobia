@@ -74,6 +74,7 @@ void AAItemSpawner::Server_SpawnItem()
 
 		SpawnLocation.X += FMath::RandRange(500, 1000);
 		SpawnLocation.Y += FMath::RandRange(500, 1000);
+
 		switch (RandomSpawnNum) {
 		case 1:
 		{
@@ -97,7 +98,7 @@ void AAItemSpawner::Server_SpawnItem()
 			// InstanceItem->ItemType = AABaseItem::BaseItemType::Ammo;
 			break;
 		case 6:
-			// InstanceItem->ItemType = AABaseItem::BaseItemType::Parts;
+			// InstanceItem->ItemType = AABaseItem::BaseItemType::Vaccine;
 			break;
 		default:
 			UE_LOG(Pro4, Warning, TEXT("Spawn Item ERROR."));

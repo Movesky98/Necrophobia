@@ -173,6 +173,9 @@ void AAGrenade::SetGrenadeExplosion()
 	FCollisionQueryParams GrenadeColParams;
 
 	DrawDebugSphere(GetWorld(), ExplosionLocation, GrenadeColSphere.GetSphereRadius(), 30, FColor::Green, true, 5.0f);
+
+	WBP_NameWidget->SetVisibility(ESlateVisibility::Hidden);
+	GrenadeProjectile->bSimulationEnabled = false;
 	GrenadeParticle->ToggleActive();
 
 	bool bIsHit = GetWorld()->SweepMultiByProfile(OutHits, ExplosionLocation, ExplosionLocation, FQuat::Identity, ProfileName, GrenadeColSphere);
@@ -196,7 +199,7 @@ void AAGrenade::SetGrenadeExplosion()
 		}
 	}
 
-	GetWorldTimerManager().SetTimer(SetExplosionTimer, this, &AAGrenade::GrenadeExplosion, 2.5f);
+	GetWorldTimerManager().SetTimer(SetExplosionTimer, this, &AAGrenade::GrenadeExplosion, 1.5f);
 }
 
 void AAGrenade::GrenadeExplosion()

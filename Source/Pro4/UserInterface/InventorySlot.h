@@ -14,13 +14,20 @@ class PRO4_API UInventorySlot : public UUserWidget
 {
 	GENERATED_BODY()
 public:
-	void SetUp(FString& Name, uint16 Num, FString Path);
+	virtual bool Initialize();
+	void SetUp(FString Type, FString Name, uint16 Num, FString Path);
+	
+	FString GetItemType();
+	void SetItemType(FString _ItemType);
 
 	FString GetItemName();
-	void SetItemName(FString& Name);
+	void SetItemName(FString Name);
 
 	uint16 GetItemNum();
 	void SetItemNum(uint16 Num);
+
+	UFUNCTION()
+	void UseInventoryItem();
 	
 private:
 	UPROPERTY(meta = (BindWidget))
@@ -29,6 +36,7 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	class UImage* InventorySlotImage;
 
+	FString ItemType;
 	FString ItemName;
 	uint16 ItemNum;
 };

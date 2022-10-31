@@ -51,11 +51,24 @@ void AEncroachField::BeginPlay()
 void AEncroachField::NotifyActorBeginOverlap(AActor* Act)
 {
 	UE_LOG(Pro4, Log, TEXT("Its in the encroaching field"));
+	
+	if (Act->ActorHasTag("Player"))
+	{
+		APro4Character* PlayerCharacter = Cast<APro4Character>(Act);
+		PlayerCharacter->Encroached();
+		PlayerCharacter->StartEncroachTimer();
+	}
 }
 
 void AEncroachField::NotifyActorEndOverlap(AActor* Act)
 {
 	UE_LOG(Pro4, Log, TEXT("Its out of the encroaching field"));
+	if (Act->ActorHasTag("Player"))
+	{
+		APro4Character* PlayerCharacter = Cast<APro4Character>(Act);
+		PlayerCharacter->UnEncroached();
+		PlayerCharacter->StopEncroachTimer();
+	}
 }
 
 // Called every frame

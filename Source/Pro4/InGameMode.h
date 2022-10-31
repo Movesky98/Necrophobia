@@ -46,4 +46,6 @@ private:
 	void CountingTheSeconds();
 
 	void UpdatePlayerTimeStete();
+
+	void SpawnBossZombie();
 };
