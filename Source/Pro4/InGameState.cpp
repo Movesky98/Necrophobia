@@ -153,6 +153,8 @@ void AInGameState::SpawnPlayerToStartLocation(TArray<FVector> SpawnArray)
 		PlayerCharacter->SetActorLocation(SpawnArray[i]);
 		i++;
 	}
+
+	InGameSec = 0;
 }
 
 void AInGameState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const

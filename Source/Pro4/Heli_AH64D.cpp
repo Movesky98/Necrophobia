@@ -13,6 +13,7 @@ AHeli_AH64D::AHeli_AH64D()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	bReplicates = true;
 
 	SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
 	MachineGunFX = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("MachineGunFX"));
@@ -67,8 +68,8 @@ AHeli_AH64D::AHeli_AH64D()
 
 void AHeli_AH64D::CallEscape()
 {
-	SetMainRotorSpeed(100.0f);
-	SetTailRotorSpeed(100.0f);
+	SetMainRotorSpeed(300.0f);
+	SetTailRotorSpeed(300.0f);
 }
 
 // Called when the game starts or when spawned
@@ -126,4 +127,20 @@ void AHeli_AH64D::CheckEscapeCollision(UPrimitiveComponent* OverlappedComp, AAct
 		APro4Character* PlayerChracter = Cast<APro4Character>(OtherActor);
 		PlayerChracter->PlayerEscape();
 	}
+}
+
+void AHeli_AH64D::SetHelicopterSetting(FVector TargetLocation, FVector SpawnLocation, FRotator TargetRotation)
+{
+	if (GetWorld()->IsServer())
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Server Call Helicopter Settings."));
+		SetHelicopterSettingOnClient(TargetLocation, SpawnLocation, TargetRotation);
+	}
+}
+
+void AHeli_AH64D::SetHelicopterSettingOnClient_Implementation(FVector TargetLocation, FVector SpawnLocation, FRotator TargetRotation)
+{
+	SetTargetPlayerLocation(TargetLocation);
+	SetActorLocation(SpawnLocation);
+	SetActorRotation(TargetRotation);
 }

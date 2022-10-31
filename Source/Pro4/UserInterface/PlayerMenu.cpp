@@ -209,34 +209,31 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
 		InventoryItem->SetUp("Recovery", Recovery->GetItemName(), Recovery->GetItemNum(), Recovery->GetIconPath());
 		InventoryBox->AddChildToWrapBox(InventoryItem);
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
 	}
 		break;
 	case AABaseItem::BaseItemType::Ammo:
 	{
 		// TO DO : Implement Item of Ammo
-		ARecovery* Recovery = Cast<ARecovery>(BaseItem);
-
-		UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
-		InventoryItem->SetUp("Recovery", Recovery->GetItemName(), Recovery->GetItemNum(), Recovery->GetIconPath());
-		InventoryBox->AddChildToWrapBox(InventoryItem);
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
-	}
-		break;
-	case AABaseItem::BaseItemType::Vaccine:
-	{
-		// TO DO : Implement Item of Vaccine
 		AAmmo* Ammo = Cast<AAmmo>(BaseItem);
 
 		UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
 		InventoryItem->SetUp("Ammo", Ammo->GetItemName(), Ammo->GetItemNum(), Ammo->GetIconPath());
 		InventoryBox->AddChildToWrapBox(InventoryItem);
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
-		
+	}
+		break;
+	case AABaseItem::BaseItemType::Vaccine:
+	{
+		// TO DO : Implement Item of Vaccine
+		AVaccine* Vaccine = Cast<AVaccine>(BaseItem);
+		MyPawn->SetIsPossibleEscapeOnServer(true);
+
+		UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
+		InventoryItem->SetUp("Vaccine", Vaccine->GetItemName(), Vaccine->GetItemNum(), Vaccine->GetIconPath());
+		InventoryBox->AddChildToWrapBox(InventoryItem);
 	}
 		break;
 	default:
-		UE_LOG(Pro4, Warning, TEXT("Add item to Inventory ERROR"));
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Add Item To Inventory ERROR"));
 		break;
 	}
 }
@@ -293,14 +290,4 @@ void UPlayerMenu::AddItemToWeapon(FString _IconPath, FString _WeaponName)
 
 		UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *MainWeaponBox->Brush.GetResourceName().ToString());
 	}
-}
-
-void UPlayerMenu::SetPlayerHP(float CurHP, float MaxHP)
-{
-	HP_ProgressBar->Percent = CurHP / MaxHP;
-}
-
-void UPlayerMenu::SetPlayerAP(float CurAP, float MaxAP)
-{
-	Armor_ProgressBar->Percent = CurAP / MaxAP;
 }

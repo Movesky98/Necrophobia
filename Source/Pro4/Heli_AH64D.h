@@ -34,6 +34,11 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void SetDoorsAngle(float DoorsAngle);
 
+	void SetHelicopterSetting(FVector TargetLocation, FVector SpawnLocation, FRotator TargetRotation);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void SetHelicopterSettingOnClient(FVector TargetLocation, FVector SpawnLocation, FRotator TargetRotation);
+
 	void SetTargetPlayerLocation(FVector Location)
 	{
 		TargetPlayerLocation = Location;

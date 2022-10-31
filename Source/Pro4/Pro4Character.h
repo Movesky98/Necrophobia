@@ -143,10 +143,8 @@ public:
 		return IsPossibleEscape;
 	}
 
-	void SetIsPossibleEscape(bool Escape)
-	{
-		IsPossibleEscape = Escape;
-	}
+	UFUNCTION(Server, Reliable)
+	void SetIsPossibleEscapeOnServer(bool Escape);
 
 	bool IsProning()
 	{
@@ -224,6 +222,11 @@ public:
 	float CharacterPitch()
 	{
 		return CharacterRotationPitch;
+	}
+
+	float CharacterYaw()
+	{
+		return CharacterRotationYaw;
 	}
 
 	/* ZombieSpawner Sector */
@@ -372,7 +375,9 @@ private:
 	FTimerHandle EncroachTimer;
 	int32 EncroachLevel = 0;
 	bool IsEncroach;
+
 	float CharacterRotationPitch;
+	float CharacterRotationYaw;
 
 	FTimerHandle FireDelay;
 

@@ -1612,6 +1612,11 @@ void APro4Character::EquipPlayerWeaponOnClient_Implementation(const WeaponMode& 
 
 #pragma region Escape
 
+void APro4Character::SetIsPossibleEscapeOnServer_Implementation(bool Escape)
+{
+	IsPossibleEscape = Escape;
+}
+
 /* 백신을 가졌을 때, 탈출하기 위한 헬리콥터를 부르는 함수 */
 void APro4Character::CallHelicopterToEscapeOnServer_Implementation()
 {
@@ -1642,11 +1647,10 @@ void APro4Character::CallHelicopterToEscapeOnServer_Implementation()
 
 	FRotator SpawnRotation = ToPlayerVector.Rotation();
 
-	AHeli_AH64D* SpawnHelicopter = Cast<AHeli_AH64D>(GetWorld()->SpawnActor(BP_Helicopter->GeneratedClass));
+	AActor* SpawnHeliActor = GetWorld()->SpawnActor(BP_Helicopter->GeneratedClass);
+	AHeli_AH64D* SpawnHelicopter = Cast<AHeli_AH64D>(SpawnHeliActor);
 
-	SpawnHelicopter->SetTargetPlayerLocation(GetActorLocation());
-	SpawnHelicopter->SetActorLocation(SpawnLocation);
-	SpawnHelicopter->SetActorRotation(SpawnRotation);
+	SpawnHelicopter->SetHelicopterSetting(GetActorLocation(), SpawnLocation, SpawnRotation);
 }
 
 /* 플레이어가 탈출에 성공했을 때 실행되는 함수 */
