@@ -128,6 +128,9 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Player")
 	UStaticMeshComponent* Grenade;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = State)
+	float CharacterRotationYaw;
+
 	UPROPERTY(VisibleAnywhere, Category = "Particle")
 	UParticleSystemComponent* MuzzleFlash;
 
@@ -209,6 +212,11 @@ public:
 		return CharacterRotationPitch;
 	}
 
+
+	float CharacterYaw()
+	{
+		return CharacterRotationYaw;
+	}
 	/* ZombieSpawner Sector */
 	uint16 GetSpawnZombieCurCount()
 	{
@@ -332,6 +340,7 @@ private:
 	bool IsForward;
 	bool IsFire;
 	bool IsMontagePlay;
+	bool CanZoom;
 
 	int32 Updownflag;
 	int32 LeftRightflag;
@@ -346,6 +355,7 @@ private:
 	int32 EncroachLevel;
 	bool IsEncroach;
 	float CharacterRotationPitch;
+	//float CharacterRotationYaw;
 
 	FTimerHandle FireDelay;
 

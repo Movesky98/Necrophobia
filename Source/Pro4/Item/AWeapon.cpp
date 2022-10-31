@@ -133,6 +133,12 @@ void AAWeapon::RandomSpawn(int32 Random)
 			SK_WeaponItem = SK_Weapon.Object;
 		}
 
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SK_Scope(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/Accessories/SM_Scope_25x56_Y.SM_Scope_25x56_Y"));
+		if (SK_Scope.Succeeded())
+		{
+			SK_WeaponSight = SK_Scope.Object;
+		}
+
 		WeaponBoxImagePath = "/Game/UI/Sprites/Weapon_Icon/KA_val_Image";
 		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/KA_val_Icon_500x500";
 		TemporaryName = "SR";
