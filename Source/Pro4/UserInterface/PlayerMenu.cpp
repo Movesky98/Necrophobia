@@ -41,6 +41,9 @@ UPlayerMenu::UPlayerMenu(const FObjectInitializer& ObjectInitializer) : Super(Ob
 	if (!ensure(NightObject.Object != nullptr)) return;
 
 	Night = NightObject.Object;
+
+	SlotChoose = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *SlotItemChoosePath), NULL, LOAD_None, NULL);
+	SlotEmpty = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *SlotItemEmptyPath), NULL, LOAD_None, NULL);
 }
 
 bool UPlayerMenu::Initialize()
@@ -142,7 +145,7 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		{
 			MainWeaponSizeBox->SetWidthOverride(475);
 			MainWeaponSizeBox->SetHeightOverride(136);
-			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetItemName());
+			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetIconPath(), NewWeapon->GetItemName());
 			
 			if (MainWeaponBox->GetVisibility() == ESlateVisibility::Hidden)
 			{
@@ -153,7 +156,7 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		{
 			MainWeaponSizeBox->SetWidthOverride(475);
 			MainWeaponSizeBox->SetHeightOverride(112);
-			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetItemName());
+			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetIconPath(), NewWeapon->GetItemName());
 
 			if (MainWeaponBox->GetVisibility() == ESlateVisibility::Hidden)
 			{
@@ -164,7 +167,7 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		{
 			SubWeaponSizeBox->SetWidthOverride(149);
 			SubWeaponSizeBox->SetHeightOverride(145);
-			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetItemName());
+			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetIconPath(), NewWeapon->GetItemName());
 
 			if (SubWeaponBox->GetVisibility() == ESlateVisibility::Hidden)
 			{
@@ -175,7 +178,7 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		{
 			MainWeaponSizeBox->SetWidthOverride(475);
 			MainWeaponSizeBox->SetHeightOverride(136);
-			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetItemName());
+			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetIconPath(), NewWeapon->GetItemName());
 
 			if (KnifeBox->GetVisibility() == ESlateVisibility::Hidden)
 			{
@@ -261,33 +264,56 @@ void UPlayerMenu::AddItemToGrenade(const FString& GrenadeName, uint16 Num)
 	}
 }
 
-void UPlayerMenu::AddItemToWeapon(FString _IconPath, FString _WeaponName)
+void UPlayerMenu::AddItemToWeapon(FString _ImagePath, FString _IconPath, FString _WeaponName)
 {
+	// Image를 그림
+	UTexture2D* ItemImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *_ImagePath), NULL, LOAD_None, NULL);
+	UTexture2D* ItemIcon = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *_IconPath), NULL, LOAD_None, NULL);
+
 	if (_WeaponName == "Pistol")
 	{
-		// Image를 그림
-		UTexture2D* ItemImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *_IconPath), NULL, LOAD_None, NULL);
-
 		SubWeaponBox->SetBrushFromTexture(ItemImage);
+		SubWeaponSlot->SetBrushFromTexture(ItemIcon);
 
 		UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *SubWeaponBox->Brush.GetResourceName().ToString());
 	}
 	else if (_WeaponName == "Knife")
 	{
-		// Image를 그림
-		UTexture2D* ItemImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *_IconPath), NULL, LOAD_None, NULL);
-
 		KnifeBox->SetBrushFromTexture(ItemImage);
+		KnifeSlot->SetBrushFromTexture(ItemIcon);
 
 		UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *KnifeBox->Brush.GetResourceName().ToString());
 	}
 	else
 	{
-		// Image를 그림
-		UTexture2D* ItemImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *_IconPath), NULL, LOAD_None, NULL);
-
 		MainWeaponBox->SetBrushFromTexture(ItemImage);
+		MainWeaponSlot->SetBrushFromTexture(ItemIcon);
 
 		UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *MainWeaponBox->Brush.GetResourceName().ToString());
+	}
+}
+
+void UPlayerMenu::ActiveWeaponShortcut(uint16 SlotNumber)
+{
+	MainWeaponSlotBox->SetBrushFromTexture(SlotEmpty);
+	SubWeaponSlotBox->SetBrushFromTexture(SlotEmpty);
+	KnifeSlotBox->SetBrushFromTexture(SlotEmpty);
+	GrenadeSlotBox->SetBrushFromTexture(SlotEmpty);
+	switch (SlotNumber)
+	{
+	case 1:
+		MainWeaponSlotBox->SetBrushFromTexture(SlotChoose);
+		break;
+	case 2:
+		SubWeaponSlotBox->SetBrushFromTexture(SlotChoose);
+		break;
+	case 3:
+		KnifeSlotBox->SetBrushFromTexture(SlotChoose);
+		break;
+	case 4:
+		GrenadeSlotBox->SetBrushFromTexture(SlotChoose);
+		break;
+	default:
+		break;
 	}
 }

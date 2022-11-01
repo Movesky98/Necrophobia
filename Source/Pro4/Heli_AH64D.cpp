@@ -129,18 +129,10 @@ void AHeli_AH64D::CheckEscapeCollision(UPrimitiveComponent* OverlappedComp, AAct
 	}
 }
 
-void AHeli_AH64D::SetHelicopterSetting(FVector TargetLocation, FVector SpawnLocation, FRotator TargetRotation)
+void AHeli_AH64D::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-	if (GetWorld()->IsServer())
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Server Call Helicopter Settings."));
-		SetHelicopterSettingOnClient(TargetLocation, SpawnLocation, TargetRotation);
-	}
-}
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-void AHeli_AH64D::SetHelicopterSettingOnClient_Implementation(FVector TargetLocation, FVector SpawnLocation, FRotator TargetRotation)
-{
-	SetTargetPlayerLocation(TargetLocation);
-	SetActorLocation(SpawnLocation);
-	SetActorRotation(TargetRotation);
+	DOREPLIFETIME(AHeli_AH64D, TargetPlayerLocation);
+	DOREPLIFETIME(AHeli_AH64D, IsReachPlayer);
 }

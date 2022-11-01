@@ -34,11 +34,10 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void SetDoorsAngle(float DoorsAngle);
 
+	UFUNCTION(BlueprintImplementableEvent)
 	void SetHelicopterSetting(FVector TargetLocation, FVector SpawnLocation, FRotator TargetRotation);
 
-	UFUNCTION(NetMulticast, Reliable)
-	void SetHelicopterSettingOnClient(FVector TargetLocation, FVector SpawnLocation, FRotator TargetRotation);
-
+	UFUNCTION(BlueprintCallable)
 	void SetTargetPlayerLocation(FVector Location)
 	{
 		TargetPlayerLocation = Location;
@@ -77,7 +76,9 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Helicopter, meta = (AllowPrivateAccess = "true"))
 	UBoxComponent* EscapeCollision;
 
+	UPROPERTY(Replicated, VisibleAnywhere, Category = "Escape")
 	FVector TargetPlayerLocation;
 
+	UPROPERTY(Replicated, VisibleAnywhere, Category = "Escape")
 	bool IsReachPlayer = false;
 };

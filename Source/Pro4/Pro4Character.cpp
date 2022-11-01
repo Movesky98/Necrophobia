@@ -1187,8 +1187,6 @@ void APro4Character::NoticePlayerWeaponOnServer_Implementation(AAWeapon* _Weapon
 /* NetMulticast로 호출됨. 서버가 클라이언트들에게 해당 플레이어의 무기 설정을 뿌리는 함수. */
 void APro4Character::NoticePlayerWeaponOnClient_Implementation(AAWeapon* _Weapon)
 {
-	Weapon->SetSkeletalMesh(_Weapon->GetSKWeaponItem());
-
 	if (_Weapon->GetItemName() == "AR" || _Weapon->GetItemName() == "SR")
 	{
 		MainWeapon.Weapon = _Weapon->GetSKWeaponItem();
@@ -1582,25 +1580,30 @@ void APro4Character::EquipPlayerWeaponOnClient_Implementation(const WeaponMode& 
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("MainWeapon"));
 		Weapon->SetSkeletalMesh(MainWeapon.Weapon);
 		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
+		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(1);
 		break;
 	case WeaponMode::Main2:
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("SubWeapon"));
 		Weapon->SetSkeletalMesh(SubWeapon.Weapon);
 		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
+		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(2);
 		break;
 	case WeaponMode::Sub:
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("Knife"));
 		Weapon->SetSkeletalMesh(Knife.Weapon);
 		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
+		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(3);
 		break;
 	case WeaponMode::ATW:
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("ATW"));
 		Grenade->SetStaticMesh(GrenadeMesh);
+		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(4);
 		break;
 	case WeaponMode::Disarming:
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("Disarming"));
 		Weapon->SetSkeletalMesh(nullptr);
 		Grenade->SetStaticMesh(nullptr);
+		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(0);
 		break;
 	default:
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("_CurWeaponMode Variable has garbage value."));
@@ -1649,6 +1652,11 @@ void APro4Character::CallHelicopterToEscapeOnServer_Implementation()
 
 	AActor* SpawnHeliActor = GetWorld()->SpawnActor(BP_Helicopter->GeneratedClass);
 	AHeli_AH64D* SpawnHelicopter = Cast<AHeli_AH64D>(SpawnHeliActor);
+
+	if (SpawnHelicopter)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Helicopter Spawn!"));
+	}
 
 	SpawnHelicopter->SetHelicopterSetting(GetActorLocation(), SpawnLocation, SpawnRotation);
 }

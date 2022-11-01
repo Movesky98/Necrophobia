@@ -110,7 +110,6 @@ void APro4Projectile::ProjectileBeginOverlap(UPrimitiveComponent* OverlappedComp
 	if (OtherActor->ActorHasTag("Player"))
 	{
 		ProjectileParticle->SetTemplate(Particle_Blood);
-		Mesh->SetRelativeRotation(NewRotation);
 		
 		APro4Character* PlayerCharacter = Cast<APro4Character>(OtherActor);
 		PlayerCharacter->GetDamaged(30.0f);
@@ -118,7 +117,6 @@ void APro4Projectile::ProjectileBeginOverlap(UPrimitiveComponent* OverlappedComp
 	else if(OtherActor->ActorHasTag("Zombie"))
 	{
 		ProjectileParticle->SetTemplate(Particle_Blood);
-		Mesh->SetRelativeRotation(NewRotation);
 
 		APro4Zombie* Zombie = Cast<APro4Zombie>(OtherActor);
 		Zombie->ZombieGetDamaged(30.0f);
@@ -126,9 +124,10 @@ void APro4Projectile::ProjectileBeginOverlap(UPrimitiveComponent* OverlappedComp
 	else
 	{
 		ProjectileParticle->SetTemplate(Particle_Ceramic);
-		Mesh->SetRelativeRotation(NewRotation);
 	}
 
 	ProjectileParticle->ToggleActive();
+	ProjectileParticle->SetRelativeRotation(NewRotation);
+
 	SetLifeSpan(1.0f);
 }
