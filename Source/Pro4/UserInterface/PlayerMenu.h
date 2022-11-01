@@ -22,6 +22,7 @@ public:
 	void SetUp();
 	void SetPlayerHP(float CurHP, float MaxHP);
 	void SetPlayerAP(float CurAP, float MaxAP);
+	void ActiveWeaponShortcut(uint16 SlotNumber);
 
 	virtual bool Initialize();
 
@@ -31,7 +32,7 @@ public:
 	void ChangePlayerWidget();
 
 	void AddItemToGrenade(const FString& GrenadeName, uint16 Num);
-	void AddItemToWeapon(FString _IconPath, FString _WeaponName);
+	void AddItemToWeapon(FString _ImagePath, FString _IconPath, FString _WeaponName);
 	void AddItemToInventory(AActor* ItemActor, uint16 Num);
 
 	class UTexture2D* Day;
@@ -43,6 +44,36 @@ private:
 	void Client_SetTimeText(uint16 min_, uint16 sec_);
 
 	TSubclassOf<class UInventorySlot> InventorySlot;
+
+	UTexture2D* SlotChoose;
+	UTexture2D* SlotEmpty;
+
+	FString SlotItemChoosePath = "/Game/UI/Sprites/Player_UI/Item_block/Item_choose";
+	FString SlotItemEmptyPath = "/Game/UI/Sprites/Player_UI/Item_block/Item_empty";
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* MainWeaponSlot;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* MainWeaponSlotBox;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* SubWeaponSlot;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* SubWeaponSlotBox;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* KnifeSlot;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* KnifeSlotBox;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* GrenadeSlot;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* GrenadeSlotBox;
 
 	UPROPERTY(meta = (BindWidget))
 	class UImage* TimeImage;

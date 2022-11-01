@@ -62,13 +62,10 @@ void AAWeapon::NetMulticast_SetUp_Implementation(USkeletalMesh* SK_Weapon, const
 	WeaponBoxImagePath = _ImagePath;
 	ItemNum = _ItemNum;
 
-	if (SK_WeaponSight != nullptr)
+	AccMesh->SetStaticMesh(SK_WeaponSight);
+	if (SK_Mesh->DoesSocketExist("b_gun_scopeSocket"))
 	{
-		AccMesh->SetStaticMesh(SK_WeaponSight);
-		if (SK_Mesh->DoesSocketExist("b_gun_scopeSocket"))
-		{
-			AccMesh->AttachToComponent(SK_Mesh, FAttachmentTransformRules::SnapToTargetIncludingScale, "b_gun_scopeSocket");
-		}
+		AccMesh->AttachToComponent(SK_Mesh, FAttachmentTransformRules::SnapToTargetIncludingScale, "b_gun_scopeSocket");
 	}
 }
 
