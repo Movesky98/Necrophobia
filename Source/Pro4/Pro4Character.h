@@ -27,7 +27,7 @@ struct FArmorInfo
 {
 	GENERATED_BODY()
 	bool bHaveArmor = false;
-	float AP = 50.0f;
+	float AP = 0.0f;
 	FString ArmorName = "";
 	USkeletalMesh* ArmorMesh;
 };
@@ -42,6 +42,9 @@ struct FWeaponInfo
 	FString ImagePath = "";
 	USkeletalMesh* Weapon = nullptr;
 	UStaticMesh* Scope = nullptr;
+	uint16 CurrentRound = 0;
+	uint16 TotalRound = 0;
+	uint16 Magazine = 0;
 };
 
 UENUM()
@@ -98,6 +101,7 @@ public:
 	UFUNCTION(Server, Reliable)
 	void RecoveryEncroach();
 	void PlayerEscape();
+	void SetPlayerRound(class AAmmo* _Ammo);
 	
 	APro4PlayerController* GetPlayerController();
 	void SetPlayerController(APro4PlayerController* PlayerController);

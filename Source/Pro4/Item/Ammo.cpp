@@ -17,6 +17,10 @@ AAmmo::AAmmo()
 		BoxMesh->SetStaticMesh(SM_Cube.Object);
 		BoxMesh->SetRelativeScale3D(FVector(10.0f));
 	}
+
+	ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/AR4_Icon_500x500";
+	ItemName = "Ammo";
+	ItemNum = 30;
 }
 
 
@@ -25,19 +29,26 @@ void AAmmo::BeginPlay()
 	Super::BeginPlay();
 	/* Widget Component에서 아이템의 이름을 가진 Widget을 가져옴 */
 	NameWidget->InitWidget();
-
 	WBP_NameWidget = Cast<UItemNameWidget>(NameWidget->GetUserWidgetObject());
-	if (WBP_NameWidget != nullptr)
+
+	if (GetWorld()->IsServer())
 	{
-		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/AR4_Icon_500x500";
-		ItemName = "Ammo";
-		ItemNum = 30;
-		WBP_NameWidget->SetItemName(ItemName);
+		SetUpOnClient(nullptr, ItemIconPath, ItemName, ItemNum);
 	}
-	else
+}
+
+void AAmmo::SetUpOnClient_Implementation(UStaticMesh* _AmmoMesh, const FString& _IconPath, const FString& _ItemName, uint16 _ItemNum)
+{
+	if (WBP_NameWidget == nullptr)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("CANT FIND WBP_NAMEWIDGET"));
+		return;
 	}
+
+	ItemIconPath = _IconPath;
+	ItemName = _ItemName;
+	ItemNum = _ItemNum;
+	WBP_NameWidget->SetItemName(ItemName);
 }
 
 void AAmmo::ViewItemName()

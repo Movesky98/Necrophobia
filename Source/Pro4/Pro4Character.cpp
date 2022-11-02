@@ -8,6 +8,7 @@
 #include "Item/AWeapon.h"
 #include "Item/AArmor.h"
 #include "Item/AGrenade.h"
+#include "Item/Ammo.h"
 #include "ZombieSpawner.h"
 #include "Heli_AH64D.h"
 #include "Door.h"
@@ -179,7 +180,14 @@ void APro4Character::StateSetting()
 	MaxHP = 100.0f;
 	CurrentHP = 100.0f;
 	MaxAP = 100.0f;
-	CurrentAP = 20.0f;
+	CurrentAP = 0.0f;
+
+	MainWeapon.Magazine = 30;
+	MainWeapon.TotalRound = 0;
+	SubWeapon.Magazine = 25;
+	SubWeapon.TotalRound = 0;
+	Knife.Magazine = 0;
+	Knife.TotalRound = 0;
 
 	HoldTime = 0.0f;
 	HoldFlag = 0;
@@ -759,6 +767,18 @@ void APro4Character::Reload()
 			{
 				UE_LOG(Pro4, Log, TEXT("Reload."));
 			}
+
+			// 현재 가지고 있는 탄약 수 = 현재 가지고 있는 탄약 수 - (주무기의 탄창에 들어갈 수 있는 탄약 수 - 현재 탄창에 들어가있는 탄약 수)
+			if (MainWeapon.TotalRound <= MainWeapon.Magazine)
+			{
+				MainWeapon.CurrentRound = MainWeapon.TotalRound;
+				MainWeapon.TotalRound = 0;
+			}
+			else
+			{
+				MainWeapon.TotalRound -= MainWeapon.Magazine - MainWeapon.CurrentRound;
+				MainWeapon.CurrentRound = MainWeapon.Magazine;
+			}
 			break;
 		case WeaponMode::Main2:
 			if (CurrentCharacterState == CharacterState::Standing)
@@ -896,44 +916,59 @@ void APro4Character::Fire()
 
 		}
 
-		if (CurrentWeaponMode == WeaponMode::Main1 || CurrentWeaponMode == WeaponMode::Main2) // 주무기일 때의 총알 발사 (탄창 상태 반영 안함)
+		if (CurrentWeaponMode == WeaponMode::Main1) // 주무기일 때의 총알 발사 (탄창 상태 반영 안함)
 		{
-			if (!IsMontagePlay)
+			if (MainWeapon.CurrentRound <= 0)
 			{
-				if (IsZoom)
-				{
-					Pro4Anim->PlayAttackMontage();
-					Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->AttackMontage);
-					IsMontagePlay = true;
-					IsAttacking = true;
-					UE_LOG(Pro4, Log, TEXT("2"));
-				}
-				else
-				{
-					Pro4Anim->PlayAttackMontage();
-					Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->AttackMontage);
-					IsMontagePlay = true;
-					IsAttacking = true;
-					UE_LOG(Pro4, Log, TEXT("1"));
-				}
+				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("There is no bullet."));
+				Reload();
+				return;
 			}
-			
-			MuzzleFlash->ToggleActive();
-			SpawnProjectileOnServer(MuzzleLocation, MuzzleRotation, MuzzleRotation.Vector(), this);
 
-			if (FireMod) // 연사 상태이면 함수 딜레이 후 다시 콜 (주무기 종류에 따라서 연사속도 변경)
+			MainWeapon.CurrentRound--;
+		}
+		else if (CurrentWeaponMode == WeaponMode::Main2)
+		{
+			if (SubWeapon.CurrentRound <= 0)
 			{
-				GetWorld()->GetTimerManager().SetTimer(FireDelay, this, &APro4Character::Fire, .075f, false);
+				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("There is no bullet."));
+				Reload();
+				return;
+			}
+
+			SubWeapon.CurrentRound--;
+		}
+
+		if (!IsMontagePlay)
+		{
+			if (IsZoom)
+			{
+				Pro4Anim->PlayAttackMontage();
+				Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->AttackMontage);
+				IsMontagePlay = true;
+				IsAttacking = true;
+				UE_LOG(Pro4, Log, TEXT("2"));
+			}
+			else
+			{
+				Pro4Anim->PlayAttackMontage();
+				Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->AttackMontage);
+				IsMontagePlay = true;
+				IsAttacking = true;
+				UE_LOG(Pro4, Log, TEXT("1"));
 			}
 		}
-		else // 권총 발사 (권총용 애니메이션, 탄속, 권총 오브젝트 크기에 따라 총 발사 위치 조정해야 함)
+
+		MuzzleFlash->ToggleActive();
+		SpawnProjectileOnServer(MuzzleLocation, MuzzleRotation, MuzzleRotation.Vector(), this);
+
+		if (FireMod) // 연사 상태이면 함수 딜레이 후 다시 콜 (주무기 종류에 따라서 연사속도 변경)
 		{
-			UE_LOG(Pro4, Log, TEXT("Pistol Fire"));
+			GetWorld()->GetTimerManager().SetTimer(FireDelay, this, &APro4Character::Fire, .075f, false);
 		}
 	}
 }
 	
-
 void APro4Character::Throw() // 투척무기 던지기
 {
 	/*
@@ -1114,6 +1149,7 @@ void APro4Character::NotifyActorEndOverlap(AActor* Act)
 
 
 #pragma region PlayerUI_Inventory_Section
+
 /* 플레이어가 무기를 획득할 경우 실행되는 함수 */
 void APro4Character::SetPlayerWeapon(AAWeapon* SetWeapon)
 {
@@ -1187,6 +1223,8 @@ void APro4Character::NoticePlayerWeaponOnServer_Implementation(AAWeapon* _Weapon
 /* NetMulticast로 호출됨. 서버가 클라이언트들에게 해당 플레이어의 무기 설정을 뿌리는 함수. */
 void APro4Character::NoticePlayerWeaponOnClient_Implementation(AAWeapon* _Weapon)
 {
+	Weapon->SetSkeletalMesh(_Weapon->GetSKWeaponItem());
+
 	if (_Weapon->GetItemName() == "AR" || _Weapon->GetItemName() == "SR")
 	{
 		MainWeapon.Weapon = _Weapon->GetSKWeaponItem();
@@ -1335,6 +1373,8 @@ void APro4Character::NoticePlayerArmorOnClient_Implementation(AAArmor* _Armor, c
 			PlayerVest.bHaveArmor = true;
 		}
 	}
+
+	CurrentAP = PlayerHelmet.AP + PlayerVest.AP;
 }
 
 void APro4Character::AddPlayerGrenade(AAGrenade* _Grenade)
@@ -1364,6 +1404,14 @@ void APro4Character::AddPlayerGrenade(AAGrenade* _Grenade)
 	}
 
 	Server_DestroyItem(_Grenade);
+}
+
+/* 탄약을 획득했을 때 실행되는 함수 */
+void APro4Character::SetPlayerRound(AAmmo* _Ammo)
+{
+	MainWeapon.TotalRound += _Ammo->GetItemNum();
+
+	Server_DestroyItem(_Ammo);
 }
 #pragma endregion
 

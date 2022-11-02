@@ -18,6 +18,9 @@ public:
 	AAmmo();
 	void ViewItemName();
 
+	UFUNCTION(NetMulticast, Reliable)
+	void SetUpOnClient(UStaticMesh* _AmmoMesh, const FString& _IconPath, const FString& _ItemName, uint16 _ItemNum);
+
 	/* ItemName */
 	void SetItemName(FString _Name)
 	{

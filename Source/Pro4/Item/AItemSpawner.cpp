@@ -5,6 +5,9 @@
 #include "AArmor.h"
 #include "AGrenade.h"
 #include "AWeapon.h"
+#include "Ammo.h"
+#include "Recovery.h"
+#include "Vaccine.h"
 
 #include "Math/UnrealMathUtility.h"
 #include "Net/UnrealNetwork.h"
@@ -59,8 +62,7 @@ void AAItemSpawner::Server_SpawnItem()
 		return;
 	}
 
-	RandomSpawnNum = 1;
-		// FMath::RandRange(1, 3);
+	RandomSpawnNum = FMath::RandRange(1, 6);
 	
 	UWorld* World = GetWorld();
 
@@ -77,28 +79,22 @@ void AAItemSpawner::Server_SpawnItem()
 
 		switch (RandomSpawnNum) {
 		case 1:
-		{
-			AAWeapon* InstanceItem = World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), SpawnLocation, Rot, SpawnParams);
-		}
+			World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), SpawnLocation, Rot, SpawnParams);
 		break;
 		case 2:
-		{
-			AAArmor* InstanceItem = World->SpawnActor<AAArmor>(AAArmor::StaticClass(), SpawnLocation, Rot, SpawnParams);
-		}
+			World->SpawnActor<AAArmor>(AAArmor::StaticClass(), SpawnLocation, Rot, SpawnParams);
 		break;
 		case 3:
-		{
-			AAGrenade* InstanceItem = World->SpawnActor<AAGrenade>(AAGrenade::StaticClass(), SpawnLocation, Rot, SpawnParams);
-		}
+			World->SpawnActor<AAGrenade>(AAGrenade::StaticClass(), SpawnLocation, Rot, SpawnParams);
 		break;
 		case 4:
-			// InstanceItem->ItemType = AABaseItem::BaseItemType::Recovery;
+			World->SpawnActor<ARecovery>(ARecovery::StaticClass(), SpawnLocation, Rot, SpawnParams);
 			break;
 		case 5:
-			// InstanceItem->ItemType = AABaseItem::BaseItemType::Ammo;
+			World->SpawnActor<AAmmo>(AAmmo::StaticClass(), SpawnLocation, Rot, SpawnParams);
 			break;
 		case 6:
-			// InstanceItem->ItemType = AABaseItem::BaseItemType::Vaccine;
+			World->SpawnActor<AVaccine>(AVaccine::StaticClass(), SpawnLocation, Rot, SpawnParams);
 			break;
 		default:
 			UE_LOG(Pro4, Warning, TEXT("Spawn Item ERROR."));

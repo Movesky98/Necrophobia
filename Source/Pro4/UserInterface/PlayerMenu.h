@@ -23,6 +23,7 @@ public:
 	void SetPlayerHP(float CurHP, float MaxHP);
 	void SetPlayerAP(float CurAP, float MaxAP);
 	void ActiveWeaponShortcut(uint16 SlotNumber);
+	void ActiveArmorImage(bool IsHelmet);
 
 	virtual bool Initialize();
 
@@ -120,6 +121,12 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* SmokeNum;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* EquipBox_Head;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* EquipBox_Top;
 
 #pragma endregion
 
