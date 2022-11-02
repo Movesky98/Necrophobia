@@ -122,6 +122,12 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	class UTextBlock* SmokeNum;
 
+	UPROPERTY(meta = (BindWidget))
+	class UImage* EquipBox_Head;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* EquipBox_Top;
+
 #pragma endregion
 
 	UPROPERTY(meta = (BindWidget))

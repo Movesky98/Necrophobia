@@ -193,6 +193,17 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		if (!ensure(Armor != nullptr)) return;
 
 		MyPawn->SetPlayerArmor(Armor);
+		/*if (Armor->GetItemName() == "Helmet")
+		{
+			ActiveArmorImage(true);
+		}
+		else
+		{
+
+		}*/
+
+		(Armor->GetItemName() == "Helmet") ? ActiveArmorImage(true) : ActiveArmorImage(false);
+		
 
 	}
 		break;
@@ -322,5 +333,18 @@ void UPlayerMenu::ActiveWeaponShortcut(uint16 SlotNumber)
 
 void UPlayerMenu::ActiveArmorImage(bool IsHelmet)
 {
-
+	if (IsHelmet)
+	{
+		FString Path = "/Game/UI/Sprites/Weapon_Icon/Helmet_Icon_500x500";
+		UTexture2D* HelmetImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *Path), NULL, LOAD_None, NULL);
+		EquipBox_Head->SetBrushFromTexture(HelmetImage);
+		EquipBox_Head->SetVisibility(ESlateVisibility::Visible);
+	}
+	else
+	{
+		FString Path = "/Game/UI/Sprites/Weapon_Icon/Vest_Icon_500x500";
+		UTexture2D* VestImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *Path), NULL, LOAD_None, NULL);
+		EquipBox_Top->SetBrushFromTexture(VestImage);
+		EquipBox_Top->SetVisibility(ESlateVisibility::Visible);
+	}
 }
