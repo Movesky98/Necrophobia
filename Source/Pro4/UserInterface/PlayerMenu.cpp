@@ -222,6 +222,8 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
 		InventoryItem->SetUp("Ammo", Ammo->GetItemName(), Ammo->GetItemNum(), Ammo->GetIconPath());
 		InventoryBox->AddChildToWrapBox(InventoryItem);
+
+		MyPawn->SetPlayerRound(Ammo);
 	}
 		break;
 	case AABaseItem::BaseItemType::Vaccine:
@@ -316,4 +318,9 @@ void UPlayerMenu::ActiveWeaponShortcut(uint16 SlotNumber)
 	default:
 		break;
 	}
+}
+
+void UPlayerMenu::ActiveArmorImage(bool IsHelmet)
+{
+
 }

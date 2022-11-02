@@ -35,9 +35,9 @@ public:
 	/* Current_AP */
 	void SetCurrentAP(float _AP)
 	{
-		if (_AP >= 100.0f)
+		if (_AP >= 50.0f)
 		{
-			Current_AP = 100.0f;
+			Current_AP = 50.0f;
 		}
 		else
 		{
@@ -109,10 +109,10 @@ private:
 	UPROPERTY(Replicated)
 	uint16 ItemNum;
 
-	UPROPERTY(Replicated)
+	UPROPERTY(Replicated, VisibleAnywhere)
 	float Current_AP;
 
-	float Max_AP = 100.0f;
+	float Max_AP = 50.0f;
 
 	USkeletalMesh* SK_ArmorItem;
 

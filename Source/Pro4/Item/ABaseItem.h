@@ -50,7 +50,4 @@ public:
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "UI")
 	class UWidgetComponent* NameWidget;
-
-	UPROPERTY(VisibleDefaultsOnly, Category = SphereCollision)
-	USphereComponent* SphereCollision;
 };

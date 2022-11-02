@@ -42,6 +42,7 @@ void AAArmor::NetMulticast_SetUp_Implementation(USkeletalMesh* SK_Armor, const F
 	WBP_NameWidget->SetItemName(ItemName);
 	ItemNum = _ItemNum;
 
+	Current_AP = 50.0f;
 	//if (ItemName == "Helmet")
 	//{
 	//	// HelmetSettings

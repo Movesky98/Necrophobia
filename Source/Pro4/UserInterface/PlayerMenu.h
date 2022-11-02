@@ -23,6 +23,7 @@ public:
 	void SetPlayerHP(float CurHP, float MaxHP);
 	void SetPlayerAP(float CurAP, float MaxAP);
 	void ActiveWeaponShortcut(uint16 SlotNumber);
+	void ActiveArmorImage(bool IsHelmet);
 
 	virtual bool Initialize();
 
