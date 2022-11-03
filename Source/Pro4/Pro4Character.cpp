@@ -844,6 +844,19 @@ void APro4Character::Reload()
 			{
 				UE_LOG(Pro4, Log, TEXT("Reload."));
 			}
+
+			// 현재 가지고 있는 탄약 수 = 현재 가지고 있는 탄약 수 - (주무기의 탄창에 들어갈 수 있는 탄약 수 - 현재 탄창에 들어가있는 탄약 수)
+			if (SubWeapon.TotalRound <= SubWeapon.Magazine)
+			{
+				SubWeapon.CurrentRound = SubWeapon.TotalRound;
+				SubWeapon.TotalRound = 0;
+			}
+			else
+			{
+				SubWeapon.TotalRound -= SubWeapon.Magazine - SubWeapon.CurrentRound;
+				SubWeapon.CurrentRound = SubWeapon.Magazine;
+			}
+
 			break;
 		case WeaponMode::Sub:
 			if (CurrentCharacterState == CharacterState::Standing)
@@ -1474,7 +1487,14 @@ void APro4Character::AddPlayerGrenade(AAGrenade* _Grenade)
 /* 탄약을 획득했을 때 실행되는 함수 */
 void APro4Character::SetPlayerRound(AAmmo* _Ammo)
 {
-	MainWeapon.TotalRound += _Ammo->GetItemNum();
+	if (_Ammo->GetItemName() == "MainWeaponAmmo")
+	{
+		MainWeapon.TotalRound += _Ammo->GetItemNum();
+	}
+	else
+	{
+		SubWeapon.TotalRound += _Ammo->GetItemNum();
+	}
 
 	Server_DestroyItem(_Ammo);
 }

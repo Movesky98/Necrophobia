@@ -16,6 +16,14 @@ class PRO4_API AAmmo : public AABaseItem
 	
 public:
 	AAmmo();
+
+	enum class AmmoType : int32
+	{
+		MainWeaponAmmo,	// 주무기 탄약
+		SubWeaponAmmo,	// 보조무기 탄약
+		MAX
+	};
+
 	void ViewItemName();
 
 	UFUNCTION(NetMulticast, Reliable)
@@ -63,6 +71,8 @@ protected:
 	void NotifyActorEndOverlap(AActor* OtherActor) override;
 
 private:
+	AmmoType CurrentAmmo;
+
 	UPROPERTY(Replicated)
 		FString ItemName;
 

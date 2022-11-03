@@ -10,17 +10,44 @@ AAmmo::AAmmo()
 {
 	ItemType = BaseItemType::Ammo;
 
-	
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Cube(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/Ammunition/SM_Shell_556x45"));
-	if (SM_Cube.Succeeded())
-	{
-		BoxMesh->SetStaticMesh(SM_Cube.Object);
-		BoxMesh->SetRelativeScale3D(FVector(10.0f));
-	}
+	uint32 RandomItemNum = FMath::RandRange(0, static_cast<int32>(AmmoType::MAX) - 1);
 
-	ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/AR4_Icon_500x500";
-	ItemName = "Ammo";
-	ItemNum = 30;
+	CurrentAmmo = static_cast<AmmoType>(RandomItemNum);
+
+	switch (CurrentAmmo)
+	{
+	case AAmmo::AmmoType::MainWeaponAmmo:
+	{
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Cube(TEXT("/Game/Weapon/BulletCase_A"));
+		if (SM_Cube.Succeeded())
+		{
+			BoxMesh->SetStaticMesh(SM_Cube.Object);
+		}
+
+		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/AR4_Icon_500x500";
+		ItemName = "MainWeaponAmmo";
+		ItemNum = 30;
+	}
+		break;
+	case AAmmo::AmmoType::SubWeaponAmmo:
+	{
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Cube(TEXT("/Game/Weapon/BulletCase_B"));
+		if (SM_Cube.Succeeded())
+		{
+			BoxMesh->SetStaticMesh(SM_Cube.Object);
+		}
+
+		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/AR4_Icon_500x500";
+		ItemName = "SubWeaponAmmo";
+		ItemNum = 30;
+	}
+		break;
+	case AAmmo::AmmoType::MAX:
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Ammo Spawn ERROR!"));
+		break;
+	default:
+		break;
+	}
 }
 
 
