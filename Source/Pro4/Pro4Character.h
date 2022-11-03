@@ -365,6 +365,7 @@ private:
 	bool IsFire;
 	bool IsMontagePlay;
 	bool IsPossibleEscape;
+	bool CanZoom;
 
 	int32 Updownflag;
 	int32 LeftRightflag;

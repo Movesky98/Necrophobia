@@ -195,6 +195,8 @@ void APro4Character::StateSetting()
 	EncroachLevel = 0;
 	IsEncroach = false;
 	EncroachTime = 0.0f;
+
+	CanZoom = true;
 }
 
 void APro4Character::SocketSetting()
@@ -271,6 +273,7 @@ void APro4Character::Tick(float DeltaTime)
 				IsHold = false;
 				HoldTime = 0.0f;
 				HoldFlag = 0;
+				CanZoom = true;
 			}
 			break;
 		case 2:
@@ -279,9 +282,15 @@ void APro4Character::Tick(float DeltaTime)
 				IsHold = false;
 				HoldTime = 0.0f;
 				HoldFlag = 0;
+				CanZoom = true;
 			}
 			break;
 		}
+	}
+
+	if (!GetMovementComponent()->IsFalling())
+	{
+		CanZoom = true;
 	}
 
 	if (Updownflag == 1 && LeftRightflag != 0)
@@ -298,6 +307,11 @@ void APro4Character::Tick(float DeltaTime)
 	}
 
 	CharacterRotationPitch = GetControlRotation().Pitch;
+
+	if ((GetControlRotation().Yaw >= 325.0f && GetControlRotation().Yaw < 360.0) || (GetControlRotation().Yaw >= 0.0f && GetControlRotation().Yaw < 35.0))
+	{
+		CharacterRotationYaw = GetControlRotation().Yaw;
+	}
 	// Character Role Test.
 	// DrawDebugString(GetWorld(), FVector(0, 0, 150), GetEnumRole(GetLocalRole()), this, FColor::Green, DeltaTime);
 }
@@ -339,12 +353,14 @@ void APro4Character::OnEquipMontageEnded(UAnimMontage* Montage, bool bInterrupte
 {
 	IsMontagePlay = false;
 	IsEquipping = false;
+	CanZoom = true;
 }
 
 void APro4Character::OnReloadMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	IsMontagePlay = false;
 	IsReloading = false;
+	CanZoom = true;
 }
 
 void APro4Character::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
@@ -588,6 +604,8 @@ void APro4Character::Jump()
 
 		if (IsZoom)
 			Zoom();
+
+		CanZoom = false;
 	}
 
 }
@@ -621,6 +639,8 @@ void APro4Character::beCrouch()
 
 		if (IsZoom)
 			Zoom();
+
+		CanZoom = false;
 	}
 }
 
@@ -650,6 +670,8 @@ void APro4Character::Prone()
 
 		if (IsZoom)
 			Zoom();
+
+		CanZoom = false;
 	}
 }
 /// <summary>
@@ -662,21 +684,30 @@ void APro4Character::Prone()
 
 void APro4Character::EquipMain1()
 {
-	if (CurrentWeaponMode == WeaponMode::Main1)
+	if (MainWeapon.bHaveWeapon)
 	{
-		UE_LOG(Pro4, Log, TEXT("Disarming."));
-		Equipflag = 0;
-		CurrentWeaponMode = WeaponMode::Disarming;
-	}
-	else
-	{
-		if (IsEquipping) return;
-		Equipflag = 1;
-		Pro4Anim->PlayEquipMontage();
-		Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->EquipMontage);
-		IsMontagePlay = true;
-		IsEquipping = true;
-		CurrentWeaponMode = WeaponMode::Main1;
+		if (IsMontagePlay)
+		{
+			Pro4Anim->Montage_Stop(0.0f);
+			IsMontagePlay = false;
+		}
+
+		if (CurrentWeaponMode == WeaponMode::Main1)
+		{
+			Equipflag = 0;
+			CurrentWeaponMode = WeaponMode::Disarming;
+		}
+		else
+		{
+			if (IsZoom)
+				Zoom();
+			Equipflag = 1;
+			Pro4Anim->PlayEquipMontage();
+			Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->EquipMontage);
+			IsMontagePlay = true;
+			IsEquipping = true;
+			CurrentWeaponMode = WeaponMode::Main1;
+		}
 	}
 
 	EquipPlayerWeaponOnServer(CurrentWeaponMode);
@@ -684,22 +715,30 @@ void APro4Character::EquipMain1()
 
 void APro4Character::EquipMain2()
 {
-	if (CurrentWeaponMode == WeaponMode::Main2)
+	if (MainWeapon.bHaveWeapon)
 	{
-		UE_LOG(Pro4, Log, TEXT("Disarming."));
-		Equipflag = 0;
-		CurrentWeaponMode = WeaponMode::Disarming;
-	}
-	else
-	{
-		if (IsEquipping) return;
-		UE_LOG(Pro4, Log, TEXT("EquipMain2."));
-		Equipflag = 1;
-		Pro4Anim->PlayEquipMontage();
-		Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->EquipMontage);
-		IsMontagePlay = true;
-		IsEquipping = true;
-		CurrentWeaponMode = WeaponMode::Main2;
+		if (IsMontagePlay)
+		{
+			Pro4Anim->Montage_Stop(0.0f);
+			IsMontagePlay = false;
+		}
+
+		if (CurrentWeaponMode == WeaponMode::Main2)
+		{
+			Equipflag = 0;
+			CurrentWeaponMode = WeaponMode::Disarming;
+		}
+		else
+		{
+			if (IsZoom)
+				Zoom();
+			Equipflag = 1;
+			Pro4Anim->PlayEquipMontage();
+			Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->EquipMontage);
+			IsMontagePlay = true;
+			IsEquipping = true;
+			CurrentWeaponMode = WeaponMode::Main2;
+		}
 	}
 
 	EquipPlayerWeaponOnServer(CurrentWeaponMode);
@@ -707,21 +746,30 @@ void APro4Character::EquipMain2()
 
 void APro4Character::EquipSub()
 {
-	if (CurrentWeaponMode == WeaponMode::Sub)
+	if (SubWeapon.bHaveWeapon)
 	{
-		UE_LOG(Pro4, Log, TEXT("Disarming."));
-		CurrentWeaponMode = WeaponMode::Disarming;
-	}
-	else
-	{
-		if (IsEquipping) return;
-		UE_LOG(Pro4, Log, TEXT("EquipSub."));
-		Equipflag = 2;
-		Pro4Anim->PlayEquipMontage();
-		Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->EquipMontage);
-		IsMontagePlay = true;
-		IsEquipping = true;
-		CurrentWeaponMode = WeaponMode::Sub;
+		if (IsMontagePlay)
+		{
+			Pro4Anim->Montage_Stop(0.0f);
+			IsMontagePlay = false;
+		}
+
+		if (CurrentWeaponMode == WeaponMode::Sub)
+		{
+			Equipflag = 0;
+			CurrentWeaponMode = WeaponMode::Disarming;
+		}
+		else
+		{
+			if (IsZoom)
+				Zoom();
+			Equipflag = 2;
+			Pro4Anim->PlayEquipMontage();
+			Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->EquipMontage);
+			IsMontagePlay = true;
+			IsEquipping = true;
+			CurrentWeaponMode = WeaponMode::Sub;
+		}
 	}
 
 	EquipPlayerWeaponOnServer(CurrentWeaponMode);
@@ -821,6 +869,9 @@ void APro4Character::Reload()
 			UE_LOG(Pro4, Log, TEXT("Reload."));
 			break;
 		}
+
+		if (IsZoom)
+			Zoom();
 	}
 }
 /// <summary>
@@ -859,7 +910,7 @@ void APro4Character::Attack()
 
 void APro4Character::Zoom() // �� ��, �� �ƿ�(�ѵ����������)
 {
-	if (Weapon != nullptr)
+	if (Weapon != nullptr && CanZoom == true && !IsEquipping && !IsReloading)
 	{
 		if (CurrentWeaponMode == WeaponMode::Main1 || CurrentWeaponMode == WeaponMode::Main2 || CurrentWeaponMode == WeaponMode::Sub)
 		{
@@ -869,6 +920,7 @@ void APro4Character::Zoom() // �� ��, �� �ƿ�(�ѵ�����
 				SpringArm->AttachToComponent(GetCapsuleComponent(), FAttachmentTransformRules::SnapToTargetIncludingScale);
 				SpringArm->TargetArmLength = 450.0f;
 				SpringArm->SocketOffset = FVector(0.0f, 100.0f, 50.0f);
+				Camera->FieldOfView = 90.0f;
 			}
 			else
 			{
@@ -876,6 +928,19 @@ void APro4Character::Zoom() // �� ��, �� �ƿ�(�ѵ�����
 				SpringArm->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetIncludingScale, "b_gun_scopeCamera");
 				SpringArm->TargetArmLength = 0.0f;
 				SpringArm->SocketOffset = FVector(0.0f, 0.0f, 0.0f);
+				if (MainWeapon.Name == "SR")
+				{
+					Camera->FieldOfView = 22.5f;
+					Camera->PostProcessSettings.VignetteIntensity = 1.0f;
+				}
+				if (IsRun)
+					IsRun = false;
+			}
+
+			if (MainWeapon.Name == "SR")
+			{
+				UNecrophobiaGameInstance* Instance = Cast<UNecrophobiaGameInstance>(GetGameInstance());
+				Instance->PlayerMenu->PlayerZoomWidget();
 			}
 		}
 	}
