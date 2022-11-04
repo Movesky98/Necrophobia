@@ -71,7 +71,7 @@ void AAItemSpawner::Server_SpawnItem()
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Owner = this;
 		SpawnParams.Instigator = GetInstigator();
-		FRotator Rot;
+		FRotator Rot = FRotator::ZeroRotator;
 		FVector SpawnLocation = GetActorLocation();
 
 		SpawnLocation.X += FMath::RandRange(500, 1000);
