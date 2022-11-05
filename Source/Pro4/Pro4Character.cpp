@@ -22,6 +22,7 @@ APro4Character::APro4Character()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
+	bNetLoadOnClient = true;
  
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("CAMERA"));
@@ -715,7 +716,7 @@ void APro4Character::EquipMain1()
 
 void APro4Character::EquipMain2()
 {
-	if (MainWeapon.bHaveWeapon)
+	if (SubWeapon.bHaveWeapon)
 	{
 		if (IsMontagePlay)
 		{
@@ -746,7 +747,7 @@ void APro4Character::EquipMain2()
 
 void APro4Character::EquipSub()
 {
-	if (SubWeapon.bHaveWeapon)
+	if (Knife.bHaveWeapon)
 	{
 		if (IsMontagePlay)
 		{
@@ -1065,7 +1066,7 @@ void APro4Character::Throw() // 투척무기 던지기
 		if (GetMesh()->DoesSocketExist("Hand_r_GrenadeSocket"))
 		{
 			ThrowLocation = GetMesh()->GetSocketLocation("Hand_r_GrenadeSocket");
-			ThrowLocation.X += 200.0f;
+			ThrowLocation += GetActorForwardVector() * 200.0f;
 		}
 
 		FRotator ThrowRotation = CameraRotation;
@@ -1729,7 +1730,11 @@ void APro4Character::EquipPlayerWeaponOnClient_Implementation(const WeaponMode& 
 		break;
 	case WeaponMode::ATW:
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("ATW"));
-		Grenade->SetStaticMesh(GrenadeMesh);
+		if (PlayerGrenade.GrenadeNum >= 0)
+		{
+			Grenade->SetStaticMesh(GrenadeMesh);
+		}
+
 		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(4);
 		break;
 	case WeaponMode::Disarming:

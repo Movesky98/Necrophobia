@@ -85,8 +85,16 @@ void AInGameState::AddInGameSeconds() {
 			AddInGameDay();
 			SetIsNight(false);
 
+			bool isServer = true;
+			
 			for (APlayerState* _PlayerState : PlayerArray)
 			{
+				if (isServer)
+				{
+					continue;
+					isServer = false;
+				}
+
 				AInGamePlayerState* Player = Cast<AInGamePlayerState>(_PlayerState);
 				APro4Character* PlayerCharacter = Cast<APro4Character>(Player->GetPawn());
 				PlayerCharacter->DetectZombieSpawner(false);
@@ -97,8 +105,15 @@ void AInGameState::AddInGameSeconds() {
 			UE_LOG(Pro4, Warning, TEXT("The night has come."));
 			SetIsNight(true);
 
+			bool isServer = true;
+
 			for (APlayerState* _PlayerState : PlayerArray)
 			{
+				if (isServer)
+				{
+					continue;
+					isServer = false;
+				}
 				AInGamePlayerState* Player = Cast<AInGamePlayerState>(_PlayerState);
 				APro4Character* PlayerCharacter = Cast<APro4Character>(Player->GetPawn());
 				PlayerCharacter->DetectZombieSpawner(true);
@@ -143,12 +158,19 @@ void AInGameState::SetIsStateChanged(bool StateChanged_)
 
 void AInGameState::SpawnPlayerToStartLocation(TArray<FVector> SpawnArray)
 {
+	// 서버를 제외하고 1부터
 	int i = 0;
 
 	for (APlayerState* PlayerState : PlayerArray)
 	{
 		AInGamePlayerState* InGamePlayerState = Cast<AInGamePlayerState>(PlayerState);
 		APro4Character* PlayerCharacter = Cast<APro4Character>(InGamePlayerState->GetPawn());
+
+		if (i == 0)
+		{
+			PlayerCharacter->SetHidden(true);
+			PlayerCharacter->GetPlayerController()->SetServerToSpectator();
+		}
 
 		PlayerCharacter->SetActorLocation(SpawnArray[i]);
 		i++;

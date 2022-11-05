@@ -36,6 +36,9 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	class UImage* InventorySlotImage;
 
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* InventorySlotNum;
+
 	FString ItemType;
 	FString ItemName;
 	uint16 ItemNum;

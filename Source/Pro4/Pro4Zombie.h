@@ -72,6 +72,11 @@ public:
 	virtual void PostInitializeComponents() override;
 	void MovementSetting();
 
+	/* Zombie Attack */
+	UFUNCTION()
+	void DrawAttackField();
+
+
 	/* Zombie Get Damaged */
 	void ZombieGetDamaged(float _Damage);
 
