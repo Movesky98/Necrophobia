@@ -13,5 +13,17 @@ UCLASS()
 class PRO4_API AInGamePlayerState : public APlayerState
 {
 	GENERATED_BODY()
-	
+public:
+	void SetIsServer(bool isServer)
+	{
+		bIsServer = isServer;
+	}
+
+	bool GetIsServer()
+	{
+		return bIsServer;
+	}
+
+private:
+	bool bIsServer = false;
 };

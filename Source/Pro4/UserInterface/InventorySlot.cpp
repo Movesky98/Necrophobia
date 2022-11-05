@@ -5,6 +5,7 @@
 #include "../Pro4Character.h"
 
 #include "Components/Button.h"
+#include "Components/TextBlock.h"
 #include "Components/Image.h"
 
 bool UInventorySlot::Initialize()
@@ -24,6 +25,9 @@ void UInventorySlot::SetUp(FString Type, FString Name, uint16 Num, FString Path)
 	SetItemName(Name);
 	SetItemNum(Num);
 	SetItemType(Type);
+	FString SlotNumber = FString::FromInt(Num);
+
+	InventorySlotNum->SetText(FText::FromString(SlotNumber));
 	
 	// Image¸¦ ±×¸²
 	UTexture2D* ItemImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *Path), NULL, LOAD_None, NULL);

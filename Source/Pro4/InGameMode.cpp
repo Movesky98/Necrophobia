@@ -26,22 +26,18 @@ AInGameMode::AInGameMode()
 {
     PrimaryActorTick.bCanEverTick = true;
     // set default pawn class to our Blueprinted character
-
-    // static ConstructorHelpers::FClassFinder<APro4Character> BP_PlayerCharacter(TEXT("/Game/BLUEPRINT(JunJae)/BP_Pro4Character"));
-
-    /*if (BP_PlayerCharacter.Succeeded())   BP_PlayerCharacter은 아예 C++로 구현해놓겠음.
+    static ConstructorHelpers::FClassFinder<APro4PlayerController> BP_PlayerController(TEXT("/Game/Blueprints/BP_PlayerController"));
+    if (BP_PlayerController.Succeeded())
     {
-        DefaultPawnClass = BP_PlayerCharacter.Class;
-        UE_LOG(Pro4, Warning, TEXT("Set PawnClass : BP_PlayerCharacter"));
+        PlayerControllerClass = BP_PlayerController.Class;
     }
     else
     {
-    
-    }*/
+        PlayerControllerClass = APro4PlayerController::StaticClass();
+    }
 
     DefaultPawnClass = APro4Character::StaticClass();
     UE_LOG(Pro4, Warning, TEXT("Set PawnClass : APro4Character"));
-    PlayerControllerClass = APro4PlayerController::StaticClass();
     GameStateClass = AInGameState::StaticClass();
     PlayerStateClass = AInGamePlayerState::StaticClass();
 }
@@ -61,6 +57,8 @@ void AInGameMode::BeginPlay()
     {
         UE_LOG(Pro4, Warning, TEXT("GameState is NULL"));
     }
+
+
 }
 
 void AInGameMode::Tick(float DeltaTime)
@@ -123,6 +121,7 @@ void AInGameMode::StartGame()
     Engine->AddOnScreenDebugMessage(0, 10.0f, FColor::Red, TEXT("Game Start!"));
 
     TArray<FVector> SpawnArray;
+    SpawnArray.Add(FVector(0.0f, 0.0f, -1000.0f));
     SpawnArray.Add(FVector(-45470.0f, 19260.0f, -840.0f));
     SpawnArray.Add(FVector(0.0f, 0.0f, 100.0f));
     SpawnArray.Add(FVector(100.0f, 0.0f, 100.0f));

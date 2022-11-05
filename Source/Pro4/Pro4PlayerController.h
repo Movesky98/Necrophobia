@@ -26,9 +26,9 @@ public:
 	{
 		return Cast<AActor>(PlayerCharacter);
 	}
-	/* PlayerCharacter <-> Item Sector */
-	UFUNCTION(Server, Reliable)
-	void SpawnArmorOnServer(FVector Location, USkeletalMesh* _ArmorMesh, const FString& _ArmorName, float _AP);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void SetServerToSpectator();
 
 protected:
 
@@ -43,6 +43,8 @@ private:
 
 	void UpdatePlayerTimeState();
 	float Time = 0.0f;
+
+	bool bIsServer = false;
 
 	class APro4Character* PlayerCharacter;
 

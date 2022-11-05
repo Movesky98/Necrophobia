@@ -45,6 +45,16 @@ void UZombieAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 }
 
+void UZombieAnimInstance::AnimNotify_AttackHitCheck()
+{
+	auto Pawn = TryGetPawnOwner();
+	if (IsValid(Pawn))
+	{
+		APro4Zombie* Zombie = Cast<APro4Zombie>(Pawn);
+		Zombie->DrawAttackField();
+	}
+}
+
 void UZombieAnimInstance::PlayAttackMontage()
 {
 	if (!Montage_IsPlaying(AttackMontage))

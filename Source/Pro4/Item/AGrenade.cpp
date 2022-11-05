@@ -7,6 +7,7 @@
 #include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "DrawDebugHelpers.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 
 AAGrenade::AAGrenade()
@@ -174,7 +175,7 @@ void AAGrenade::SetGrenadeExplosion()
 
 	DrawDebugSphere(GetWorld(), ExplosionLocation, GrenadeColSphere.GetSphereRadius(), 30, FColor::Green, true, 5.0f);
 
-	WBP_NameWidget->SetVisibility(ESlateVisibility::Hidden);
+	BoxMesh->SetVisibility(false);
 	GrenadeProjectile->bSimulationEnabled = false;
 	GrenadeParticle->ToggleActive();
 
@@ -211,6 +212,7 @@ void AAGrenade::GrenadeExplosion()
 void AAGrenade::SetSimulatePhysics(const FVector& ThrowDirection)
 {
 	BoxMesh->SetRelativeScale3D(FVector(10.0f));
+	WBP_NameWidget->SetVisibility(ESlateVisibility::Hidden);
 	GrenadeProjectile->bSimulationEnabled = true;
 	GrenadeProjectile->Velocity = ThrowDirection * GrenadeProjectile->MaxSpeed;
 
