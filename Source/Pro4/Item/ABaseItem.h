@@ -15,7 +15,7 @@ public:
 	// Sets default values for this actor's properties
 	AABaseItem();
 
-#pragma region ItemTypeDeclaration
+	/* 무기종류 */
 	enum class BaseItemType : int32
 	{
 		Weapon,		// 무기
@@ -29,25 +29,15 @@ public:
 	
 	BaseItemType ItemType;
 
-	enum class RecoveryType : int32
-	{
-		Antidote,	// 해독제
-		Bandage,	// 붕대
-		Kit,		// 회복키트
-		MAX
-	};
-
-#pragma endregion
-
-	// Called every frame
-	// virtual void Tick(float DeltaTime) override;
-
+	/* 아이템을 그려낼 SkeletalMeshComponent */
 	UPROPERTY(VisibleDefaultsOnly, Category = Box)
 	USkeletalMeshComponent* SK_Mesh;
-	
+
+	/* 아이템을 그려낼 StaticMeshComponent */
 	UPROPERTY(VisibleDefaultsOnly, Category = Box)
 	UStaticMeshComponent* BoxMesh;
 
+	/* 아이템의 이름을 보여줄 UI */
 	UPROPERTY(VisibleDefaultsOnly, Category = "UI")
 	class UWidgetComponent* NameWidget;
 };

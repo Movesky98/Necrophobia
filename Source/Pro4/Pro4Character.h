@@ -90,6 +90,15 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	/*UPROPERTY(Replicated, VisibleAnywhere)
+	bool isStartPlayer;
+
+	UFUNCTION(Server, Reliable)
+	void SpawnClientPlayerOnServer(USkeletalMesh* WeaponMesh, USkeletalMesh* HelmetMesh, USkeletalMesh* VestMesh, UStaticMesh* ScopeMesh);
+	
+	UFUNCTION(NetMulticast, UnReliable)
+	void SpawnClientPlayerOnClient();*/
+
 	void SetPlayerWeapon(class AAWeapon* SetWeapon);
 	void SetPlayerArmor(class AAArmor* Armor);
 	void AddPlayerGrenade(class AAGrenade* _Grenade);
@@ -102,6 +111,7 @@ public:
 	void RecoveryEncroach();
 	void PlayerEscape();
 	void SetPlayerRound(class AAmmo* _Ammo);
+
 	
 	APro4PlayerController* GetPlayerController();
 	void SetPlayerController(APro4PlayerController* PlayerController);
@@ -134,7 +144,7 @@ public:
 	USkeletalMeshComponent* Weapon;
 
 	UPROPERTY(VisibleAnywhere, Category = "Palyer")
-		UStaticMeshComponent* Scope;
+	UStaticMeshComponent* Scope;
 
 	UPROPERTY(VisibleAnywhere, Category = "Player")
 	UStaticMeshComponent* Grenade;

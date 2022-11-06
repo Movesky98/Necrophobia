@@ -12,10 +12,12 @@ AInGameState::AInGameState()
 	bReplicates = true;
 }
 
+/* 인게임 시간 내 분을 가져오는 함수 */
 uint8 AInGameState::GetInGameMinutes() {
 	return InGameMin;
 }
 
+/* 인게임 시간 내 분을 설정하는 함수 */
 void AInGameState::SetInGameMinutes(uint8 min) {
 	if (min < 0 || min > 2)
 	{
@@ -27,6 +29,7 @@ void AInGameState::SetInGameMinutes(uint8 min) {
 	}
 }
 
+/* 인게임 시간 내 분을 추가하는 함수 */
 void AInGameState::AddInGameMinutes() {
 	InGameMin++;
 	if (InGameMin >= 2)
@@ -35,10 +38,12 @@ void AInGameState::AddInGameMinutes() {
 	}
 }
 
+/* 인게임 시간 내 '일'을 가져오는 함수 */
 uint8 AInGameState::GetInGameDay() {
 	return InGameDay;
 }
 
+/* 인게임 시간 내 '일'을 설정하는 함수 */
 void AInGameState::SetInGameDay(uint8 day) {
 	if (day < 0)
 	{
@@ -50,15 +55,18 @@ void AInGameState::SetInGameDay(uint8 day) {
 	}
 }
 
+/* 인게임 시간 내 '일'을 추가하는 함수 */
 void AInGameState::AddInGameDay()
 {
 	InGameDay++;
 }
 
+/* 인게임 시간 내 '초'를 가져오는 함수 */
 uint8 AInGameState::GetInGameSeconds() {
 	return InGameSec;
 }
 
+/* 인게임 시간 내 '초'를 설정하는 함수*/
 void AInGameState::SetInGameSeconds(uint8 sec) {
 	if (sec < 0 || sec > 60)
 	{
@@ -70,6 +78,7 @@ void AInGameState::SetInGameSeconds(uint8 sec) {
 	}
 }
 
+/* 인게임 시간 내 '초'를 추가하는 함수 */
 void AInGameState::AddInGameSeconds() {
 	InGameSec += 1;
 	UE_LOG(Pro4, Warning, TEXT("Seconds : %d"), GetInGameSeconds());
@@ -79,6 +88,7 @@ void AInGameState::AddInGameSeconds() {
 		InGameSec = 0;
 		InGameMin = 0;
 
+		// 낮 밤 여부에 따라 캐릭터 설정
 		if (GetIsNight())
 		{
 			UE_LOG(Pro4, Warning, TEXT("The day has passed."));
@@ -136,26 +146,31 @@ void AInGameState::AddInGameSeconds() {
 	isStateChanged = true;
 }
 
+/* 인게임 시간이 밤인지 */
 bool AInGameState::GetIsNight()
 {
 	return isNight;
 }
 
+/* 인게임 시간을 밤으로 설정하는 함수 */
 void AInGameState::SetIsNight(bool TimeState)
 {
 	isNight = TimeState;
 }
 
+/* 인게임 시간 내, 낮 밤이 바뀌었는지 정보를 가져오는 함수 */
 bool AInGameState::GetIsStateChanged()
 {
 	return isStateChanged;
 }
 
+/* 인게임 시간 내, 낮 밤이 바뀌었는지 정보를 설정하는 함수 */
 void AInGameState::SetIsStateChanged(bool StateChanged_)
 {
 	isStateChanged = StateChanged_;
 }
 
+/* 게임 시작하면서, 플레이어의 시작 위치를 설정해주는 함수 */
 void AInGameState::SpawnPlayerToStartLocation(TArray<FVector> SpawnArray)
 {
 	// 서버를 제외하고 1부터
@@ -179,6 +194,7 @@ void AInGameState::SpawnPlayerToStartLocation(TArray<FVector> SpawnArray)
 	InGameSec = 0;
 }
 
+/* 서버 <-> 클라이언트 간에 필요한 정보를 복사하는 것을 설정하는 함수 */
 void AInGameState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
