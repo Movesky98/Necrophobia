@@ -17,6 +17,7 @@ class PRO4_API AAArmor : public AABaseItem
 public:
 	AAArmor();
 
+	/* 방어구 종류 */
 	enum class ArmorType : int32
 	{
 		Helmet,			// 헬멧
@@ -24,9 +25,10 @@ public:
 		MAX
 	};
 	
+	/* 아이템 이름을 보여주는 함수 */
 	void ViewItemName();
 
-
+	/* Server -> Client들에게 스폰된 방어구의 정보를 뿌려줌 */
 	UFUNCTION(NetMulticast, Reliable)
 	void NetMulticast_SetUp(USkeletalMesh* SK_Armor, const FString& _ItemName, uint16 _ItemNum);
 
@@ -89,15 +91,14 @@ public:
 
 	virtual void BeginPlay();
 
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
 protected:
+	/* 콜리전이 겹칠 때 실행되는 함수  */
 	void NotifyActorBeginOverlap(AActor* OtherActor) override;
 
 	void NotifyActorEndOverlap(AActor* OtherActor) override;
 
 private:
+	/* 방어구 종류 중, 랜덤으로 방어구의 정보를 설정하는 함수 */
 	void RandomSpawn(int32 Random);
 
 	ArmorType CurrentArmor;

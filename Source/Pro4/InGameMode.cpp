@@ -16,16 +16,11 @@
 #include "TimerManager.h"
 #include "UObject/ConstructorHelpers.h"
 
-/*
-#include <Steamworks/Steamv153/sdk/public/steam/steam_api.h>
- 스팀 라이브러리를 명시적으로 연결함
-#pragma comment(lib, "ThirdParty/Steamworks/Steamv153/sdk/redistributable_bin/win64/steam_api64.lib")
-*/
-
 AInGameMode::AInGameMode()
 {
     PrimaryActorTick.bCanEverTick = true;
     // set default pawn class to our Blueprinted character
+
     static ConstructorHelpers::FClassFinder<APro4PlayerController> BP_PlayerController(TEXT("/Game/Blueprints/BP_PlayerController"));
     if (BP_PlayerController.Succeeded())
     {
@@ -42,6 +37,7 @@ AInGameMode::AInGameMode()
     PlayerStateClass = AInGamePlayerState::StaticClass();
 }
 
+/* 월드에 생성되었을 때 실행되는 함수 */
 void AInGameMode::BeginPlay()
 {
     Super::BeginPlay();
@@ -57,10 +53,9 @@ void AInGameMode::BeginPlay()
     {
         UE_LOG(Pro4, Warning, TEXT("GameState is NULL"));
     }
-
-
 }
 
+/* 매 프레임마다 실행되는 함수 */
 void AInGameMode::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
@@ -142,6 +137,7 @@ void AInGameMode::CountingTheSeconds()
     }
 }
 
+/* 서버가 보스를 생성하는 함수 */
 void AInGameMode::SpawnBossZombie()
 {
     FVector SpawnLocation = FVector(-47632.0f, 19246.0f, 40.0f);

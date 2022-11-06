@@ -28,8 +28,6 @@ protected:
 	void Tick(float DeltaTime) override;
 
 private:
-	TSubclassOf<class UUserWidget> PlayerClass;
-
 	class AInGameState* InGameState;
 	class UNecrophobiaGameInstance* InGameInstance;
 
