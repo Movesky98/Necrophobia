@@ -751,8 +751,7 @@ void APro4Character::EquipMain1()
 			if (IsZoom)
 				Zoom();
 			Equipflag = 1;
-			Pro4Anim->PlayEquipMontage();
-			Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->EquipMontage);
+			PlayMontageOnServer(Pro4Anim->GetEquipMontage(), 1);
 			IsMontagePlay = true;
 			IsEquipping = true;
 			CurrentWeaponMode = WeaponMode::Main1;
@@ -786,8 +785,7 @@ void APro4Character::EquipMain2()
 			if (IsZoom)
 				Zoom();
 			Equipflag = 1;
-			Pro4Anim->PlayEquipMontage();
-			Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->EquipMontage);
+			PlayMontageOnServer(Pro4Anim->GetEquipMontage(), 2);
 			IsMontagePlay = true;
 			IsEquipping = true;
 			CurrentWeaponMode = WeaponMode::Main2;
@@ -821,8 +819,7 @@ void APro4Character::EquipSub()
 			if (IsZoom)
 				Zoom();
 			Equipflag = 2;
-			Pro4Anim->PlayEquipMontage();
-			Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->EquipMontage);
+			PlayMontageOnServer(Pro4Anim->GetEquipMontage(), 2);
 			IsMontagePlay = true;
 			IsEquipping = true;
 			CurrentWeaponMode = WeaponMode::Sub;
@@ -864,8 +861,7 @@ void APro4Character::Reload()
 		case WeaponMode::Main1:
 			if (CurrentCharacterState == CharacterState::Standing)
 			{
-				Pro4Anim->PlayReloadMontage();
-				Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->ReloadMontage);
+				PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 1);
 				IsMontagePlay = true;
 				IsReloading = true;
 			}
@@ -894,8 +890,7 @@ void APro4Character::Reload()
 		case WeaponMode::Main2:
 			if (CurrentCharacterState == CharacterState::Standing)
 			{
-				Pro4Anim->PlayReloadMontage();
-				Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->ReloadMontage);
+				PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 1);
 				IsMontagePlay = true;
 				IsReloading = true;
 			}
@@ -923,8 +918,7 @@ void APro4Character::Reload()
 		case WeaponMode::Sub:
 			if (CurrentCharacterState == CharacterState::Standing)
 			{
-				Pro4Anim->PlayReloadMontage();
-				Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->ReloadMontage);
+				PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 2);
 				IsMontagePlay = true;
 				IsReloading = true;
 			}
@@ -972,10 +966,6 @@ void APro4Character::Attack()
 			break;
 		// 칼은 Swing
 		case WeaponMode::Sub:
-			// if(���Ⱑ �����̸�)
-			// Swing();
-			// else(���Ⱑ �����̸�)
-			// Fire();
 			break;
 		// 투척무기는 Throw
 		case WeaponMode::ATW:
@@ -990,7 +980,7 @@ void APro4Character::Attack()
 }
 
 // 스코프 줌 인,아웃
-void APro4Character::Zoom() // �� ��, �� �ƿ�(�ѵ����������)
+void APro4Character::Zoom()
 {
 	if (Weapon != nullptr && CanZoom == true && !IsEquipping && !IsReloading)
 	{
@@ -1033,21 +1023,21 @@ void APro4Character::Zoom() // �� ��, �� �ƿ�(�ѵ�����
 }
 
 // 총기 조종간
-void APro4Character::Fire_Mod() // ������, �ܹ߸�� ����
+void APro4Character::Fire_Mod()
 {
 	if (CurrentWeaponMode == WeaponMode::Main1 || CurrentWeaponMode == WeaponMode::Main2)
 		FireMod = !FireMod;
 }
 
 // 마우스 클릭시 실행
-void APro4Character::StartFire() // ���콺 Ŭ���� �� �ݵǼ� ��� ���·�
+void APro4Character::StartFire()
 {
 	IsFire = true;
 	Attack();
 }
 
 // 마우스에서 때면 실행
-void APro4Character::StopFire() // ���콺 �� �� �ݵǼ� ��� ���� ���·�
+void APro4Character::StopFire()
 {
 	IsFire = false;
 }
@@ -1114,16 +1104,14 @@ void APro4Character::Fire()
 		{
 			if (IsZoom)
 			{
-				Pro4Anim->PlayAttackMontage();
-				Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->AttackMontage);
+				PlayMontageOnServer(Pro4Anim->GetAttackMontage(), 2);
 				IsMontagePlay = true;
 				IsAttacking = true;
 				UE_LOG(Pro4, Log, TEXT("2"));
 			}
 			else
 			{
-				Pro4Anim->PlayAttackMontage();
-				Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->AttackMontage);
+				PlayMontageOnServer(Pro4Anim->GetAttackMontage(), 1);
 				IsMontagePlay = true;
 				IsAttacking = true;
 				UE_LOG(Pro4, Log, TEXT("1"));
@@ -1976,6 +1964,42 @@ void APro4Character::StopEncroachTimer()
 }
 #pragma endregion
 
+void APro4Character::PlayMontageOnServer_Implementation(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0)
+{
+	PlayMontageOnClient(AnimationMontage, SectionNumber);
+}
+
+void APro4Character::PlayMontageOnClient_Implementation(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0)
+{
+	Pro4Anim->Montage_Play(AnimationMontage, 1.0f);
+
+	if (SectionNumber)
+	{
+		FName Section(FString::FromInt(SectionNumber));
+		Pro4Anim->Montage_JumpToSection(Section, AnimationMontage);
+	}
+}
+
+//void APro4Character::SetPlayerState_Implementation(FString State)
+//{
+//	if (State == "Run")
+//	{
+//
+//	}
+//	else if (State == "Zoom")
+//	{
+//
+//	}
+//	else if (State == "EquipFlag")
+//	{
+//
+//	}
+//	else if (State == "MoveFlag")
+//	{
+//
+//	}
+//}
+
 void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -1983,4 +2007,8 @@ void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(APro4Character, CurrentHP);
 	DOREPLIFETIME(APro4Character, MaxHP);
 	DOREPLIFETIME(APro4Character, CurrentAP);
+	DOREPLIFETIME(APro4Character, IsRun);
+	DOREPLIFETIME(APro4Character, IsZoom);
+	DOREPLIFETIME(APro4Character, Equipflag);
+	DOREPLIFETIME(APro4Character, Moveflag);
 }

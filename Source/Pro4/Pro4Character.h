@@ -396,10 +396,12 @@ private:
 	float CameraRotationX;
 
 	// 상태플래그
+	UPROPERTY(Replicated)
 	bool IsRun;
 	bool IsHold;
 	bool EquipAnim;
 	bool FireMod;
+	UPROPERTY(Replicated)
 	bool IsZoom;
 	bool bHit;
 	bool IsForward;
@@ -415,6 +417,7 @@ private:
 	float HoldTime;
 	float MoveRate;
 	int32 HoldFlag;
+	UPROPERTY(Replicated)
 	int32 Moveflag;
 
 	// 잠식 관련 변수
@@ -447,7 +450,7 @@ private:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Equip, Meta = (AllowPrivateAccess = true))
 		bool IsEquipping;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Equip, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(Replicated, VisibleInstanceOnly, BlueprintReadOnly, Category = Equip, Meta = (AllowPrivateAccess = true))
 		int32 Equipflag;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Reload, Meta = (AllowPrivateAccess = true))
@@ -535,4 +538,13 @@ private:
 	UFUNCTION(NetMulticast, Reliable)
 	void EquipPlayerWeaponOnClient(const WeaponMode& _CurWeaponMode, UStaticMesh* GrenadeMesh = nullptr);
 	/* Equip Player Weapon Sector */
+
+	UFUNCTION(Server, Reliable)
+	void PlayMontageOnServer(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void PlayMontageOnClient(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0);
+
+	/*UFUNCTION(Server, Reliable)
+	void SetPlayerState(FString State);*/
 };
