@@ -18,12 +18,14 @@ public:
 	UBossAnimInstance();
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
+	// 공격 애니메이션 실행을 위한 함수와 변수
 	void PlayAttackMontage();
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
 		UAnimMontage* AttackMontage;
 
 private:
+	// 이동을 위한 변수
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 		float CurrentPawnSpeed;
 };

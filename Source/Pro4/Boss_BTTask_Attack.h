@@ -23,6 +23,7 @@ protected:
 	virtual void TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds) override;
 
 private:
+	// 애니메이션 컨트롤을 위한 변수
 	bool IsAttacking = false;
 	int32 AttackNum;
 };
