@@ -63,6 +63,7 @@ void APro4PlayerController::UpdatePlayerTimeState()
 	{
 		PlayerMenu->SetTimeText(InGameState->GetInGameMinutes(), InGameState->GetInGameSeconds());
 
+		// ÀÎ°ÔÀÓ ½Ã°£ÀÌ ¹ãÀÌµÇ¸é ¹ãÀ¸·Î ³·ÀÌµÇ¸é ³·À¸·Î
 		if (InGameState->GetIsNight())
 		{
 			PlayerMenu->SetImage(PlayerMenu->Night);

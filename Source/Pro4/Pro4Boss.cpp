@@ -11,16 +11,19 @@ APro4Boss::APro4Boss()
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	// 보스 메시
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh>SK_Boss(TEXT("/Game/Character_Animation/Zombie/Creta/Creta_Tpose.Creta_Tpose"));
 	if (SK_Boss.Succeeded())
 	{
 		GetMesh()->SetSkeletalMesh(SK_Boss.Object);
 	}
 
+	// 보스 캐릭터를 조종할 AI 컨트롤러
 	AIControllerClass = APro4BossAI::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+	// 보스 애니메이션 연결
 	static ConstructorHelpers::FClassFinder<UAnimInstance>SK_BossAnim(TEXT("/Game/Character_Animation/Zombie/Creta/CretaAnimBlueprint.CretaAnimBlueprint_C"));
 	if (SK_BossAnim.Succeeded())
 	{
@@ -38,6 +41,7 @@ void APro4Boss::BeginPlay()
 
 }
 
+// 몽타주 중복실행을 막기위한 함수
 void APro4Boss::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
@@ -52,6 +56,7 @@ void APro4Boss::PostInitializeComponents()
 	}
 }
 
+// 움직임 초기 설정
 void APro4Boss::MovementSetting()
 {
 	bUseControllerRotationYaw = false;
@@ -74,10 +79,12 @@ void APro4Boss::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 }
 
+// 공격
 void APro4Boss::Attack()
 {
 	if (IsAttacking) return;
 
+	// 2가지 공격모션중 랜덤하게 실행
 	AttackNum = FMath::RandRange(1, 2);
 	BossAnim->PlayAttackMontage();
 
@@ -97,6 +104,7 @@ void APro4Boss::Attack()
 	IsMontagePlay = true;
 }
 
+// 공격 몽타주 종료시 실행
 void APro4Boss::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	IsAttacking = false;

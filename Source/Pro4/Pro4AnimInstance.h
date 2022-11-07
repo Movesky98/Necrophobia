@@ -36,6 +36,7 @@ public:
 		UAnimMontage* AttackMontage;
 
 private:
+	// 좀비 애니메이션 컨트롤을 위한 변수들
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Pawn, Meta = (AllowPrivateAccess = true))
 		float CurrentPawnSpeed;
 

@@ -52,6 +52,9 @@ APro4Zombie::APro4Zombie()
 	IsDead = false;
 
 	CurrentHP = 1.0f;
+
+	Damage = 30.0f;
+
 	Damage = 20.0f;
 	Velocity = 0.0f;
 	Tags.Add("Zombie");
@@ -208,7 +211,6 @@ void APro4Zombie::ZombieGetDamagedOnServer_Implementation(float _Damage)
 	}
 }
 
-
 void APro4Zombie::Dead()
 {
 	if (GetWorld()->IsServer())
@@ -238,4 +240,5 @@ void APro4Zombie::DrawAttackField()
 			PlayerCharacter->GetDamaged(Damage);
 		}
 	}
+
 }

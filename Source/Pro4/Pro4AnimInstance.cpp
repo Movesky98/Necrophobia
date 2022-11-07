@@ -9,6 +9,7 @@
 /**/
 UPro4AnimInstance::UPro4AnimInstance()
 {
+	// 변수 초기 설정
 	CurrentPawnSpeed = 0.0f;
 	IsInAir = false;
 	IsCrouch = false;
@@ -16,18 +17,21 @@ UPro4AnimInstance::UPro4AnimInstance()
 	IsRun = false;
 	Equipflag = 0;
 
+	// 장착 애니메이션 몽타주
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> EQUIP_MONTAGE(TEXT("/Game/Character_Animation/Mannequin/Animations/Equip_Montage.Equip_Montage"));
 	if (EQUIP_MONTAGE.Succeeded())
 	{
 		EquipMontage = EQUIP_MONTAGE.Object;
 	}
 
+	// 장전 애니메이션 몽타주
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> RELOAD_MONTAGE(TEXT("/Game/Character_Animation/Mannequin/Animations/Reload_Montage.Reload_Montage"));
 	if (RELOAD_MONTAGE.Succeeded())
 	{
 		ReloadMontage = RELOAD_MONTAGE.Object;
 	}
 
+	// 사격 애니메이션 몽타주
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> ATTACK_MONTAGE(TEXT("/Game/Character_Animation/Mannequin/Animations/Attack_Montage.Attack_Montage"));
 	if (ATTACK_MONTAGE.Succeeded())
 	{
@@ -39,11 +43,14 @@ void UPro4AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
+	// 애니메이션을 적용할 캐릭터 가져오기
 	auto Pawn = TryGetPawnOwner();
 	if (::IsValid(Pawn))
 	{
+		// 캐릭터의 이동속도
 		CurrentPawnSpeed = Pawn->GetVelocity().Size();
 		auto Character = Cast<APro4Character>(Pawn);
+		// 캐릭터 클래스의 변수를 받아 애니메이션의 변수 설정
 		if (Character)
 		{
 			IsInAir = Character->GetMovementComponent()->IsFalling();
@@ -59,22 +66,25 @@ void UPro4AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	}
 }
 
+// 장착 몽타주 실행
 void UPro4AnimInstance::PlayEquipMontage()
 {
 	Montage_Play(EquipMontage, 1.0f);
 }
 
+// 장전 몽타주 실행
 void UPro4AnimInstance::PlayReloadMontage()
 {
 	Montage_Play(ReloadMontage, 1.0f);
 }
 
+// 공격 몽타주 실행
 void UPro4AnimInstance::PlayAttackMontage()
 {
-	UE_LOG(Pro4, Log, TEXT("Attack11"));
 	Montage_Play(AttackMontage, 1.0f);
 }
 
+// 몽타주 번호 이동
 void UPro4AnimInstance::JumpToEquipMontageSection(int32 NewSection)
 {
 	UE_LOG(Pro4, Log, TEXT("section1."));

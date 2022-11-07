@@ -27,6 +27,15 @@ AAGrenade::AAGrenade()
 	GrenadeParticle->SetupAttachment(BoxMesh);
 	GrenadeParticle->bAutoActivate = false;
 
+	static ConstructorHelpers::FObjectFinder<USoundCue>ThrowSound(TEXT("/Game/StarterContent/Audio/ThrowFires"));
+	if (ThrowSound.Succeeded())
+	{
+		SC = ThrowSound.Object;
+	}
+	AC = CreateDefaultSubobject<UAudioComponent>(TEXT("AC"));
+	AC->bAutoActivate = false;
+	AC->SetupAttachment(BoxMesh);
+
 	uint32 RandomItemNum = FMath::RandRange(0, static_cast<int32>(GrenadeType::MAX) - 1);
 	RandomSpawn(RandomItemNum);
 
@@ -194,7 +203,8 @@ void AAGrenade::SetGrenadeExplosion()
 			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Orange, Hit.GetActor()->GetName());
 		}
 	}
-
+	AC->SetSound(Cast<USoundBase>(SC));
+	AC->Play();
 	GetWorldTimerManager().SetTimer(SetExplosionTimer, this, &AAGrenade::GrenadeExplosion, 1.5f);
 }
 

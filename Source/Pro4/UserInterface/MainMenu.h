@@ -6,7 +6,7 @@
 #include "WidgetMenu.h"
 #include "MainMenu.generated.h"
 
-/* 세션을 찾을 때, 각 세션들에 대한 정보를 담아놓는 구조체 */
+
 USTRUCT()
 struct FSessionData {
 	GENERATED_BODY()
@@ -52,4 +52,5 @@ private:
 
 	UFUNCTION()
 	void ExitGame();
+
 };

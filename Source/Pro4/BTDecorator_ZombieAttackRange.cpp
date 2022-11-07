@@ -16,13 +16,15 @@ bool UBTDecorator_ZombieAttackRange::CalculateRawConditionValue(UBehaviorTreeCom
 {
 	bool bResult = Super::CalculateRawConditionValue(OwnerComp, NodeMemory);
 
+	// AI로 빙의한 좀비 캐릭터 가져오기
 	auto ControllingPawn = OwnerComp.GetAIOwner()->GetPawn();
 	if (ControllingPawn == nullptr)
 		return false;
 
+	// 블랙보드에 타겟으로 지정된 캐릭터 가져오기
 	auto Target = Cast<APro4Character>(OwnerComp.GetBlackboardComponent()->GetValueAsObject(FName(TEXT("Target"))));
 	if (Target == nullptr)
 		return false;
 	
-	return bResult && Target->GetDistanceTo(ControllingPawn) <= 200.0f;
+	return bResult && Target->GetDistanceTo(ControllingPawn) <= 200.0f; // 타깃이 존재하고 200f 안에있으면 공격가능
 }

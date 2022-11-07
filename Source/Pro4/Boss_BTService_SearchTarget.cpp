@@ -18,6 +18,7 @@ void UBoss_BTService_SearchTarget::TickNode(UBehaviorTreeComponent& OwnerComp, u
 {
 	Super::TickNode(OwnerComp, NodeMemory, DeltaSeconds);
 
+	// 보스좀비에 빙의한 AI를 캐릭터를 가져옴
 	auto CurrentPawn = Cast<APro4Boss>(OwnerComp.GetAIOwner()->GetPawn());
 	if (CurrentPawn == nullptr)
 		return;
@@ -32,6 +33,7 @@ void UBoss_BTService_SearchTarget::TickNode(UBehaviorTreeComponent& OwnerComp, u
 	TArray<FOverlapResult> OverlapResults;
 	FCollisionQueryParams QueryParams(NAME_None, false, CurrentPawn);
 
+	// 보스좀비 위치를 기준으로 정해놓은 범위 안에 겹치는 물체 감지
 	bool bResult = World->OverlapMultiByChannel(
 		OverlapResults,
 		Center,
@@ -40,10 +42,12 @@ void UBoss_BTService_SearchTarget::TickNode(UBehaviorTreeComponent& OwnerComp, u
 		FCollisionShape::MakeSphere(SearchRadius),
 		QueryParams);
 
+	// 겹치는게 있을때
 	if (bResult)
 	{
 		for (auto& OverlapResult : OverlapResults)
 		{
+			// 겹치는 물체가 캐릭터 이면 해당 캐릭터를 AI 블랙보드의 타겟으로 지정
 			APro4Character* PlayerCharacter = Cast<APro4Character>(OverlapResult.GetActor());
 			if (PlayerCharacter && PlayerCharacter->GetController()->IsPlayerController())
 			{
@@ -54,6 +58,8 @@ void UBoss_BTService_SearchTarget::TickNode(UBehaviorTreeComponent& OwnerComp, u
 			}
 		}
 	}
+	
+	// 없으면 타겟을 리셋
 	OwnerComp.GetBlackboardComponent()->SetValueAsObject(FName(TEXT("Target")), nullptr);
 	DrawDebugSphere(World, Center, SearchRadius, 16, FColor::Red, false, 0.2f);
 }

@@ -12,7 +12,8 @@
 #include "ZombieSpawner.h"
 #include "Heli_AH64D.h"
 #include "Door.h"
-
+#include "Components/AudioComponent.h"
+#include "Sound/SoundCue.h"
 #include "DrawDebugHelpers.h"
 #include "Net/UnrealNetwork.h"
 
@@ -23,9 +24,8 @@ APro4Character::APro4Character()
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 	bNetLoadOnClient = true;
-	bAlwaysRelevant = true;
-	NetCullDistanceSquared = 2500000000.0f;
-
+ 
+	/* 캐릭터 클래스를 구성하는 컴포넌트(카메라, 방어구, 무기..) */
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("CAMERA"));
 	Weapon = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WEAPON"));
@@ -35,20 +35,23 @@ APro4Character::APro4Character()
 	Grenade = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("GRENADE"));
 	DetectZSpawnerCol = CreateDefaultSubobject<UBoxComponent>(TEXT("DetectCollsion"));
 	MuzzleFlash = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("MuzzleFlash"));
+	MapSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("MAPSPRINGARM"));
+	MapCapture = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("MAPCAPTURE"));
+	/* 캐릭터 클래스를 구성하는 컴포넌트(카메라, 방어구, 무기..) */
 
+	/* 총알 발사효과를 무기컴포넌트의 하위로*/
 	MuzzleFlash->SetupAttachment(Weapon);
 	MuzzleFlash->bAutoActivate = false;
-	
-	static ConstructorHelpers::FObjectFinder<UParticleSystem> MuzzleFlashAsset(TEXT("/Game/Impacts/Particles/MuzzleFlash/P_MuzzleFlash_3"));
+	/* 총알 발사효과를 무기컴포넌트의 하위로*/
 
+	/* 발사효과로 사용할 파티클 지정 */
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> MuzzleFlashAsset(TEXT("/Game/Impacts/Particles/MuzzleFlash/P_MuzzleFlash_3"));
 	if (MuzzleFlashAsset.Succeeded())
 	{
 		MuzzleFlash->SetTemplate(MuzzleFlashAsset.Object);
 	}
 
-	MapSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("MAPSPRINGARM"));
-	MapCapture = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("MAPCAPTURE"));
-
+	/* 컴포넌트 계층 설정 */
 	RootComponent = GetCapsuleComponent();
 	DetectZSpawnerCol->SetupAttachment(GetCapsuleComponent());
 	DetectZSpawnerCol->SetIsReplicated(true);
@@ -62,14 +65,18 @@ APro4Character::APro4Character()
 	MapSpringArm->SetupAttachment(GetCapsuleComponent());
 	MapCapture->SetupAttachment(MapSpringArm);
 	MapSpringArm->SetRelativeRotation(FRotator(-90.0f, 0.0f, 0.0f));
+	/* 컴포넌트 계층 설정 */
 
+	/* 캐릭터 메쉬 위치, 회전 값 설정*/
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f));
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("PCharacter"));
 
+	/* 초기설정 함수 */
 	CameraSetting();
 	MovementSetting();
 	WeaponSetting();
 	StateSetting();
+	/* 초기설정 함수 */
 
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh>SK_Mannequin(TEXT("/Game/Character_Animation/Mannequin/Character/Mesh/SK_Mannequin.SK_Mannequin"));
 	if (SK_Mannequin.Succeeded())
@@ -95,6 +102,16 @@ APro4Character::APro4Character()
 	SocketSetting();
 
 	Tags.Add("Player");
+
+	static ConstructorHelpers::FObjectFinder<USoundCue>FireSound(TEXT("SoundCue'/Game/StarterContent/Audio/ShootSound.ShootSound'"));
+	FireS = FireSound.Object;
+	static ConstructorHelpers::FObjectFinder<USoundCue>SubSound(TEXT("SoundCue'/Game/StarterContent/Audio/SubShoots.SubShoots'"));
+	SubS = SubSound.Object;
+	static ConstructorHelpers::FObjectFinder<USoundCue>EmptySound(TEXT("SoundCue'/Game/StarterContent/Audio/EmptyShoots.EmptyShoots'"));
+	EmptyS = EmptySound.Object;
+	FireA = CreateDefaultSubobject<UAudioComponent>(TEXT("FireA"));
+	FireA->bAutoActivate = false;
+	FireA->SetupAttachment(GetMesh());
 }
 
 // Called when the game starts or when spawned
@@ -114,6 +131,7 @@ void APro4Character::BeginPlay()
 ////////////////////////////////////////////////////// 초기세팅 ////////////////////////////////////////////////////////////
 /// </summary>
 
+// 카메라 초기 세팅
 void APro4Character::CameraSetting()
 {
 	SpringArm->TargetArmLength = 450.0f;
@@ -136,6 +154,7 @@ void APro4Character::CameraSetting()
 	MapCapture->OrthoWidth = 1000.0f;
 }
 
+// 캐릭터 위상 세팅
 void APro4Character::MovementSetting()
 {
 	GetCharacterMovement()->JumpZVelocity = 500.0f;
@@ -150,6 +169,7 @@ void APro4Character::MovementSetting()
 	LeftRightflag=0;
 }
 
+// 캐릭터 무기정보 세팅
 void APro4Character::WeaponSetting()
 {
 	ProjectileClass = APro4Projectile::StaticClass();
@@ -177,6 +197,7 @@ void APro4Character::WeaponSetting()
 	}
 }
 
+// 캐릭터 상태 세팅
 void APro4Character::StateSetting()
 {
 	MaxHP = 100.0f;
@@ -191,6 +212,9 @@ void APro4Character::StateSetting()
 	Knife.Magazine = 0;
 	Knife.TotalRound = 0;
 
+	CurrentWeaponMode = WeaponMode::Disarming;
+	CurrentCharacterState = CharacterState::Standing;
+
 	HoldTime = 0.0f;
 	HoldFlag = 0;
 
@@ -201,6 +225,7 @@ void APro4Character::StateSetting()
 	CanZoom = true;
 }
 
+// 무기, 총알, 장비 장착지점 세팅
 void APro4Character::SocketSetting()
 {
 	FName WeaponSocket(TEXT("Hand_rSocket"));
@@ -264,6 +289,7 @@ void APro4Character::SocketSetting()
 void APro4Character::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	// 위상 변화 애니메이션 작동 중 다른행동을 막기위한 부분
 	if (IsHold)
 	{
 		HoldTime += DeltaTime;
@@ -290,11 +316,13 @@ void APro4Character::Tick(float DeltaTime)
 		}
 	}
 
+	// 점프 상태가 아닐 때 줌 가능하도록
 	if (!GetMovementComponent()->IsFalling())
 	{
 		CanZoom = true;
 	}
 
+	// 대각선 이동을 위한 세팅
 	if (Updownflag == 1 && LeftRightflag != 0)
 	{
 		bUseControllerRotationYaw = false;
@@ -308,6 +336,7 @@ void APro4Character::Tick(float DeltaTime)
 		SpringArm->SetRelativeRotation(FRotator::ZeroRotator);
 	}
 
+	// 캐릭터 회전값을 애니메이션에 반영하기 위해 변수 저장
 	CharacterRotationPitch = GetControlRotation().Pitch;
 
 	if ((GetControlRotation().Yaw >= 325.0f && GetControlRotation().Yaw < 360.0) || (GetControlRotation().Yaw >= 0.0f && GetControlRotation().Yaw < 35.0))
@@ -341,6 +370,7 @@ FString APro4Character::GetEnumRole(ENetRole CharacterRole)
 	}
 }
 
+// 몽타주 중복실행을 막기위한 함수
 void APro4Character::PostInitializeComponents()
 {
 	Super::PostInitializeComponents();
@@ -351,6 +381,7 @@ void APro4Character::PostInitializeComponents()
 	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnAttackMontageEnded);
 }
 
+// 장착 몽타주 종료시 콜백
 void APro4Character::OnEquipMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	IsMontagePlay = false;
@@ -358,6 +389,7 @@ void APro4Character::OnEquipMontageEnded(UAnimMontage* Montage, bool bInterrupte
 	CanZoom = true;
 }
 
+// 장전 몽타주 종료시 콜백
 void APro4Character::OnReloadMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	IsMontagePlay = false;
@@ -365,6 +397,7 @@ void APro4Character::OnReloadMontageEnded(UAnimMontage* Montage, bool bInterrupt
 	CanZoom = true;
 }
 
+// 공격 몽타주 종료시 콜백
 void APro4Character::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	IsMontagePlay = false;
@@ -403,6 +436,7 @@ void APro4Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 ////////////////////////////////////////////////////// 캐릭터 움직임 코드 ////////////////////////////////////////////////////////////
 /// </summary>
 
+// 앞 뒤 이동시 속도 조정
 float APro4Character::UpdownSpeed()
 {
 	switch (CurrentCharacterState)
@@ -456,6 +490,7 @@ float APro4Character::UpdownSpeed()
 	}
 }
 
+// 좌우 이동시 속도 조정
 float APro4Character::LeftRightSpeed()
 {
 	switch (CurrentCharacterState)
@@ -509,6 +544,7 @@ float APro4Character::LeftRightSpeed()
 	}
 }
 
+// 앞 뒤 이동
 void APro4Character::UpDown(float NewAxisValue)
 {
 	if (!IsHold)
@@ -538,6 +574,7 @@ void APro4Character::UpDown(float NewAxisValue)
 	}
 }
 
+// 좌 우 이동
 void APro4Character::LeftRight(float NewAxisValue)
 {
 	if (!IsHold)
@@ -565,25 +602,28 @@ void APro4Character::LeftRight(float NewAxisValue)
 	}
 }
 
+// 위아래 시점 회전
 void APro4Character::LookUp(float NewAxisValue)
 {
 	AddControllerPitchInput(NewAxisValue);
 }
 
+// 좌우 시점 회전
 void APro4Character::Turn(float NewAxisValue)
 {
 	AddControllerYawInput(NewAxisValue);
 }
 
+// 달리기
 void APro4Character::Run()
 {
 	if(CurrentCharacterState==CharacterState::Standing)
 	IsRun = !IsRun;
-
 	if (IsZoom)
 		Zoom();
 }
 
+// 점프
 void APro4Character::Jump()
 {
 	if (!IsHold)
@@ -613,6 +653,7 @@ void APro4Character::Jump()
 
 }
 
+// 앉기
 void APro4Character::beCrouch()
 {
 	if (!IsHold)
@@ -647,6 +688,7 @@ void APro4Character::beCrouch()
 	}
 }
 
+// 엎드리기
 void APro4Character::Prone()
 {
 	if (!IsHold)
@@ -685,16 +727,20 @@ void APro4Character::Prone()
 ////////////////////////////////////////////////////// 캐릭터 무기장착, 장전 코드 ////////////////////////////////////////////////////////////
 /// </summary>
 
+// 1번 무기
 void APro4Character::EquipMain1()
 {
+	// 메인무기 보유시 장착 가능
 	if (MainWeapon.bHaveWeapon)
 	{
+		// 다른 몽타주 실행중이라면 해당 몽타주 종료
 		if (IsMontagePlay)
 		{
 			Pro4Anim->Montage_Stop(0.0f);
 			IsMontagePlay = false;
 		}
 
+		// 무기 장착
 		if (CurrentWeaponMode == WeaponMode::Main1)
 		{
 			Equipflag = 0;
@@ -705,9 +751,8 @@ void APro4Character::EquipMain1()
 			if (IsZoom)
 				Zoom();
 			Equipflag = 1;
-			PlayMontageOnServer(Pro4Anim->GetEquipMontage(), 1);
-			// Pro4Anim->PlayEquipMontage();
-			// Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->EquipMontage);
+			Pro4Anim->PlayEquipMontage();
+			Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->EquipMontage);
 			IsMontagePlay = true;
 			IsEquipping = true;
 			CurrentWeaponMode = WeaponMode::Main1;
@@ -717,16 +762,20 @@ void APro4Character::EquipMain1()
 	EquipPlayerWeaponOnServer(CurrentWeaponMode);
 }
 
+// 2번 무기
 void APro4Character::EquipMain2()
 {
+	// 보조무기 보유시 장착 가능
 	if (SubWeapon.bHaveWeapon)
 	{
+		// 다른 몽타주 실행중이라면 해당 몽타주 종료
 		if (IsMontagePlay)
 		{
 			Pro4Anim->Montage_Stop(0.0f);
 			IsMontagePlay = false;
 		}
 
+		// 무기 장착
 		if (CurrentWeaponMode == WeaponMode::Main2)
 		{
 			Equipflag = 0;
@@ -737,7 +786,8 @@ void APro4Character::EquipMain2()
 			if (IsZoom)
 				Zoom();
 			Equipflag = 1;
-			PlayMontageOnServer(Pro4Anim->GetEquipMontage(), 2);
+			Pro4Anim->PlayEquipMontage();
+			Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->EquipMontage);
 			IsMontagePlay = true;
 			IsEquipping = true;
 			CurrentWeaponMode = WeaponMode::Main2;
@@ -747,16 +797,20 @@ void APro4Character::EquipMain2()
 	EquipPlayerWeaponOnServer(CurrentWeaponMode);
 }
 
+// 보조 무기
 void APro4Character::EquipSub()
 {
+	// 칼 보유중일시 장착 가능
 	if (Knife.bHaveWeapon)
 	{
+		// 다른 몽타주 실행중이라면 해당 몽타주 종료
 		if (IsMontagePlay)
 		{
 			Pro4Anim->Montage_Stop(0.0f);
 			IsMontagePlay = false;
 		}
 
+		// 무기 장착
 		if (CurrentWeaponMode == WeaponMode::Sub)
 		{
 			Equipflag = 0;
@@ -767,7 +821,8 @@ void APro4Character::EquipSub()
 			if (IsZoom)
 				Zoom();
 			Equipflag = 2;
-			PlayMontageOnServer(Pro4Anim->GetEquipMontage(), 2);
+			Pro4Anim->PlayEquipMontage();
+			Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->EquipMontage);
 			IsMontagePlay = true;
 			IsEquipping = true;
 			CurrentWeaponMode = WeaponMode::Sub;
@@ -777,6 +832,7 @@ void APro4Character::EquipSub()
 	EquipPlayerWeaponOnServer(CurrentWeaponMode);
 }
 
+// 투척 무기
 void APro4Character::EquipATW()
 {
 	if (CurrentWeaponMode == WeaponMode::ATW)
@@ -793,18 +849,23 @@ void APro4Character::EquipATW()
 	EquipPlayerWeaponOnServer(CurrentWeaponMode, PlayerGrenade.SM_Grenade);
 }
 
+// 장전
 void APro4Character::Reload()
 {
+	// 이미 장전중이거나 다른 몽타주 실행중일시 중단
 	if (IsReloading)
 		return;
 	if (!IsMontagePlay)
 	{
+		// 무기 유형마다 다른 애니메이션, 각각 변수 설정
 		switch (CurrentWeaponMode)
 		{
+		// 주무기 장전
 		case WeaponMode::Main1:
 			if (CurrentCharacterState == CharacterState::Standing)
 			{
-				PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 1);
+				Pro4Anim->PlayReloadMontage();
+				Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->ReloadMontage);
 				IsMontagePlay = true;
 				IsReloading = true;
 			}
@@ -829,10 +890,12 @@ void APro4Character::Reload()
 				MainWeapon.CurrentRound = MainWeapon.Magazine;
 			}
 			break;
+		// 보조무기 장전
 		case WeaponMode::Main2:
 			if (CurrentCharacterState == CharacterState::Standing)
 			{
-				PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 1);
+				Pro4Anim->PlayReloadMontage();
+				Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->ReloadMontage);
 				IsMontagePlay = true;
 				IsReloading = true;
 			}
@@ -856,14 +919,12 @@ void APro4Character::Reload()
 				SubWeapon.TotalRound -= SubWeapon.Magazine - SubWeapon.CurrentRound;
 				SubWeapon.CurrentRound = SubWeapon.Magazine;
 			}
-
 			break;
 		case WeaponMode::Sub:
 			if (CurrentCharacterState == CharacterState::Standing)
 			{
-				PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 2);
-				// Pro4Anim->PlayReloadMontage();
-				// Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->ReloadMontage);
+				Pro4Anim->PlayReloadMontage();
+				Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->ReloadMontage);
 				IsMontagePlay = true;
 				IsReloading = true;
 			}
@@ -894,27 +955,33 @@ void APro4Character::Reload()
 
 #pragma region Character_Attack
 
+// 공격
 void APro4Character::Attack()
 {
 	if (!IsEquipping)
 	{
+		// 무기마다 다른 공격 모션
 		switch (CurrentWeaponMode)
 		{
+		// 총은 Fire
 		case WeaponMode::Main1:
 			Fire();
 			break;
 		case WeaponMode::Main2:
 			Fire();
 			break;
+		// 칼은 Swing
 		case WeaponMode::Sub:
 			// if(���Ⱑ �����̸�)
 			// Swing();
 			// else(���Ⱑ �����̸�)
 			// Fire();
 			break;
+		// 투척무기는 Throw
 		case WeaponMode::ATW:
 			Throw();
 			break;
+		// 비무장은 Punch
 		case WeaponMode::Disarming:
 			Punch();
 			break;
@@ -922,12 +989,15 @@ void APro4Character::Attack()
 	}
 }
 
+// 스코프 줌 인,아웃
 void APro4Character::Zoom() // �� ��, �� �ƿ�(�ѵ����������)
 {
 	if (Weapon != nullptr && CanZoom == true && !IsEquipping && !IsReloading)
 	{
+		// 장착 무기가 총기류일때 줌 가능
 		if (CurrentWeaponMode == WeaponMode::Main1 || CurrentWeaponMode == WeaponMode::Main2 || CurrentWeaponMode == WeaponMode::Sub)
 		{
+			// 줌 인 가능한 상태일시 카메라 위치 설정과 스코프 종류에 따라 확대
 			if (IsZoom)
 			{
 				IsZoom = false;
@@ -947,10 +1017,12 @@ void APro4Character::Zoom() // �� ��, �� �ƿ�(�ѵ�����
 					Camera->FieldOfView = 22.5f;
 					Camera->PostProcessSettings.VignetteIntensity = 1.0f;
 				}
+				// 달리기 상태였을시 해제
 				if (IsRun)
 					IsRun = false;
 			}
 
+			// 장착무기가 SR일시 스코프 UI로 변경
 			if (MainWeapon.Name == "SR")
 			{
 				UNecrophobiaGameInstance* Instance = Cast<UNecrophobiaGameInstance>(GetGameInstance());
@@ -960,23 +1032,27 @@ void APro4Character::Zoom() // �� ��, �� �ƿ�(�ѵ�����
 	}
 }
 
+// 총기 조종간
 void APro4Character::Fire_Mod() // ������, �ܹ߸�� ����
 {
 	if (CurrentWeaponMode == WeaponMode::Main1 || CurrentWeaponMode == WeaponMode::Main2)
 		FireMod = !FireMod;
 }
 
+// 마우스 클릭시 실행
 void APro4Character::StartFire() // ���콺 Ŭ���� �� �ݵǼ� ��� ���·�
 {
 	IsFire = true;
 	Attack();
 }
 
+// 마우스에서 때면 실행
 void APro4Character::StopFire() // ���콺 �� �� �ݵǼ� ��� ���� ���·�
 {
 	IsFire = false;
 }
 
+// 총 발사
 void APro4Character::Fire()
 {
 	if (IsFire)
@@ -984,6 +1060,7 @@ void APro4Character::Fire()
 		FVector MuzzleLocation;
 		FRotator MuzzleRotation;
 
+		// 무기 장착중일 때 총알 스폰 지점 설정
 		if (Weapon != nullptr)
 		{
 			if (Weapon->DoesSocketExist("gunFireLocation"))
@@ -1000,36 +1077,53 @@ void APro4Character::Fire()
 			if (MainWeapon.CurrentRound <= 0)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("There is no bullet."));
+				FireA->SetSound(EmptyS);
+				FireA->Play();
 				Reload();
 				return;
+			}
+			else
+			{
+				FireA->SetSound(FireS);
+				FireA->Play();
 			}
 
 			MainWeapon.CurrentRound--;
 		}
-		else if (CurrentWeaponMode == WeaponMode::Main2)
+		else if (CurrentWeaponMode == WeaponMode::Main2) // 보조무기일 때의 총알 발사
 		{
 			if (SubWeapon.CurrentRound <= 0)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("There is no bullet."));
+				FireA->SetSound(EmptyS);
+				FireA->Play();
 				Reload();
 				return;
+			}
+			else
+			{
+				FireA->SetSound(SubS);
+				FireA->Play();
 			}
 
 			SubWeapon.CurrentRound--;
 		}
 
+		// 총알 발사 애니메이션
 		if (!IsMontagePlay)
 		{
 			if (IsZoom)
 			{
-				PlayMontageOnServer(Pro4Anim->GetAttackMontage(), 2);
+				Pro4Anim->PlayAttackMontage();
+				Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->AttackMontage);
 				IsMontagePlay = true;
 				IsAttacking = true;
 				UE_LOG(Pro4, Log, TEXT("2"));
 			}
 			else
 			{
-				PlayMontageOnServer(Pro4Anim->GetAttackMontage(), 1);
+				Pro4Anim->PlayAttackMontage();
+				Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->AttackMontage);
 				IsMontagePlay = true;
 				IsAttacking = true;
 				UE_LOG(Pro4, Log, TEXT("1"));
@@ -1045,14 +1139,16 @@ void APro4Character::Fire()
 		}
 	}
 }
-	
-void APro4Character::Throw() // 투척무기 던지기
+
+// 투척무기 던지기
+void APro4Character::Throw()
 {
 	/*
 	* 던지는 애니메이션
 	*/
 	UE_LOG(Pro4, Log, TEXT("ATW Throw"));
 
+	// 투척무기 보유시 장착중인 투척무기 투척
 	if (Grenade->GetStaticMesh() != nullptr)
 	{
 		FVector CameraLocation;
@@ -1094,6 +1190,7 @@ void APro4Character::SpawnProjectileOnServer_Implementation(FVector Location, FR
 		SpawnParams.Owner = _Owner;
 		SpawnParams.Instigator = GetInstigator();
 
+		// 총알 생성 후 발사 방향과 속도
 		APro4Projectile* Projectile = World->SpawnActor<APro4Projectile>(ProjectileClass, Location, Rotation, SpawnParams);
 		if (Projectile)
 		{
@@ -1119,6 +1216,7 @@ void APro4Character::SpawnGrenadeOnServer_Implementation(FVector Location, FRota
 		SpawnParams.Owner = _Owner;
 		SpawnParams.Instigator = GetInstigator();
 
+		// 수류탄 생성 후 투척 물리 설정
 		AAGrenade* SpawnGrenade = World->SpawnActor<AAGrenade>(AAGrenade::StaticClass(), Location, Rotation, SpawnParams);
 
 		if (SpawnGrenade)
@@ -1156,6 +1254,7 @@ void APro4Character::InteractPressed()
 
 	bHit = World->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, TraceParams);
 
+	// 라인트레이싱을 통해 해당지점에 있는 사물 정보 획득
 	if (bHit)
 	{
 		if (Hit.GetActor()) {
@@ -1166,14 +1265,14 @@ void APro4Character::InteractPressed()
 
 			AActor* Interactable = Hit.GetActor();
 
-			// Actor가 가지고 있는 Tag가 Item이라면.
+			// Actor가 가지고 있는 Tag가 Item이라면 아이템 획득
 			if (Interactable->ActorHasTag(TEXT("Item")))
 			{
 				UE_LOG(Pro4, Log, TEXT("Get %s"), *Interactable->GetName());
 				
 				NecGameInstance->PlayerMenu->AddItemToInventory(Interactable, 1);
 			}
-			else if (Interactable->ActorHasTag(TEXT("Door")))
+			else if (Interactable->ActorHasTag(TEXT("Door"))) // Actor가 가지고 있는 Tag가 문이면 문을 열기
 			{
 				ADoor* Door = Cast<ADoor>(Interactable);
 				if (Door->GetCanPlayerOpenDoor())
@@ -1187,6 +1286,7 @@ void APro4Character::InteractPressed()
 	}
 }
 
+// UI 스위칭 함수
 void APro4Character::ChangePlayerWidget()
 {
 	if (!NecGameInstance)
@@ -1208,8 +1308,10 @@ void APro4Character::Server_DestroyItem_Implementation(AActor* DestroyActor)
 ////////////////////////////////////////////////////// 잠식 상호작용 코드 ////////////////////////////////////////////////////////////
 /// </summary>
 
+// 잠식지역에 들어가고 벗어날 때 실행되는 함수
 void APro4Character::NotifyActorBeginOverlap(AActor* Act)
 {
+	// Tag가 Encroach인 필드에 입장하면 잠식상태 함수 콜백
 	if (Act->ActorHasTag(TEXT("Encroach")))
 	{
 		Encroached();
@@ -1218,6 +1320,7 @@ void APro4Character::NotifyActorBeginOverlap(AActor* Act)
 
 void APro4Character::NotifyActorEndOverlap(AActor* Act)
 {
+	// Tag가 Encroach인 필드에 벗어나면 잠식상태 해제 함수 콜백
 	if (Act->ActorHasTag(TEXT("Encroach")))
 	{
 		UnEncroached();
@@ -1230,11 +1333,11 @@ void APro4Character::NotifyActorEndOverlap(AActor* Act)
 /* 플레이어가 무기를 획득할 경우 실행되는 함수 */
 void APro4Character::SetPlayerWeapon(AAWeapon* SetWeapon)
 {
+	// 플레이어가 습득한 무기 정보를 서버에 전달
 	if (SetWeapon->GetItemName() == "AR" || SetWeapon->GetItemName() == "SR")
 	{
 		if (MainWeapon.bHaveWeapon)
 		{
-
 			SpawnWeaponItemOnServer(GetActorLocation(), MainWeapon.Weapon, MainWeapon.Scope, MainWeapon.Name, MainWeapon.IconPath, MainWeapon.ImagePath);
 		}
 
@@ -1301,7 +1404,7 @@ void APro4Character::NoticePlayerWeaponOnServer_Implementation(AAWeapon* _Weapon
 void APro4Character::NoticePlayerWeaponOnClient_Implementation(AAWeapon* _Weapon)
 {
 	Weapon->SetSkeletalMesh(_Weapon->GetSKWeaponItem());
-
+	// 무기 타입에 따라 해당하는 변수에 아이템 정보 저장 
 	if (_Weapon->GetItemName() == "AR" || _Weapon->GetItemName() == "SR")
 	{
 		MainWeapon.Weapon = _Weapon->GetSKWeaponItem();
@@ -1310,11 +1413,13 @@ void APro4Character::NoticePlayerWeaponOnClient_Implementation(AAWeapon* _Weapon
 		MainWeapon.IconPath = _Weapon->GetIconPath();
 		MainWeapon.ImagePath = _Weapon->GetBoxImagePath();
 
+		// 무기 보유상태로 변경
 		if (!MainWeapon.bHaveWeapon)
 		{
 			MainWeapon.bHaveWeapon = true;
 		}
 
+		// 스코프 소켓에 스코프 장착
 		if (Weapon->DoesSocketExist("b_gun_scopeSocket"))
 		{
 			Scope->SetStaticMesh(_Weapon->GetSKScopeItem());
@@ -1328,6 +1433,7 @@ void APro4Character::NoticePlayerWeaponOnClient_Implementation(AAWeapon* _Weapon
 		SubWeapon.IconPath = _Weapon->GetIconPath();
 		SubWeapon.ImagePath = _Weapon->GetBoxImagePath();
 		
+		// 무기 보유상태로 변경
 		if (!SubWeapon.bHaveWeapon)
 		{
 			SubWeapon.bHaveWeapon = true;
@@ -1340,6 +1446,7 @@ void APro4Character::NoticePlayerWeaponOnClient_Implementation(AAWeapon* _Weapon
 		Knife.IconPath = _Weapon->GetIconPath();
 		Knife.ImagePath = _Weapon->GetBoxImagePath();
 
+		// 무기 보유상태로 변경
 		if (!Knife.bHaveWeapon)
 		{
 			Knife.bHaveWeapon = true;
@@ -1424,6 +1531,7 @@ void APro4Character::NoticePlayerArmorOnServer_Implementation(AAArmor* _Armor, c
 /* NetMulticast로 실행되는 함수, 서버가 클라이언트들에게 업데이트 된 방어구 정보를 뿌려줌. */
 void APro4Character::NoticePlayerArmorOnClient_Implementation(AAArmor* _Armor, const FString& ArmorType)
 {
+	// 방어구 유형에 따라 정보 저장
 	if (ArmorType == "Helmet")
 	{
 		PlayerHelmet.ArmorName = _Armor->GetItemName();
@@ -1432,6 +1540,7 @@ void APro4Character::NoticePlayerArmorOnClient_Implementation(AAArmor* _Armor, c
 
 		Helmet->SetSkeletalMesh(PlayerHelmet.ArmorMesh);
 
+		// 헬멧 장착 상태로 변경
 		if (!PlayerHelmet.bHaveArmor)
 		{
 			PlayerHelmet.bHaveArmor = true;
@@ -1445,6 +1554,7 @@ void APro4Character::NoticePlayerArmorOnClient_Implementation(AAArmor* _Armor, c
 
 		Vest->SetSkeletalMesh(PlayerVest.ArmorMesh);
 
+		// 방탄조끼 장착 상태로 변경
 		if(!PlayerVest.bHaveArmor)
 		{
 			PlayerVest.bHaveArmor = true;
@@ -1454,6 +1564,7 @@ void APro4Character::NoticePlayerArmorOnClient_Implementation(AAArmor* _Armor, c
 	CurrentAP = PlayerHelmet.AP + PlayerVest.AP;
 }
 
+// 투척무기 습득시 실행되는 함수
 void APro4Character::AddPlayerGrenade(AAGrenade* _Grenade)
 {
 	if (NecGameInstance == nullptr)
@@ -1461,6 +1572,7 @@ void APro4Character::AddPlayerGrenade(AAGrenade* _Grenade)
 		return;
 	}
 
+	// 투척무기 유형에 따라서 해당하는 변수 값 증가
 	if (!_Grenade->GetItemName().Compare("Grenade"))
 	{
 		PlayerGrenade.GrenadeNum++;
@@ -1499,7 +1611,7 @@ void APro4Character::SetPlayerRound(AAmmo* _Ammo)
 }
 #pragma endregion
 
-/* 플레리어 앞에있는 물건 확인하는 함수 */
+/* 플레이어 앞에있는 물건 확인하는 함수 */
 void APro4Character::CheckFrontActorUsingTrace()
 {
 	FVector CharacterLoc;
@@ -1516,8 +1628,10 @@ void APro4Character::CheckFrontActorUsingTrace()
 
 	bHit = World->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, TraceParams);
 
+	// 커서에 닿은 물체가 있을때
 	if (bHit)
 	{
+		// 닿은 물체의 클래스가 액터이면
 		if (Hit.GetActor())
 		{
 			DrawDebugLine(World, Start, Hit.ImpactPoint, FColor::Red, false, 2.0f);
@@ -1525,6 +1639,7 @@ void APro4Character::CheckFrontActorUsingTrace()
 
 			AActor* HitActor = Hit.GetActor();
 
+			// 아이템 태그 확인
 			if (HitActor->ActorHasTag(TEXT("Item")))
 			{
 				AABaseItem* BaseItem = Cast<AABaseItem>(HitActor);
@@ -1606,6 +1721,7 @@ bool APro4Character::RecoverPlayerHealthOnServer_Validate()
 	return true;
 }
 
+// 플레이어 체력이 닳았을 때
 void APro4Character::PlayerHealthGetDamagedOnServer_Implementation(float Damage)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue, "Processing Player get Damage On Server");
@@ -1639,6 +1755,7 @@ bool APro4Character::PlayerHealthGetDamagedOnServer_Validate(float Damage)
 	return true;
 }
 
+// 플레이어 피격시
 void APro4Character::GetDamaged(float Damage)
 {
 	if (GetWorld()->IsServer())
@@ -1859,50 +1976,11 @@ void APro4Character::StopEncroachTimer()
 }
 #pragma endregion
 
-void APro4Character::PlayMontageOnServer_Implementation(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0)
-{
-	PlayMontageOnClient(AnimationMontage, SectionNumber);
-}
-
-void APro4Character::PlayMontageOnClient_Implementation(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0)
-{
-	Pro4Anim->Montage_Play(AnimationMontage, 1.0f);
-
-	if (SectionNumber)
-	{
-		FName Section(FString::FromInt(SectionNumber));
-		Pro4Anim->Montage_JumpToSection(Section, AnimationMontage);
-	}
-}
-
-void APro4Character::SetPlayerState_Implementation(FString State)
-{
-	if (State == "Run")
-	{
-
-	}
-	else if (State == "Zoom")
-	{
-
-	}
-	else if (State == "EquipFlag")
-	{
-
-	}
-	else if (State == "MoveFlag")
-	{
-
-	}
-}
-
 void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
 	DOREPLIFETIME(APro4Character, CurrentHP);
 	DOREPLIFETIME(APro4Character, MaxHP);
 	DOREPLIFETIME(APro4Character, CurrentAP);
-	DOREPLIFETIME(APro4Character, IsRun);
-	DOREPLIFETIME(APro4Character, IsZoom);
-	DOREPLIFETIME(APro4Character, Equipflag);
-	DOREPLIFETIME(APro4Character, Moveflag);
 }
