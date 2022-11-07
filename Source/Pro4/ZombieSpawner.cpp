@@ -10,8 +10,6 @@
 // Sets default values
 AZombieSpawner::AZombieSpawner()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 	
 	ZombieSpawnerComponent = CreateDefaultSubobject<USphereComponent>(TEXT("ZombieSpawner"));
@@ -26,18 +24,10 @@ AZombieSpawner::AZombieSpawner()
 	Tags.Add("ZombieSpawner");
 }
 
-// Called when the game starts or when spawned
+/* 월드에 생성되었을 때, 실행되는 함수 */
 void AZombieSpawner::BeginPlay()
 {
 	Super::BeginPlay();
-
-}
-
-// Called every frame
-void AZombieSpawner::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
 
 }
 
@@ -101,6 +91,7 @@ void AZombieSpawner::SpawnZombieOnServer_Implementation(APawn* PlayerInstigator)
 	}
 }
 
+/* 서버에게 좀비를 스폰해달라 했을 때, 서버에서 검증하는 함수 */
 bool AZombieSpawner::SpawnZombieOnServer_Validate(APawn* PlayerInstigator)
 {
 	return true;

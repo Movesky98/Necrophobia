@@ -18,26 +18,28 @@ AABaseItem::AABaseItem()
 
 	bReplicates = true;
 	bNetLoadOnClient = true;
+	NetCullDistanceSquared = 2500000000.0f;
 
 	RootComponent = BoxMesh;
 	SK_Mesh->SetupAttachment(BoxMesh);
 	NameWidget->SetupAttachment(BoxMesh);
 
+	// 경로로부터 Blueprint ItemNameWidget을 가져옴
 	static ConstructorHelpers::FClassFinder<UItemNameWidget> BP_ItemNameWidget(TEXT("/Game/UI/Item/BP_ItemName"));
-
 	if (BP_ItemNameWidget.Succeeded())
 	{
 		NameWidget->SetWidgetClass(BP_ItemNameWidget.Class);
 	}
 
+	/* NameWidget 초기 세팅 */
 	NameWidget->SetWidgetSpace(EWidgetSpace::Screen);
 	NameWidget->SetIsReplicated(true);
 
 	FVector2D DrawSize;
 	DrawSize.Set(100.0f, 50.0f);
-
 	NameWidget->SetDrawSize(DrawSize);
 
+	/* 아이템의 기본 콜리전 설정 */
 	BoxMesh->SetCollisionProfileName(TEXT("BaseItem"));
 	BoxMesh->SetIsReplicated(true);
 

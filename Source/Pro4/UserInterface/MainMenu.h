@@ -6,6 +6,11 @@
 #include "WidgetMenu.h"
 #include "MainMenu.generated.h"
 
+<<<<<<< HEAD
+
+=======
+/* 세션을 찾을 때, 각 세션들에 대한 정보를 담아놓는 구조체 */
+>>>>>>> 24d5f156ac738fd7e5f71ba5ef89afc460b53dd0
 USTRUCT()
 struct FSessionData {
 	GENERATED_BODY()
@@ -26,6 +31,7 @@ public:
 	virtual bool Initialize();
 
 private:
+	// 메인메뉴에 구성되는 UI 위젯
 	UPROPERTY(meta = (BindWidget))
 	class UButton* GameStartButton;
 
@@ -38,6 +44,7 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	class UButton* ExitButton;
 
+	// 각 버튼을 눌렀을 경우 실행되는 함수.
 	UFUNCTION()
 	void GameStart();
 
@@ -49,6 +56,8 @@ private:
 
 	UFUNCTION()
 	void ExitGame();
+<<<<<<< HEAD
 
-
+=======
+>>>>>>> 24d5f156ac738fd7e5f71ba5ef89afc460b53dd0
 };

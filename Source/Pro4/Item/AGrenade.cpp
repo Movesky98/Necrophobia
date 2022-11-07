@@ -12,9 +12,6 @@
 
 AAGrenade::AAGrenade()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
 	ItemType = BaseItemType::Grenade;
 	GrenadeProjectile = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("GrenadeProjectile"));
 	GrenadeParticle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("GrenadeParticle"));
@@ -29,6 +26,12 @@ AAGrenade::AAGrenade()
 
 	GrenadeParticle->SetupAttachment(BoxMesh);
 	GrenadeParticle->bAutoActivate = false;
+
+	static ConstructorHelpers::FObjectFinder<USoundCue>ThrowSound(TEXT("SoundCue'/Game/StarterContent/Audio/ThrowFires.ThrowFires'"));
+	SC = ThrowSound.Object;
+	AC = CreateDefaultSubobject<UAudioComponent>(TEXT("AC"));
+	AC->bAutoActivate = false;
+	AC->SetupAttachment(BoxMesh);
 
 	uint32 RandomItemNum = FMath::RandRange(0, static_cast<int32>(GrenadeType::MAX) - 1);
 	RandomSpawn(RandomItemNum);
@@ -47,6 +50,7 @@ AAGrenade::AAGrenade()
 	}
 }
 
+/* 아이템이 월드에 생성되었을 때, 실행되는 함수 */
 void AAGrenade::BeginPlay()
 {
 	Super::BeginPlay();
@@ -57,6 +61,7 @@ void AAGrenade::BeginPlay()
 	}
 }
 
+/* Server -> Client들에게 생성된 투척무기 정보를 뿌려주는 함수 */
 void AAGrenade::NetMulticast_SetUp_Implementation(UStaticMesh* SM_Grenade, const FString& _ItemName, uint16 _ItemNum)
 {
 	if (WBP_NameWidget == nullptr)
@@ -70,20 +75,14 @@ void AAGrenade::NetMulticast_SetUp_Implementation(UStaticMesh* SM_Grenade, const
 	ItemNum = _ItemNum;
 }
 
-void AAGrenade::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	// ItemName Draw
-	// DrawDebugString(GetWorld(), FVector(0, 0, 100), ItemName, this, FColor::Green, DeltaTime);
-}
-
+/* 아이템의 이름을 가진 UI를 보여주는 함수 */
 void AAGrenade::ViewItemName()
 {
 	bIsObservable = !bIsObservable;
 	WBP_NameWidget->ToggleVisibility();
 }
 
+/* 아이템과 겹치기 시작하는 액터가 있을 때 실행되는 함수*/
 void AAGrenade::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	if (OtherActor->ActorHasTag("Player"))
@@ -94,6 +93,7 @@ void AAGrenade::NotifyActorBeginOverlap(AActor* OtherActor)
 	}
 }
 
+/* 아이템과 겹치고 있던 액터가 벗어날 때 실행되는 함수*/
 void AAGrenade::NotifyActorEndOverlap(AActor* OtherActor)
 {
 	if (OtherActor->ActorHasTag("Player"))
@@ -105,6 +105,7 @@ void AAGrenade::NotifyActorEndOverlap(AActor* OtherActor)
 	}
 }
 
+/* 투척무기 종류 중, 랜덤으로 투척무기의 정보를 설정하는 함수 */
 void AAGrenade::RandomSpawn(int32 Random)
 {
 	CurrentGrenade = static_cast<GrenadeType>(Random);
@@ -199,16 +200,19 @@ void AAGrenade::SetGrenadeExplosion()
 			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Orange, Hit.GetActor()->GetName());
 		}
 	}
-
+	AC->SetSound(Cast<USoundBase>(SC));
+	AC->Play();
 	GetWorldTimerManager().SetTimer(SetExplosionTimer, this, &AAGrenade::GrenadeExplosion, 1.5f);
 }
 
+/* 수류탄 폭발 파티클이 끝나고 실행되는 함수 */
 void AAGrenade::GrenadeExplosion()
 {
 	GetWorldTimerManager().ClearTimer(SetExplosionTimer);
 	Destroy();
 }
 
+/* 수류탄을 던졌을 때, 날아가도록 하는 함수 */
 void AAGrenade::SetSimulatePhysics(const FVector& ThrowDirection)
 {
 	BoxMesh->SetRelativeScale3D(FVector(10.0f));
@@ -219,6 +223,7 @@ void AAGrenade::SetSimulatePhysics(const FVector& ThrowDirection)
 	GetWorldTimerManager().SetTimer(SetExplosionTimer, this, &AAGrenade::SetGrenadeExplosion, 5.0f);
 }
 
+/* 아이템에서 서버와 클라이언트에 복제되는 변수들을 설정하는 함수 */
 void AAGrenade::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

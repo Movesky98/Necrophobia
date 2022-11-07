@@ -19,6 +19,9 @@ class PRO4_API AAGrenade : public AABaseItem
 public:
 	AAGrenade();
 
+	class UAudioComponent* AC;
+	class USoundCue* SC;
+
 	enum class GrenadeType : int32
 	{
 		Grenade,	// 수류탄
@@ -66,9 +69,6 @@ public:
 #pragma endregion
 
 	virtual void BeginPlay();
-
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
 protected:
 	void NotifyActorBeginOverlap(AActor* OtherActor) override;

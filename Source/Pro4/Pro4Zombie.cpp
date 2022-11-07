@@ -52,7 +52,11 @@ APro4Zombie::APro4Zombie()
 	IsDead = false;
 
 	CurrentHP = 1.0f;
+<<<<<<< HEAD
+	Damage = 30.0f;
+=======
 	Damage = 20.0f;
+>>>>>>> 24d5f156ac738fd7e5f71ba5ef89afc460b53dd0
 	Velocity = 0.0f;
 	Tags.Add("Zombie");
 }
@@ -202,12 +206,20 @@ void APro4Zombie::ZombieGetDamagedOnServer_Implementation(float _Damage)
 		IsDead = true;
 		IsMontagePlay = true;
 		IsDeading = true;
+<<<<<<< HEAD
+=======
 
 		Dead();
+>>>>>>> 24d5f156ac738fd7e5f71ba5ef89afc460b53dd0
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Zombie is dead."));
 	}
 }
 
+<<<<<<< HEAD
+void APro4Zombie::Dead()
+{
+
+=======
 
 void APro4Zombie::Dead()
 {
@@ -238,4 +250,5 @@ void APro4Zombie::DrawAttackField()
 			PlayerCharacter->GetDamaged(Damage);
 		}
 	}
+>>>>>>> 24d5f156ac738fd7e5f71ba5ef89afc460b53dd0
 }
