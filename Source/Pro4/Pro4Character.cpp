@@ -12,7 +12,7 @@
 #include "ZombieSpawner.h"
 #include "Heli_AH64D.h"
 #include "Door.h"
-
+#include "Engine.h"
 #include "DrawDebugHelpers.h"
 #include "Net/UnrealNetwork.h"
 
@@ -68,6 +68,26 @@ APro4Character::APro4Character()
 	WeaponSetting();
 	StateSetting();
 
+	static ConstructorHelpers::FObjectFinder<USoundCue>JumpSound(TEXT("SoundCue'/Game/StarterContent/Audio/JumpSound.JumpSound'"));
+	JumpS = JumpSound.Object;
+	static ConstructorHelpers::FObjectFinder<USoundCue>WalkSound(TEXT("SoundCue'/Game/StarterContent/Audio/Walk.Walk'"));
+	WalkS = WalkSound.Object;
+	static ConstructorHelpers::FObjectFinder<USoundCue>FireSound(TEXT("SoundCue'/Game/StarterContent/Audio/ShootSound.ShootSound'"));
+	FireS = FireSound.Object;
+	static ConstructorHelpers::FObjectFinder<USoundCue>SubSound(TEXT("SoundCue'/Game/StarterContent/Audio/SubShoots.SubShoots'"));
+	SubS = SubSound.Object;
+	static ConstructorHelpers::FObjectFinder<USoundCue>EmptySound(TEXT("SoundCue'/Game/StarterContent/Audio/EmptyShoots.EmptyShoots'"));
+	EmptyS = EmptySound.Object;
+	FireA = CreateDefaultSubobject<UAudioComponent>(TEXT("FireA"));
+	FireA->bAutoActivate = false;
+	FireA->SetupAttachment(GetMesh());
+	JumpA = CreateDefaultSubobject<UAudioComponent>(TEXT("JumpA"));
+	JumpA->bAutoActivate = false;
+	JumpA->SetupAttachment(GetMesh());
+	WalkA = CreateDefaultSubobject<UAudioComponent>(TEXT("WalkA"));
+	WalkA->bAutoActivate = false;
+	WalkA->SetupAttachment(GetMesh());
+
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh>SK_Mannequin(TEXT("/Game/Character_Animation/Mannequin/Character/Mesh/SK_Mannequin.SK_Mannequin"));
 	if (SK_Mannequin.Succeeded())
 	{
@@ -98,7 +118,6 @@ APro4Character::APro4Character()
 void APro4Character::BeginPlay()
 {
 	Super::BeginPlay();
-	
 	DetectZSpawnerCol->OnComponentBeginOverlap.AddDynamic(this, &APro4Character::ZombieSpawnerBeginOverlap);
 	DetectZSpawnerCol->OnComponentEndOverlap.AddDynamic(this, &APro4Character::ZombieSpawnerEndOverlap);
 	NecGameInstance = Cast<UNecrophobiaGameInstance>(GetGameInstance());
@@ -195,6 +214,8 @@ void APro4Character::StateSetting()
 	EncroachLevel = 0;
 	IsEncroach = false;
 	EncroachTime = 0.0f;
+
+	CanZoom = true;
 }
 
 void APro4Character::SocketSetting()
@@ -271,6 +292,7 @@ void APro4Character::Tick(float DeltaTime)
 				IsHold = false;
 				HoldTime = 0.0f;
 				HoldFlag = 0;
+				CanZoom = true;
 			}
 			break;
 		case 2:
@@ -279,9 +301,15 @@ void APro4Character::Tick(float DeltaTime)
 				IsHold = false;
 				HoldTime = 0.0f;
 				HoldFlag = 0;
+				CanZoom = true;
 			}
 			break;
 		}
+	}
+
+	if (!GetMovementComponent()->IsFalling())
+	{
+		CanZoom = true;
 	}
 
 	if (Updownflag == 1 && LeftRightflag != 0)
@@ -289,6 +317,7 @@ void APro4Character::Tick(float DeltaTime)
 		bUseControllerRotationYaw = false;
 		GetCharacterMovement()->bOrientRotationToMovement = true;
 		GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
+		
 	}
 	else
 	{
@@ -298,6 +327,11 @@ void APro4Character::Tick(float DeltaTime)
 	}
 
 	CharacterRotationPitch = GetControlRotation().Pitch;
+
+	if ((GetControlRotation().Yaw >= 325.0f && GetControlRotation().Yaw < 360.0) || (GetControlRotation().Yaw >= 0.0f && GetControlRotation().Yaw < 35.0))
+	{
+		CharacterRotationYaw = GetControlRotation().Yaw;
+	}
 	// Character Role Test.
 	// DrawDebugString(GetWorld(), FVector(0, 0, 150), GetEnumRole(GetLocalRole()), this, FColor::Green, DeltaTime);
 }
@@ -339,12 +373,14 @@ void APro4Character::OnEquipMontageEnded(UAnimMontage* Montage, bool bInterrupte
 {
 	IsMontagePlay = false;
 	IsEquipping = false;
+	CanZoom = true;
 }
 
 void APro4Character::OnReloadMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	IsMontagePlay = false;
 	IsReloading = false;
+	CanZoom = true;
 }
 
 void APro4Character::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
@@ -512,6 +548,8 @@ void APro4Character::UpDown(float NewAxisValue)
 		else
 		{
 			IsForward = false;
+			WalkA->SetSound(WalkS);
+			WalkA->Play();
 			Updownflag = 0;
 		}
 
@@ -531,11 +569,13 @@ void APro4Character::LeftRight(float NewAxisValue)
 			{
 				Moveflag = 1;
 				LeftRightflag = 1;
+
 			}
 			else
 			{
 				Moveflag = 0;
 				LeftRightflag = -1;
+
 			}
 		}
 		else
@@ -588,6 +628,8 @@ void APro4Character::Jump()
 
 		if (IsZoom)
 			Zoom();
+
+		CanZoom = false;
 	}
 
 }
@@ -621,6 +663,8 @@ void APro4Character::beCrouch()
 
 		if (IsZoom)
 			Zoom();
+
+		CanZoom = false;
 	}
 }
 
@@ -650,6 +694,8 @@ void APro4Character::Prone()
 
 		if (IsZoom)
 			Zoom();
+
+		CanZoom = false;
 	}
 }
 /// <summary>
@@ -662,21 +708,30 @@ void APro4Character::Prone()
 
 void APro4Character::EquipMain1()
 {
-	if (CurrentWeaponMode == WeaponMode::Main1)
+	if (MainWeapon.bHaveWeapon)
 	{
-		UE_LOG(Pro4, Log, TEXT("Disarming."));
-		Equipflag = 0;
-		CurrentWeaponMode = WeaponMode::Disarming;
-	}
-	else
-	{
-		if (IsEquipping) return;
-		Equipflag = 1;
-		Pro4Anim->PlayEquipMontage();
-		Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->EquipMontage);
-		IsMontagePlay = true;
-		IsEquipping = true;
-		CurrentWeaponMode = WeaponMode::Main1;
+		if (IsMontagePlay)
+		{
+			Pro4Anim->Montage_Stop(0.0f);
+			IsMontagePlay = false;
+		}
+
+		if (CurrentWeaponMode == WeaponMode::Main1)
+		{
+			Equipflag = 0;
+			CurrentWeaponMode = WeaponMode::Disarming;
+		}
+		else
+		{
+			if (IsZoom)
+				Zoom();
+			Equipflag = 1;
+			Pro4Anim->PlayEquipMontage();
+			Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->EquipMontage);
+			IsMontagePlay = true;
+			IsEquipping = true;
+			CurrentWeaponMode = WeaponMode::Main1;
+		}
 	}
 
 	EquipPlayerWeaponOnServer(CurrentWeaponMode);
@@ -684,22 +739,30 @@ void APro4Character::EquipMain1()
 
 void APro4Character::EquipMain2()
 {
-	if (CurrentWeaponMode == WeaponMode::Main2)
+	if (MainWeapon.bHaveWeapon)
 	{
-		UE_LOG(Pro4, Log, TEXT("Disarming."));
-		Equipflag = 0;
-		CurrentWeaponMode = WeaponMode::Disarming;
-	}
-	else
-	{
-		if (IsEquipping) return;
-		UE_LOG(Pro4, Log, TEXT("EquipMain2."));
-		Equipflag = 1;
-		Pro4Anim->PlayEquipMontage();
-		Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->EquipMontage);
-		IsMontagePlay = true;
-		IsEquipping = true;
-		CurrentWeaponMode = WeaponMode::Main2;
+		if (IsMontagePlay)
+		{
+			Pro4Anim->Montage_Stop(0.0f);
+			IsMontagePlay = false;
+		}
+
+		if (CurrentWeaponMode == WeaponMode::Main2)
+		{
+			Equipflag = 0;
+			CurrentWeaponMode = WeaponMode::Disarming;
+		}
+		else
+		{
+			if (IsZoom)
+				Zoom();
+			Equipflag = 1;
+			Pro4Anim->PlayEquipMontage();
+			Pro4Anim->Montage_JumpToSection(FName("1"), Pro4Anim->EquipMontage);
+			IsMontagePlay = true;
+			IsEquipping = true;
+			CurrentWeaponMode = WeaponMode::Main2;
+		}
 	}
 
 	EquipPlayerWeaponOnServer(CurrentWeaponMode);
@@ -707,21 +770,30 @@ void APro4Character::EquipMain2()
 
 void APro4Character::EquipSub()
 {
-	if (CurrentWeaponMode == WeaponMode::Sub)
+	if (SubWeapon.bHaveWeapon)
 	{
-		UE_LOG(Pro4, Log, TEXT("Disarming."));
-		CurrentWeaponMode = WeaponMode::Disarming;
-	}
-	else
-	{
-		if (IsEquipping) return;
-		UE_LOG(Pro4, Log, TEXT("EquipSub."));
-		Equipflag = 2;
-		Pro4Anim->PlayEquipMontage();
-		Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->EquipMontage);
-		IsMontagePlay = true;
-		IsEquipping = true;
-		CurrentWeaponMode = WeaponMode::Sub;
+		if (IsMontagePlay)
+		{
+			Pro4Anim->Montage_Stop(0.0f);
+			IsMontagePlay = false;
+		}
+
+		if (CurrentWeaponMode == WeaponMode::Sub)
+		{
+			Equipflag = 0;
+			CurrentWeaponMode = WeaponMode::Disarming;
+		}
+		else
+		{
+			if (IsZoom)
+				Zoom();
+			Equipflag = 2;
+			Pro4Anim->PlayEquipMontage();
+			Pro4Anim->Montage_JumpToSection(FName("2"), Pro4Anim->EquipMontage);
+			IsMontagePlay = true;
+			IsEquipping = true;
+			CurrentWeaponMode = WeaponMode::Sub;
+		}
 	}
 
 	EquipPlayerWeaponOnServer(CurrentWeaponMode);
@@ -796,6 +868,19 @@ void APro4Character::Reload()
 			{
 				UE_LOG(Pro4, Log, TEXT("Reload."));
 			}
+
+			// 현재 가지고 있는 탄약 수 = 현재 가지고 있는 탄약 수 - (주무기의 탄창에 들어갈 수 있는 탄약 수 - 현재 탄창에 들어가있는 탄약 수)
+			if (SubWeapon.TotalRound <= SubWeapon.Magazine)
+			{
+				SubWeapon.CurrentRound = SubWeapon.TotalRound;
+				SubWeapon.TotalRound = 0;
+			}
+			else
+			{
+				SubWeapon.TotalRound -= SubWeapon.Magazine - SubWeapon.CurrentRound;
+				SubWeapon.CurrentRound = SubWeapon.Magazine;
+			}
+
 			break;
 		case WeaponMode::Sub:
 			if (CurrentCharacterState == CharacterState::Standing)
@@ -821,6 +906,9 @@ void APro4Character::Reload()
 			UE_LOG(Pro4, Log, TEXT("Reload."));
 			break;
 		}
+
+		if (IsZoom)
+			Zoom();
 	}
 }
 /// <summary>
@@ -859,7 +947,7 @@ void APro4Character::Attack()
 
 void APro4Character::Zoom() // �� ��, �� �ƿ�(�ѵ����������)
 {
-	if (Weapon != nullptr)
+	if (Weapon != nullptr && CanZoom == true && !IsEquipping && !IsReloading)
 	{
 		if (CurrentWeaponMode == WeaponMode::Main1 || CurrentWeaponMode == WeaponMode::Main2 || CurrentWeaponMode == WeaponMode::Sub)
 		{
@@ -869,6 +957,7 @@ void APro4Character::Zoom() // �� ��, �� �ƿ�(�ѵ�����
 				SpringArm->AttachToComponent(GetCapsuleComponent(), FAttachmentTransformRules::SnapToTargetIncludingScale);
 				SpringArm->TargetArmLength = 450.0f;
 				SpringArm->SocketOffset = FVector(0.0f, 100.0f, 50.0f);
+				Camera->FieldOfView = 90.0f;
 			}
 			else
 			{
@@ -876,6 +965,19 @@ void APro4Character::Zoom() // �� ��, �� �ƿ�(�ѵ�����
 				SpringArm->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetIncludingScale, "b_gun_scopeCamera");
 				SpringArm->TargetArmLength = 0.0f;
 				SpringArm->SocketOffset = FVector(0.0f, 0.0f, 0.0f);
+				if (MainWeapon.Name == "SR")
+				{
+					Camera->FieldOfView = 22.5f;
+					Camera->PostProcessSettings.VignetteIntensity = 1.0f;
+				}
+				if (IsRun)
+					IsRun = false;
+			}
+
+			if (MainWeapon.Name == "SR")
+			{
+				UNecrophobiaGameInstance* Instance = Cast<UNecrophobiaGameInstance>(GetGameInstance());
+				Instance->PlayerMenu->PlayerZoomWidget();
 			}
 		}
 	}
@@ -918,22 +1020,37 @@ void APro4Character::Fire()
 
 		if (CurrentWeaponMode == WeaponMode::Main1) // 주무기일 때의 총알 발사 (탄창 상태 반영 안함)
 		{
+
 			if (MainWeapon.CurrentRound <= 0)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("There is no bullet."));
+				FireA->SetSound(EmptyS);
+				FireA->Play();
 				Reload();
 				return;
 			}
-
+			else
+			{
+				FireA->SetSound(FireS);
+				FireA->Play();
+			}
 			MainWeapon.CurrentRound--;
 		}
 		else if (CurrentWeaponMode == WeaponMode::Main2)
 		{
+
 			if (SubWeapon.CurrentRound <= 0)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("There is no bullet."));
+				FireA->SetSound(EmptyS);
+				FireA->Play();
 				Reload();
 				return;
+			}
+			else
+			{
+				FireA->SetSound(SubS);
+				FireA->Play();
 			}
 
 			SubWeapon.CurrentRound--;
@@ -984,6 +1101,8 @@ void APro4Character::Throw() // 투척무기 던지기
 
 		FVector ThrowLocation;
 
+		FireA->SetSound(WalkS);
+		FireA->Play();
 		if (GetMesh()->DoesSocketExist("Hand_r_GrenadeSocket"))
 		{
 			ThrowLocation = GetMesh()->GetSocketLocation("Hand_r_GrenadeSocket");
@@ -992,9 +1111,11 @@ void APro4Character::Throw() // 투척무기 던지기
 
 		FRotator ThrowRotation = CameraRotation;
 		ThrowRotation.Pitch += 10.0f;
-
+		
 		DrawDebugSolidBox(GetWorld(), ThrowLocation, FVector(5.0f), FColor::Blue, true, 5.0f);
 		SpawnGrenadeOnServer(ThrowLocation, ThrowRotation, ThrowRotation.Vector(), this);
+
+
 	}
 }
 
@@ -1409,7 +1530,14 @@ void APro4Character::AddPlayerGrenade(AAGrenade* _Grenade)
 /* 탄약을 획득했을 때 실행되는 함수 */
 void APro4Character::SetPlayerRound(AAmmo* _Ammo)
 {
-	MainWeapon.TotalRound += _Ammo->GetItemNum();
+	if (_Ammo->GetItemName() == "MainWeaponAmmo")
+	{
+		MainWeapon.TotalRound += _Ammo->GetItemNum();
+	}
+	else
+	{
+		SubWeapon.TotalRound += _Ammo->GetItemNum();
+	}
 
 	Server_DestroyItem(_Ammo);
 }

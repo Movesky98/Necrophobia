@@ -1,7 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "MainMenu.h"
-
 #include "Components/Button.h"
 #include "Components/EditableTextBox.h"
 #include "GameFramework/PlayerController.h"
@@ -37,7 +36,6 @@ void UMainMenu::GameStart()
 void UMainMenu::LoadPreference()
 {
 	
-
 }
 
 void UMainMenu::LoadGameRecord()
@@ -53,3 +51,5 @@ void UMainMenu::ExitGame()
 	APlayerController* PlayerController = World->GetFirstPlayerController();
 	PlayerController->ConsoleCommand("quit");
 }
+
+

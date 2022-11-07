@@ -127,6 +127,32 @@ void UPlayerMenu::ChangePlayerWidget()
 	UE_LOG(Pro4, Warning, TEXT("ActiveWidgetIndex = %d."), UISwitcher->ActiveWidgetIndex);
 }
 
+void UPlayerMenu::PlayerZoomWidget()
+{
+	UWorld* World = GetWorld();
+	if (!ensure(World != nullptr)) return;
+
+	APlayerController* PlayerController = World->GetFirstPlayerController();
+	if (!ensure(PlayerController != nullptr)) return;
+
+	if (UISwitcher->GetActiveWidgetIndex() != 2)
+	{
+		UISwitcher->SetActiveWidgetIndex(2);
+
+		FInputModeGameOnly InputModeData;
+		PlayerController->SetInputMode(InputModeData);
+		PlayerController->SetShowMouseCursor(false);
+	}
+	else
+	{
+		UISwitcher->SetActiveWidgetIndex(0);
+
+		FInputModeGameOnly InputModeData;
+		PlayerController->SetInputMode(InputModeData);
+		PlayerController->SetShowMouseCursor(false);
+	}
+}
+
 void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 {
 	AABaseItem* BaseItem = Cast<AABaseItem>(ItemActor);

@@ -24,6 +24,7 @@ UNecrophobiaGameInstance::UNecrophobiaGameInstance(const FObjectInitializer& Obj
 	if (!ensure(WBPPlayerClass.Class != nullptr)) return;
 
 	this->PlayerClass = WBPPlayerClass.Class;
+
 }
 
 void UNecrophobiaGameInstance::Init()
@@ -92,6 +93,7 @@ void UNecrophobiaGameInstance::Host()
 		{
 			// 技记 积己
 			CreateSession();
+
 		}
 	}
 }
@@ -238,7 +240,6 @@ void UNecrophobiaGameInstance::OnCreateSessionComplete(FName SessionName, bool S
 
 	UWorld* World = GetWorld();
 	if (!ensure(World != nullptr)) return;
-
 	World->ServerTravel("/Game/ThirdPersonCPP/Maps/ThirdPersonExampleMap?listen");
 }
 

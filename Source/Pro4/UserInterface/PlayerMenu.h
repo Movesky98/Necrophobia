@@ -31,6 +31,7 @@ public:
 	void SetImage(UTexture2D* InTexture);
 
 	void ChangePlayerWidget();
+	void PlayerZoomWidget();
 
 	void AddItemToGrenade(const FString& GrenadeName, uint16 Num);
 	void AddItemToWeapon(FString _ImagePath, FString _IconPath, FString _WeaponName);

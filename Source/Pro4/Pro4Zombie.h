@@ -25,6 +25,7 @@ protected:
 
 private:
 #pragma region ZombieState
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = State, Meta = (AllowPrivateAccess = true))
 	float CurrentHP;
 	float Damage;
 	float Velocity;
@@ -36,6 +37,8 @@ private:
 	bool IsRun = false;
 	bool IsDown;
 	bool IsMontagePlay;
+	bool IsDead;
+	bool IsDeading;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
 	float CountWakeUp;
@@ -49,6 +52,8 @@ private:
 		void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	UFUNCTION()
 		void OnWakeUpMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	UFUNCTION()
+		void OnDeadMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 	/* Zombie Spanwer Collision */
 	UPROPERTY(VisibleAnywhere, Category = "ZombieCollision")
@@ -143,8 +148,14 @@ public:
 		IsFind = false;
 	}
 
+	bool ZombieDead()
+	{
+		return IsDead;
+	}
+
 	void Attack();
 	void WakeUp();
+	void Dead();
 
 	FOnAttackEndDelegate OnAttackEnd;
 	FOnWakeUpEndDelegate OnWakeUpEnd;

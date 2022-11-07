@@ -106,6 +106,16 @@ public:
 	APro4PlayerController* GetPlayerController();
 	void SetPlayerController(APro4PlayerController* PlayerController);
 
+
+	class UAudioComponent* JumpA;
+	class UAudioComponent* WalkA;
+	class UAudioComponent* FireA;
+	class USoundCue* SubS;
+	class USoundCue* EmptyS;
+	class USoundCue* FireS;
+	class USoundCue* JumpS;
+	class USoundCue* WalkS;
+
 	UPROPERTY(VisibleAnywhere, Category=Camera)
 	USpringArmComponent *SpringArm;
 
@@ -365,6 +375,7 @@ private:
 	bool IsFire;
 	bool IsMontagePlay;
 	bool IsPossibleEscape;
+	bool CanZoom;
 
 	int32 Updownflag;
 	int32 LeftRightflag;

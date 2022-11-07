@@ -19,6 +19,9 @@ class PRO4_API AAGrenade : public AABaseItem
 public:
 	AAGrenade();
 
+	class UAudioComponent* AC;
+	class USoundCue* SC;
+
 	enum class GrenadeType : int32
 	{
 		Grenade,	// 수류탄

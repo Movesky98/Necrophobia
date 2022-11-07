@@ -6,6 +6,7 @@
 #include "WidgetMenu.h"
 #include "MainMenu.generated.h"
 
+
 USTRUCT()
 struct FSessionData {
 	GENERATED_BODY()
@@ -49,6 +50,5 @@ private:
 
 	UFUNCTION()
 	void ExitGame();
-
 
 };

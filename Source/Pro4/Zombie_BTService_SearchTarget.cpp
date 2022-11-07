@@ -29,6 +29,12 @@ void UZombie_BTService_SearchTarget::TickNode(UBehaviorTreeComponent& OwnerComp,
 	if (World == nullptr)
 		return;
 
+	if (CurrentPawn->ZombieDead())
+	{
+		OwnerComp.GetBlackboardComponent()->SetValueAsBool(FName(TEXT("Dead")), true);
+		return;
+	}
+
 	TArray<FOverlapResult> OverlapResults;
 	FCollisionQueryParams QueryParams(NAME_None, false, CurrentPawn);
 
