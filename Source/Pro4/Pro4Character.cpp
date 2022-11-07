@@ -1796,6 +1796,7 @@ void APro4Character::ZombieSpawnerEndOverlap(UPrimitiveComponent* OverlappedComp
 
 void APro4Character::DetectZombieSpawner(bool isNight)
 {
+	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Detect Zombie Spawner"));
 	DetectZSpawnerCol->SetGenerateOverlapEvents(isNight);
 }
 

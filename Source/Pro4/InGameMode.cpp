@@ -118,10 +118,9 @@ void AInGameMode::StartGame()
     TArray<FVector> SpawnArray;
     SpawnArray.Add(FVector(0.0f, 0.0f, -1000.0f));
     SpawnArray.Add(FVector(-45470.0f, 19260.0f, -840.0f));
-    SpawnArray.Add(FVector(0.0f, 0.0f, 100.0f));
-    SpawnArray.Add(FVector(100.0f, 0.0f, 100.0f));
-    SpawnArray.Add(FVector(0.0f, 100.0f, 100.0f));
-    SpawnArray.Add(FVector(100.0f, 100.0f, 100.0f));
+    SpawnArray.Add(FVector(-55546, 28496, 910));
+    SpawnArray.Add(FVector(-53433.0f, 36765.0f, 1110.0f));
+    SpawnArray.Add(FVector(-50113.0f, 30207.0f, 363.0f));
 
     InGameState->SpawnPlayerToStartLocation(SpawnArray);
 }

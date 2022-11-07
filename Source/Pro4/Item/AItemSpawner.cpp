@@ -44,7 +44,7 @@ void AAItemSpawner::Tick(float DeltaTime)
 
 	if (GetWorld()->IsServer())
 	{
-		if (2.0f < Seconds)
+		if (10.0f < Seconds)
 		{
 			Seconds = 0.0f;
 			Server_SpawnItem();

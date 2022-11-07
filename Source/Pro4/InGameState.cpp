@@ -101,8 +101,8 @@ void AInGameState::AddInGameSeconds() {
 			{
 				if (isServer)
 				{
-					continue;
 					isServer = false;
+					continue;
 				}
 
 				AInGamePlayerState* Player = Cast<AInGamePlayerState>(_PlayerState);
@@ -121,9 +121,10 @@ void AInGameState::AddInGameSeconds() {
 			{
 				if (isServer)
 				{
-					continue;
 					isServer = false;
+					continue;
 				}
+
 				AInGamePlayerState* Player = Cast<AInGamePlayerState>(_PlayerState);
 				APro4Character* PlayerCharacter = Cast<APro4Character>(Player->GetPawn());
 				PlayerCharacter->DetectZombieSpawner(true);
