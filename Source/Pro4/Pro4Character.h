@@ -545,6 +545,9 @@ private:
 	UFUNCTION(NetMulticast, Reliable)
 	void PlayMontageOnClient(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0);
 
-	/*UFUNCTION(Server, Reliable)
-	void SetPlayerState(FString State);*/
+	UFUNCTION(Server, Reliable)
+	void SetPlayerStateOnServer(const FString& State, bool bIsState);
+	
+	UFUNCTION(Server, Reliable)
+	void SetPlayerFlagOnServer(const FString& State, int32 Flag);
 };
