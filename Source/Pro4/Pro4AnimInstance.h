@@ -17,6 +17,9 @@ class PRO4_API UPro4AnimInstance : public UAnimInstance
 public:
 	UPro4AnimInstance();
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+	UAnimMontage* GetEquipMontage();
+	UAnimMontage* GetReloadMontage();
+	UAnimMontage* GetAttackMontage();
 
 	void PlayEquipMontage();
 	void PlayReloadMontage();

@@ -4,6 +4,8 @@
 
 #include "Pro4AnimInstance.h"
 #include "Pro4Character.h"
+
+#include "Net/UnrealNetwork.h"
 /**/
 UPro4AnimInstance::UPro4AnimInstance()
 {
@@ -83,4 +85,19 @@ FName UPro4AnimInstance::GetEquipMontageSectionName(int32 Section)
 {
 	UE_LOG(Pro4, Log, TEXT("section2."));
 	return FName(*FString::Printf(TEXT("%d")), Section);
+}
+
+UAnimMontage* UPro4AnimInstance::GetEquipMontage()
+{
+	return EquipMontage;
+}
+
+UAnimMontage* UPro4AnimInstance::GetReloadMontage()
+{
+	return ReloadMontage;
+}
+
+UAnimMontage* UPro4AnimInstance::GetAttackMontage()
+{
+	return AttackMontage;
 }

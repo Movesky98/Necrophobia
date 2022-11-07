@@ -89,16 +89,6 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	/*UPROPERTY(Replicated, VisibleAnywhere)
-	bool isStartPlayer;
-
-	UFUNCTION(Server, Reliable)
-	void SpawnClientPlayerOnServer(USkeletalMesh* WeaponMesh, USkeletalMesh* HelmetMesh, USkeletalMesh* VestMesh, UStaticMesh* ScopeMesh);
-	
-	UFUNCTION(NetMulticast, UnReliable)
-	void SpawnClientPlayerOnClient();*/
-
 	void SetPlayerWeapon(class AAWeapon* SetWeapon);
 	void SetPlayerArmor(class AAArmor* Armor);
 	void AddPlayerGrenade(class AAGrenade* _Grenade);
@@ -365,10 +355,12 @@ private:
 	float CameraRotationX;
 
 	// 상태플래그
+	UPROPERTY(Replicated)
 	bool IsRun;
 	bool IsHold;
 	bool EquipAnim;
 	bool FireMod;
+	UPROPERTY(Replicated)
 	bool IsZoom;
 	bool bHit;
 	bool IsForward;
@@ -383,6 +375,7 @@ private:
 	float HoldTime;
 	float MoveRate; // 이동속도 조절 변수
 	int32 HoldFlag;
+	UPROPERTY(Replicated)
 	int32 Moveflag;
 
 	
@@ -410,7 +403,7 @@ private:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Equip, Meta = (AllowPrivateAccess = true))
 		bool IsEquipping;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Equip, Meta = (AllowPrivateAccess = true))
+	UPROPERTY(Replicated, VisibleInstanceOnly, BlueprintReadOnly, Category = Equip, Meta = (AllowPrivateAccess = true))
 		int32 Equipflag;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Reload, Meta = (AllowPrivateAccess = true))
@@ -489,4 +482,19 @@ private:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void EquipPlayerWeaponOnClient(const WeaponMode& _CurWeaponMode, UStaticMesh* GrenadeMesh = nullptr);
+
+	/* 플레이어 애니메이션 동기화 함수 */
+	/*	Standing,
+		Crouching,
+		Proning,
+	*/
+
+	UFUNCTION(Server, Reliable)
+	void PlayMontageOnServer(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void PlayMontageOnClient(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0);
+
+	UFUNCTION(Server, Reliable)
+	void SetPlayerState(FString State);
 };

@@ -243,7 +243,7 @@ void UNecrophobiaGameInstance::OnCreateSessionComplete(FName SessionName, bool S
 	UWorld* World = GetWorld();
 	if (!ensure(World != nullptr)) return;
 
-	World->ServerTravel("/Game/ThirdPersonCPP/Maps/ThirdPersonExampleMap?listen");
+	World->ServerTravel("/Game/ThirdPersonCPP/Maps/TestMap?listen");
 }
 
 /* 세션 파괴가 완료되었을 때, 실행되는 함수 */
