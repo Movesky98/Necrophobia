@@ -24,11 +24,11 @@ AAmmo::AAmmo()
 			BoxMesh->SetStaticMesh(SM_Cube.Object);
 		}
 
-<<<<<<< HEAD
+
 		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/AR4_Icon_500x500";
-=======
+
 		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/Rifle_Bullet_Icon_500x500";
->>>>>>> 24d5f156ac738fd7e5f71ba5ef89afc460b53dd0
+
 		ItemName = "MainWeaponAmmo";
 		ItemNum = 30;
 	}
@@ -41,11 +41,11 @@ AAmmo::AAmmo()
 			BoxMesh->SetStaticMesh(SM_Cube.Object);
 		}
 
-<<<<<<< HEAD
+
 		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/AR4_Icon_500x500";
-=======
+
 		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/Pistol_Bullet_Icon_500x500";
->>>>>>> 24d5f156ac738fd7e5f71ba5ef89afc460b53dd0
+
 		ItemName = "SubWeaponAmmo";
 		ItemNum = 30;
 	}
