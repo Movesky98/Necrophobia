@@ -28,14 +28,12 @@ protected:
 	void Tick(float DeltaTime) override;
 
 private:
-	TSubclassOf<class UUserWidget> PlayerClass;
-
 	class AInGameState* InGameState;
 	class UNecrophobiaGameInstance* InGameInstance;
 
 	void StartGame();
 
-	uint32 NumberOfPlayers = 0;
+	uint32 NumberOfPlayers = -1;
 	bool isGameStart = false;
 	int CountSeconds = 30;
 

@@ -17,18 +17,8 @@ class PRO4_API APro4PlayerController : public APlayerController
 public:
 	APro4PlayerController();
 
-	void SetPlayerCharacter(class APro4Character* _Character)
-	{
-		PlayerCharacter = Cast<class APro4Character>(_Character);
-	}
-
-	AActor* GetPlayerCharacter()
-	{
-		return Cast<AActor>(PlayerCharacter);
-	}
-	/* PlayerCharacter <-> Item Sector */
-	UFUNCTION(Server, Reliable)
-	void SpawnArmorOnServer(FVector Location, USkeletalMesh* _ArmorMesh, const FString& _ArmorName, float _AP);
+	UFUNCTION(BlueprintImplementableEvent)
+	void SetServerToSpectator();
 
 protected:
 
@@ -43,6 +33,8 @@ private:
 
 	void UpdatePlayerTimeState();
 	float Time = 0.0f;
+
+	bool bIsServer = false;
 
 	class APro4Character* PlayerCharacter;
 

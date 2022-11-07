@@ -23,24 +23,20 @@ public:
 
 	void PlayerOverlapToZSpawner(APawn* PlayerInstigator);
 	void PlayerAwayFromSpawner(APawn* PlayerInstigator);
-protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
 #pragma region Get_Set
 	bool GetIsSpawn() {
 		return bIsSpawn;
 	}
 
-	void SetIsSpawn(bool IsSpawn){
+	void SetIsSpawn(bool IsSpawn) {
 		bIsSpawn = IsSpawn;
 	}
 #pragma endregion
 
+protected:
+	// Called when the game starts or when spawned
+	virtual void BeginPlay() override;
 
 private:
 	UFUNCTION(Server, Reliable, WithValidation)

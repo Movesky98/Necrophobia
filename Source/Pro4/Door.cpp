@@ -50,6 +50,7 @@ void ADoor::Tick(float DeltaTime)
 	}
 }
 
+/* 문이 열릴 때 실행되는 함수 */
 void ADoor::OpenDoor(float DeltaTime)
 {
 	FRotator NewRotation = GetActorRotation();
@@ -65,6 +66,7 @@ void ADoor::OpenDoor(float DeltaTime)
 	SetActorRotation(NewRotation);
 }
 
+/* 열린 문이 다시 닫힐 때 실행되는 함수 */
 void ADoor::CloseDoor(float DeltaTime)
 {
 	FRotator NewRotation = GetActorRotation();
@@ -80,6 +82,7 @@ void ADoor::CloseDoor(float DeltaTime)
 	SetActorRotation(NewRotation);
 }
 
+/* 플레이어 캐릭터가 문에 다가왔을 때 실행되는 함수 */
 void ADoor::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	if (OtherActor->ActorHasTag("Player"))
@@ -90,6 +93,7 @@ void ADoor::NotifyActorBeginOverlap(AActor* OtherActor)
 	}
 }
 
+/* 플레이어 캐릭터가 문으로부터 멀어질 때 실행되는 함수 */
 void ADoor::NotifyActorEndOverlap(AActor* OtherActor)
 {
 	if (OtherActor->ActorHasTag("Player"))

@@ -14,7 +14,7 @@ class UMenuInterface : public UInterface
 };
 
 /**
- * 
+ * NecrophobiaGameInstance에서 MainMenu와 PlayerMenu를 다루도록 하기 위한 인터페이스
  */
 class PRO4_API IMenuInterface
 {

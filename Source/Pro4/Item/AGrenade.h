@@ -70,9 +70,6 @@ public:
 
 	virtual void BeginPlay();
 
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
 protected:
 	void NotifyActorBeginOverlap(AActor* OtherActor) override;
 	void NotifyActorEndOverlap(AActor* OtherActor) override;

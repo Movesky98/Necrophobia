@@ -9,9 +9,10 @@
 #include "UObject/ConstructorHelpers.h"
 #include "OnlineSessionSettings.h"
 
-
+// 세션 이름
 const static FName SESSION_NAME = TEXT("Necrophobia");
 
+/* NecrophobiaGameInstance 생성자 */
 UNecrophobiaGameInstance::UNecrophobiaGameInstance(const FObjectInitializer& ObjectInitializer)
 {
 	UE_LOG(Pro4, Warning, TEXT("GameInstance is Spawned"));
@@ -27,6 +28,7 @@ UNecrophobiaGameInstance::UNecrophobiaGameInstance(const FObjectInitializer& Obj
 
 }
 
+/* 온라인으로 멀티플레이를 하기 위해 서브시스템을 가져옴 */
 void UNecrophobiaGameInstance::Init()
 {
 	UE_LOG(Pro4, Warning, TEXT("MainMenu : %s."), *MainClass->GetName());
@@ -62,6 +64,7 @@ void UNecrophobiaGameInstance::Init()
 		UE_LOG(Pro4, Warning, TEXT("Subsystem not found."));
 	}
 
+	// 네트워크 연결에 실패할 경우 -> OnNetworkFailureComplete를 실행하도록 콜백 등록
 	if (GEngine != nullptr) 
 	{
 		GEngine->OnNetworkFailure().AddUObject(this, &UNecrophobiaGameInstance::OnNetworkFailureComplete);
@@ -181,7 +184,7 @@ void UNecrophobiaGameInstance::StartSession()
 #pragma endregion
 
 #pragma region LoadMenu
-
+/* 게임 초기에 메인메뉴를 불러오는 함수  */
 void UNecrophobiaGameInstance::LoadMenu()
 {
 	UE_LOG(Pro4, Warning, TEXT("Menu Loading..."));
@@ -195,6 +198,7 @@ void UNecrophobiaGameInstance::LoadMenu()
 	Menu->SetMenuInterface(this);
 }
 
+/* 인게임에서 플레이어 메뉴를 불러오는 함수 */
 void UNecrophobiaGameInstance::LoadPlayerMenu()
 {
 	if (!ensure(PlayerClass != nullptr)) return;
@@ -243,6 +247,7 @@ void UNecrophobiaGameInstance::OnCreateSessionComplete(FName SessionName, bool S
 	World->ServerTravel("/Game/ThirdPersonCPP/Maps/ThirdPersonExampleMap?listen");
 }
 
+/* 세션 파괴가 완료되었을 때, 실행되는 함수 */
 void UNecrophobiaGameInstance::OnDestroySessionComplete(FName SessionName, bool Success)
 {
 	// 파괴가 완료되었다면, CreateSession
@@ -252,6 +257,7 @@ void UNecrophobiaGameInstance::OnDestroySessionComplete(FName SessionName, bool 
 	}
 }
 
+/* 세션 검색이 끝났을 때 실행되는 함수 */
 void UNecrophobiaGameInstance::OnFindSessionComplete(bool Success)
 {
 	if (Success && SessionSearch.IsValid() && Menu != nullptr)
@@ -298,6 +304,7 @@ void UNecrophobiaGameInstance::OnFindSessionComplete(bool Success)
 	}
 }
 
+/* 세션에 참여를 시도하고 성공했을 때 실행되는 함수 */
 void UNecrophobiaGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
 	if (!SessionInterface.IsValid()) return;

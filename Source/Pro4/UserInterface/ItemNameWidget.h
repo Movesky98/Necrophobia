@@ -14,7 +14,6 @@ class PRO4_API UItemNameWidget : public UUserWidget
 {
 	GENERATED_BODY()
 public:
-	UItemNameWidget(const FObjectInitializer& ObjectInitializer);
 
 	void ToggleVisibility();
 	virtual bool Initialize();
@@ -25,4 +24,6 @@ public:
 private:
 	UPROPERTY(meta = (BindWidget))
 	class UEditableText* ItemName;
+
+
 };

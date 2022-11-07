@@ -3,6 +3,7 @@
 
 #include "WidgetMenu.h"
 
+/* WidgetMenu가 뷰포트에 보이도록할 때 사용되는 함수 */
 void UWidgetMenu::SetUp()
 {
 	// 뷰포트에 해당 메뉴를 보이도록 함.
@@ -22,6 +23,7 @@ void UWidgetMenu::SetUp()
 	PlayerController->SetShowMouseCursor(true);
 }
 
+/* WidgetMenu가 뷰포트에서 없어질 때 실행되는 함수 */
 void UWidgetMenu::Teardown()
 {
 	this->RemoveFromViewport();
@@ -39,6 +41,7 @@ void UWidgetMenu::Teardown()
 	PlayerController->SetShowMouseCursor(false);
 }
 
+/* 메뉴 인터페이스를 설정하는 함수 */
 void UWidgetMenu::SetMenuInterface(IMenuInterface* OtherMenuInterface)
 {
 	this->MenuInterface = OtherMenuInterface;

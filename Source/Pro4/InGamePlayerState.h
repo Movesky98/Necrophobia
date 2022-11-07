@@ -13,5 +13,6 @@ UCLASS()
 class PRO4_API AInGamePlayerState : public APlayerState
 {
 	GENERATED_BODY()
-	
+public:
+
 };

@@ -27,6 +27,11 @@ void APro4PlayerController::BeginPlay()
 		this->PlayerMenu = InGameInstance->PlayerMenu;
 	}
 
+	if (GetWorld()->IsServer())
+	{
+		bIsServer = true;
+	}
+
 }
 
 void APro4PlayerController::Tick(float DeltaTime)
@@ -34,11 +39,14 @@ void APro4PlayerController::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	
 	// 시간 차이가 있음 수정 필요.
-	Time += DeltaTime;
-	if (Time >= 1.0f) 
+	if (!bIsServer)
 	{
-		Time = 0.0f;
-		UpdatePlayerTimeState();
+		Time += DeltaTime;
+		if (Time >= 1.0f)
+		{
+			Time = 0.0f;
+			UpdatePlayerTimeState();
+		}
 	}
 }
 
@@ -63,20 +71,5 @@ void APro4PlayerController::UpdatePlayerTimeState()
 		{
 			PlayerMenu->SetImage(PlayerMenu->Day);
 		}
-	}
-}
-
-void APro4PlayerController::SpawnArmorOnServer_Implementation(FVector Location, USkeletalMesh* _ArmorMesh, const FString& _ArmorName, float _AP)
-{
-	UWorld* World = GetWorld();
-
-	if (World)
-	{
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = this;
-		SpawnParams.Instigator = GetInstigator();
-		FRotator Rotation;
-
-		AAArmor* DropItem = World->SpawnActor<AAArmor>(AAArmor::StaticClass(), Location, Rotation, SpawnParams);
 	}
 }

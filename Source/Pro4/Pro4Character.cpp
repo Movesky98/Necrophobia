@@ -22,7 +22,10 @@ APro4Character::APro4Character()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
- 
+	bNetLoadOnClient = true;
+	bAlwaysRelevant = true;
+	NetCullDistanceSquared = 2500000000.0f;
+
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("CAMERA"));
 	Weapon = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WEAPON"));
@@ -739,7 +742,11 @@ void APro4Character::EquipMain1()
 
 void APro4Character::EquipMain2()
 {
+<<<<<<< HEAD
 	if (MainWeapon.bHaveWeapon)
+=======
+	if (SubWeapon.bHaveWeapon)
+>>>>>>> 24d5f156ac738fd7e5f71ba5ef89afc460b53dd0
 	{
 		if (IsMontagePlay)
 		{
@@ -770,7 +777,11 @@ void APro4Character::EquipMain2()
 
 void APro4Character::EquipSub()
 {
+<<<<<<< HEAD
 	if (SubWeapon.bHaveWeapon)
+=======
+	if (Knife.bHaveWeapon)
+>>>>>>> 24d5f156ac738fd7e5f71ba5ef89afc460b53dd0
 	{
 		if (IsMontagePlay)
 		{
@@ -1106,7 +1117,7 @@ void APro4Character::Throw() // 투척무기 던지기
 		if (GetMesh()->DoesSocketExist("Hand_r_GrenadeSocket"))
 		{
 			ThrowLocation = GetMesh()->GetSocketLocation("Hand_r_GrenadeSocket");
-			ThrowLocation.X += 200.0f;
+			ThrowLocation += GetActorForwardVector() * 200.0f;
 		}
 
 		FRotator ThrowRotation = CameraRotation;
@@ -1772,7 +1783,11 @@ void APro4Character::EquipPlayerWeaponOnClient_Implementation(const WeaponMode& 
 		break;
 	case WeaponMode::ATW:
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("ATW"));
-		Grenade->SetStaticMesh(GrenadeMesh);
+		if (PlayerGrenade.GrenadeNum >= 0)
+		{
+			Grenade->SetStaticMesh(GrenadeMesh);
+		}
+
 		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(4);
 		break;
 	case WeaponMode::Disarming:
@@ -1902,8 +1917,8 @@ void APro4Character::StopEncroachTimer()
 void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
 	DOREPLIFETIME(APro4Character, CurrentHP);
 	DOREPLIFETIME(APro4Character, MaxHP);
 	DOREPLIFETIME(APro4Character, CurrentAP);
+	// DOREPLIFETIME(APro4Character, isStartPlayer);
 }

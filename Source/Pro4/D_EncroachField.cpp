@@ -8,6 +8,7 @@
 #include "DrawDebugHelpers.h"
 #include "Net/UnrealNetwork.h"
 
+/* 기초 설정 */
 AD_EncroachField::AD_EncroachField()
 {
 	bReplicates = true;
@@ -41,6 +42,7 @@ void AD_EncroachField::BeginPlay()
 	DrawDebugSphere(World, Center, SearchRadius, 16, FColor::Green, false, 0.2f);
 }
 
+/* EncroachField와 겹치기 시작하는 액터가 있을 때 실행되는 함수*/
 void AD_EncroachField::NotifyActorBeginOverlap(AActor* Act)
 {
 	UE_LOG(Pro4, Log, TEXT("Its in the encroaching field"));
@@ -53,6 +55,7 @@ void AD_EncroachField::NotifyActorBeginOverlap(AActor* Act)
 	}
 }
 
+/* EncroachField와 겹치고 있던 액터가 벗어날 때 실행되는 함수*/
 void AD_EncroachField::NotifyActorEndOverlap(AActor* Act)
 {
 	UE_LOG(Pro4, Log, TEXT("Its out of the encroaching field"));
