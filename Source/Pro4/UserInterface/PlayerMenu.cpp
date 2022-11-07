@@ -138,10 +138,7 @@ void UPlayerMenu::ChangePlayerWidget()
 	UE_LOG(Pro4, Warning, TEXT("ActiveWidgetIndex = %d."), UISwitcher->ActiveWidgetIndex);
 }
 
-<<<<<<< HEAD
-=======
 /* 플레이어가 줌 했을 경우 실행되는 함수 */
->>>>>>> 24d5f156ac738fd7e5f71ba5ef89afc460b53dd0
 void UPlayerMenu::PlayerZoomWidget()
 {
 	UWorld* World = GetWorld();
@@ -168,8 +165,6 @@ void UPlayerMenu::PlayerZoomWidget()
 	}
 }
 
-<<<<<<< HEAD
-=======
 /* 게임 오버 UI를 활성화 하는 함수 */
 void UPlayerMenu::ActiveGameOverUI()
 {
@@ -189,7 +184,6 @@ void UPlayerMenu::ActiveGameOverUI()
 }
 
 /* 플레이어가 Item을 획득했을 때, 실행되는 함수 */
->>>>>>> 24d5f156ac738fd7e5f71ba5ef89afc460b53dd0
 void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 {
 	AABaseItem* BaseItem = Cast<AABaseItem>(ItemActor);

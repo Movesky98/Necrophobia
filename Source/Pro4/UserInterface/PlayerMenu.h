@@ -38,10 +38,9 @@ public:
 	/* 위젯 변경 관련 함수 */
 	void ChangePlayerWidget();
 	void PlayerZoomWidget();
-<<<<<<< HEAD
-=======
+
 	void ActiveGameOverUI();
->>>>>>> 24d5f156ac738fd7e5f71ba5ef89afc460b53dd0
+
 
 	/* 플레이어가 아이템을 획득했을 때, 정보를 저장하는 함수 */
 	void AddItemToGrenade(const FString& GrenadeName, uint16 Num);

@@ -742,11 +742,11 @@ void APro4Character::EquipMain1()
 
 void APro4Character::EquipMain2()
 {
-<<<<<<< HEAD
+
 	if (MainWeapon.bHaveWeapon)
-=======
+
 	if (SubWeapon.bHaveWeapon)
->>>>>>> 24d5f156ac738fd7e5f71ba5ef89afc460b53dd0
+
 	{
 		if (IsMontagePlay)
 		{
@@ -777,11 +777,11 @@ void APro4Character::EquipMain2()
 
 void APro4Character::EquipSub()
 {
-<<<<<<< HEAD
+
 	if (SubWeapon.bHaveWeapon)
-=======
+
 	if (Knife.bHaveWeapon)
->>>>>>> 24d5f156ac738fd7e5f71ba5ef89afc460b53dd0
+
 	{
 		if (IsMontagePlay)
 		{
