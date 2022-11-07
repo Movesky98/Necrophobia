@@ -5,6 +5,8 @@
 #include "ABaseItem.h"
 #include "../UserInterface/ItemNameWidget.h"
 
+#include "Components/AudioComponent.h"
+#include "Sound/SoundCue.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "AGrenade.generated.h"
 

@@ -12,7 +12,8 @@
 #include "ZombieSpawner.h"
 #include "Heli_AH64D.h"
 #include "Door.h"
-
+#include "Components/AudioComponent.h"
+#include "Sound/SoundCue.h"
 #include "DrawDebugHelpers.h"
 #include "Net/UnrealNetwork.h"
 
@@ -101,6 +102,16 @@ APro4Character::APro4Character()
 	SocketSetting();
 
 	Tags.Add("Player");
+
+	static ConstructorHelpers::FObjectFinder<USoundCue>FireSound(TEXT("SoundCue'/Game/StarterContent/Audio/ShootSound.ShootSound'"));
+	FireS = FireSound.Object;
+	static ConstructorHelpers::FObjectFinder<USoundCue>SubSound(TEXT("SoundCue'/Game/StarterContent/Audio/SubShoots.SubShoots'"));
+	SubS = SubSound.Object;
+	static ConstructorHelpers::FObjectFinder<USoundCue>EmptySound(TEXT("SoundCue'/Game/StarterContent/Audio/EmptyShoots.EmptyShoots'"));
+	EmptyS = EmptySound.Object;
+	FireA = CreateDefaultSubobject<UAudioComponent>(TEXT("FireA"));
+	FireA->bAutoActivate = false;
+	FireA->SetupAttachment(GetMesh());
 }
 
 // Called when the game starts or when spawned
@@ -1066,8 +1077,15 @@ void APro4Character::Fire()
 			if (MainWeapon.CurrentRound <= 0)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("There is no bullet."));
+				FireA->SetSound(EmptyS);
+				FireA->Play();
 				Reload();
 				return;
+			}
+			else
+			{
+				FireA->SetSound(FireS);
+				FireA->Play();
 			}
 
 			MainWeapon.CurrentRound--;
@@ -1077,8 +1095,15 @@ void APro4Character::Fire()
 			if (SubWeapon.CurrentRound <= 0)
 			{
 				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("There is no bullet."));
+				FireA->SetSound(EmptyS);
+				FireA->Play();
 				Reload();
 				return;
+			}
+			else
+			{
+				FireA->SetSound(SubS);
+				FireA->Play();
 			}
 
 			SubWeapon.CurrentRound--;

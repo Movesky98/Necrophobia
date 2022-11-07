@@ -27,8 +27,11 @@ AAGrenade::AAGrenade()
 	GrenadeParticle->SetupAttachment(BoxMesh);
 	GrenadeParticle->bAutoActivate = false;
 
-	static ConstructorHelpers::FObjectFinder<USoundCue>ThrowSound(TEXT("SoundCue'/Game/StarterContent/Audio/ThrowFires.ThrowFires'"));
-	SC = ThrowSound.Object;
+	static ConstructorHelpers::FObjectFinder<USoundCue>ThrowSound(TEXT("/Game/StarterContent/Audio/ThrowFires"));
+	if (ThrowSound.Succeeded())
+	{
+		SC = ThrowSound.Object;
+	}
 	AC = CreateDefaultSubobject<UAudioComponent>(TEXT("AC"));
 	AC->bAutoActivate = false;
 	AC->SetupAttachment(BoxMesh);

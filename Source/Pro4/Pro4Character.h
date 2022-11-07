@@ -307,6 +307,13 @@ public:
 	// 캐릭터 피격
 	void GetDamaged(float Damage);
 
+	/* 공격 효과음 */
+	class UAudioComponent* FireA;
+	class USoundCue* SubS;
+	class USoundCue* EmptyS;
+	class USoundCue* FireS;
+	/* 공격 효과음 */
+
 private:
 	// 캐릭터 피격 여부
 	UPROPERTY(Replicated)
