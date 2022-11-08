@@ -13,4 +13,6 @@ class PRO4_API ABullet : public AABaseItem
 {
 	GENERATED_BODY()
 	
+public:
+	ABullet();
 };

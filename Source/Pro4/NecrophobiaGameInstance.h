@@ -53,12 +53,14 @@ public:
 
 	class UPlayerMenu* PlayerMenu;
 
+	class UAudioComponent* BGM;
+	class USoundCue* SBGM;
+
 private:
 	TSubclassOf<class UUserWidget> MainClass;
 	TSubclassOf<class UUserWidget> PlayerClass;
 
 	class UMainMenu* Menu;
-	
 	TSharedPtr<class FOnlineSessionSearch> SessionSearch;
 	IOnlineSessionPtr SessionInterface;
 

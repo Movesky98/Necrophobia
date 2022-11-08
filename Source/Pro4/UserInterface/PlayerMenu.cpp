@@ -8,11 +8,13 @@
 #include "../Item/AGrenade.h"
 #include "../Item/AArmor.h"
 #include "../Item/AWeapon.h"
+#include "../Item/Ammo.h"
 #include "../Item/Vaccine.h"
 #include "../Item/Recovery.h"
 
 #include "../Pro4PlayerController.h"
 #include "../Pro4Character.h"
+#include "../NecrophobiaGameInstance.h"
 
 #include "UObject/ConstructorHelpers.h"
 
@@ -23,9 +25,11 @@
 #include "Components/WrapBox.h"
 #include "Components/Image.h"
 #include "Components/SizeBox.h"
+#include "Components/Button.h"
 
 UPlayerMenu::UPlayerMenu(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
+	// InventorySlot 클래스를 가져옴
 	ConstructorHelpers::FClassFinder<UInventorySlot> InventorySlotClass(TEXT("/Game/UI/Player/WBP_InventorySlot"));
 	if (!ensure(InventorySlotClass.Class != nullptr)) return;
 
@@ -40,8 +44,12 @@ UPlayerMenu::UPlayerMenu(const FObjectInitializer& ObjectInitializer) : Super(Ob
 	if (!ensure(NightObject.Object != nullptr)) return;
 
 	Night = NightObject.Object;
+
+	SlotChoose = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *SlotItemChoosePath), NULL, LOAD_None, NULL);
+	SlotEmpty = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *SlotItemEmptyPath), NULL, LOAD_None, NULL);
 }
 
+/* UI 위젯 가져오는데에 문제가 없는지 확인하는 함수 */
 bool UPlayerMenu::Initialize()
 {
 	bool Success = Super::Initialize();
@@ -51,10 +59,15 @@ bool UPlayerMenu::Initialize()
 	if (!ensure(Time_ProgressBar != nullptr)) return false;
 	if (!ensure(HP_ProgressBar != nullptr)) return false;
 	if (!ensure(Armor_ProgressBar != nullptr)) return false;
+	if (!ensure(GameOverExitButton != nullptr)) return false;
+	
+	GameOverExitButton->OnClicked.AddDynamic(this, &UPlayerMenu::ExitInGame);
+	
 
 	return true;
 }
 
+/* 플레이어 UI 초기 세팅 */
 void UPlayerMenu::SetUp()
 {
 	// 뷰포트에 해당 메뉴를 보이도록 함.
@@ -83,6 +96,7 @@ void UPlayerMenu::SetTimeText(uint16 min_, uint16 sec_)
 	Client_SetTimeText(min_, sec_);
 }
 
+/* 서버 -> 클라이언트들에게 시간을 뿌려줌 */
 void UPlayerMenu::Client_SetTimeText_Implementation(uint16 min_, uint16 sec_)
 {
 	FString TimeString = FString::FromInt(min_);
@@ -93,6 +107,7 @@ void UPlayerMenu::Client_SetTimeText_Implementation(uint16 min_, uint16 sec_)
 	InGameTimeText->SetText(TimeText);
 }
 
+/* PlayeDefaultUI <-> Inventory UI랑 변경하기 위한 함수 */
 void UPlayerMenu::ChangePlayerWidget()
 {
 
@@ -123,6 +138,52 @@ void UPlayerMenu::ChangePlayerWidget()
 	UE_LOG(Pro4, Warning, TEXT("ActiveWidgetIndex = %d."), UISwitcher->ActiveWidgetIndex);
 }
 
+/* 플레이어가 줌 했을 경우 실행되는 함수 */
+void UPlayerMenu::PlayerZoomWidget()
+{
+	UWorld* World = GetWorld();
+	if (!ensure(World != nullptr)) return;
+
+	APlayerController* PlayerController = World->GetFirstPlayerController();
+	if (!ensure(PlayerController != nullptr)) return;
+
+	if (UISwitcher->GetActiveWidgetIndex() != 2)
+	{
+		UISwitcher->SetActiveWidgetIndex(2);
+
+		FInputModeGameOnly InputModeData;
+		PlayerController->SetInputMode(InputModeData);
+		PlayerController->SetShowMouseCursor(false);
+	}
+	else
+	{
+		UISwitcher->SetActiveWidgetIndex(0);
+
+		FInputModeGameOnly InputModeData;
+		PlayerController->SetInputMode(InputModeData);
+		PlayerController->SetShowMouseCursor(false);
+	}
+}
+
+/* 게임 오버 UI를 활성화 하는 함수 */
+void UPlayerMenu::ActiveGameOverUI()
+{
+	UWorld* World = GetWorld();
+	if (!ensure(World != nullptr)) return;
+
+	APlayerController* PlayerController = World->GetFirstPlayerController();
+	if (!ensure(PlayerController != nullptr)) return;
+
+	UISwitcher->SetActiveWidgetIndex(3);
+
+	FInputModeGameAndUI InputModeData;
+	InputModeData.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+
+	PlayerController->SetInputMode(InputModeData);
+	PlayerController->SetShowMouseCursor(true);
+}
+
+/* 플레이어가 Item을 획득했을 때, 실행되는 함수 */
 void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 {
 	AABaseItem* BaseItem = Cast<AABaseItem>(ItemActor);
@@ -141,7 +202,7 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		{
 			MainWeaponSizeBox->SetWidthOverride(475);
 			MainWeaponSizeBox->SetHeightOverride(136);
-			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetItemName());
+			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetIconPath(), NewWeapon->GetItemName());
 			
 			if (MainWeaponBox->GetVisibility() == ESlateVisibility::Hidden)
 			{
@@ -152,7 +213,7 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		{
 			MainWeaponSizeBox->SetWidthOverride(475);
 			MainWeaponSizeBox->SetHeightOverride(112);
-			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetItemName());
+			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetIconPath(), NewWeapon->GetItemName());
 
 			if (MainWeaponBox->GetVisibility() == ESlateVisibility::Hidden)
 			{
@@ -163,7 +224,7 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		{
 			SubWeaponSizeBox->SetWidthOverride(149);
 			SubWeaponSizeBox->SetHeightOverride(145);
-			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetItemName());
+			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetIconPath(), NewWeapon->GetItemName());
 
 			if (SubWeaponBox->GetVisibility() == ESlateVisibility::Hidden)
 			{
@@ -174,7 +235,7 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		{
 			MainWeaponSizeBox->SetWidthOverride(475);
 			MainWeaponSizeBox->SetHeightOverride(136);
-			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetItemName());
+			AddItemToWeapon(NewWeapon->GetBoxImagePath(), NewWeapon->GetIconPath(), NewWeapon->GetItemName());
 
 			if (KnifeBox->GetVisibility() == ESlateVisibility::Hidden)
 			{
@@ -189,6 +250,17 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		if (!ensure(Armor != nullptr)) return;
 
 		MyPawn->SetPlayerArmor(Armor);
+		/*if (Armor->GetItemName() == "Helmet")
+		{
+			ActiveArmorImage(true);
+		}
+		else
+		{
+
+		}*/
+
+		(Armor->GetItemName() == "Helmet") ? ActiveArmorImage(true) : ActiveArmorImage(false);
+		
 
 	}
 		break;
@@ -208,27 +280,33 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
 		InventoryItem->SetUp("Recovery", Recovery->GetItemName(), Recovery->GetItemNum(), Recovery->GetIconPath());
 		InventoryBox->AddChildToWrapBox(InventoryItem);
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
 	}
 		break;
 	case AABaseItem::BaseItemType::Ammo:
+	{
 		// TO DO : Implement Item of Ammo
+		AAmmo* Ammo = Cast<AAmmo>(BaseItem);
+
+		UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
+		InventoryItem->SetUp("Ammo", Ammo->GetItemName(), Ammo->GetItemNum(), Ammo->GetIconPath());
+		InventoryBox->AddChildToWrapBox(InventoryItem);
+
+		MyPawn->SetPlayerRound(Ammo);
+	}
 		break;
 	case AABaseItem::BaseItemType::Vaccine:
 	{
 		// TO DO : Implement Item of Vaccine
 		AVaccine* Vaccine = Cast<AVaccine>(BaseItem);
-		MyPawn->SetIsPossibleEscape(true);
+		MyPawn->SetIsPossibleEscapeOnServer(true);
 
 		UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
 		InventoryItem->SetUp("Vaccine", Vaccine->GetItemName(), Vaccine->GetItemNum(), Vaccine->GetIconPath());
 		InventoryBox->AddChildToWrapBox(InventoryItem);
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, InventoryItem->GetItemName());
-		
 	}
 		break;
 	default:
-		UE_LOG(Pro4, Warning, TEXT("Add item to Inventory ERROR"));
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Add Item To Inventory ERROR"));
 		break;
 	}
 }
@@ -256,43 +334,84 @@ void UPlayerMenu::AddItemToGrenade(const FString& GrenadeName, uint16 Num)
 	}
 }
 
-void UPlayerMenu::AddItemToWeapon(FString _IconPath, FString _WeaponName)
+void UPlayerMenu::AddItemToWeapon(FString _ImagePath, FString _IconPath, FString _WeaponName)
 {
+	// Image를 그림
+	UTexture2D* ItemImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *_ImagePath), NULL, LOAD_None, NULL);
+	UTexture2D* ItemIcon = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *_IconPath), NULL, LOAD_None, NULL);
+
 	if (_WeaponName == "Pistol")
 	{
-		// Image를 그림
-		UTexture2D* ItemImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *_IconPath), NULL, LOAD_None, NULL);
-
 		SubWeaponBox->SetBrushFromTexture(ItemImage);
+		SubWeaponSlot->SetBrushFromTexture(ItemIcon);
 
 		UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *SubWeaponBox->Brush.GetResourceName().ToString());
 	}
 	else if (_WeaponName == "Knife")
 	{
-		// Image를 그림
-		UTexture2D* ItemImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *_IconPath), NULL, LOAD_None, NULL);
-
 		KnifeBox->SetBrushFromTexture(ItemImage);
+		KnifeSlot->SetBrushFromTexture(ItemIcon);
 
 		UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *KnifeBox->Brush.GetResourceName().ToString());
 	}
 	else
 	{
-		// Image를 그림
-		UTexture2D* ItemImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *_IconPath), NULL, LOAD_None, NULL);
-
 		MainWeaponBox->SetBrushFromTexture(ItemImage);
+		MainWeaponSlot->SetBrushFromTexture(ItemIcon);
 
 		UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *MainWeaponBox->Brush.GetResourceName().ToString());
 	}
 }
 
-void UPlayerMenu::SetPlayerHP(float CurHP, float MaxHP)
+/* 플레이어가 무기를 착용할 경우, 표시되는 Shotcut */
+void UPlayerMenu::ActiveWeaponShortcut(uint16 SlotNumber)
 {
-	HP_ProgressBar->Percent = CurHP / MaxHP;
+	MainWeaponSlotBox->SetBrushFromTexture(SlotEmpty);
+	SubWeaponSlotBox->SetBrushFromTexture(SlotEmpty);
+	KnifeSlotBox->SetBrushFromTexture(SlotEmpty);
+	GrenadeSlotBox->SetBrushFromTexture(SlotEmpty);
+	switch (SlotNumber)
+	{
+	case 1:
+		MainWeaponSlotBox->SetBrushFromTexture(SlotChoose);
+		break;
+	case 2:
+		SubWeaponSlotBox->SetBrushFromTexture(SlotChoose);
+		break;
+	case 3:
+		KnifeSlotBox->SetBrushFromTexture(SlotChoose);
+		break;
+	case 4:
+		GrenadeSlotBox->SetBrushFromTexture(SlotChoose);
+		break;
+	default:
+		break;
+	}
 }
 
-void UPlayerMenu::SetPlayerAP(float CurAP, float MaxAP)
+/* 방어구를 획득할 경우, 인벤토리에서 보이도록 하는 함수 */
+void UPlayerMenu::ActiveArmorImage(bool IsHelmet)
 {
-	Armor_ProgressBar->Percent = CurAP / MaxAP;
+	if (IsHelmet)
+	{
+		FString Path = "/Game/UI/Sprites/Weapon_Icon/Helmet_Icon_500x500";
+		UTexture2D* HelmetImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *Path), NULL, LOAD_None, NULL);
+		EquipBox_Head->SetBrushFromTexture(HelmetImage);
+		EquipBox_Head->SetVisibility(ESlateVisibility::Visible);
+	}
+	else
+	{
+		FString Path = "/Game/UI/Sprites/Weapon_Icon/Vest_Icon_500x500";
+		UTexture2D* VestImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *Path), NULL, LOAD_None, NULL);
+		EquipBox_Top->SetBrushFromTexture(VestImage);
+		EquipBox_Top->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
+/* 인게임 -> 메인메뉴로 나갈때 실행되는 함수 */
+void UPlayerMenu::ExitInGame()
+{
+	UNecrophobiaGameInstance* NecGameInstance = Cast<UNecrophobiaGameInstance>(GetGameInstance());
+
+	NecGameInstance->LoadMainMenu();
 }

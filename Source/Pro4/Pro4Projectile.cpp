@@ -10,12 +10,8 @@
 // Sets default values
 APro4Projectile::APro4Projectile()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
 	bReplicates = true;
 
-	// CollisionComponent = CreateDefaultSubobject<USphereComponent>(TEXT("COLLISION"));
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MESH"));
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
 	ProjectileParticle = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("PARTICLE")); 
@@ -26,19 +22,12 @@ APro4Projectile::APro4Projectile()
 	Mesh->SetCollisionProfileName(TEXT("Projectile"));
 	Mesh->SetUseCCD(true);
 
-	/*CollisionComponent->SetCollisionProfileName(TEXT("Projectile"));
-	CollisionComponent->InitSphereRadius(15.0f);
-	CollisionComponent->SetUseCCD(true);
-	CollisionComponent->CanCharacterStepUpOn = ECB_No;*/
-
 	ProjectileMovementComponent->SetUpdatedComponent(Mesh);
 	ProjectileMovementComponent->InitialSpeed = 3000.0f;
 	ProjectileMovementComponent->MaxSpeed = 3000.0f;
 	ProjectileMovementComponent->bRotationFollowsVelocity = true;
 	ProjectileMovementComponent->bShouldBounce = false;
 
-	// ProjectileMovementComponent->Bounciness = 0.3f;
-	
 	// Bullet : /Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/Ammunition/SM_Shell_556x45
 	// Box : /Game/StarterContent/Shapes/Shape_Cube
 
@@ -75,7 +64,7 @@ APro4Projectile::APro4Projectile()
 	}
 }
 
-// Called when the game starts or when spawned
+/* 월드에 생성되었을 때, 실행되는 함수 */
 void APro4Projectile::BeginPlay()
 {
 	Super::BeginPlay();
@@ -84,18 +73,13 @@ void APro4Projectile::BeginPlay()
 
 }
 
-// Called every frame
-void APro4Projectile::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-}
-
+/* 총알의 발사 방향과 속도를 설정해주는 함수 */
 void APro4Projectile::FireInDirection(const FVector& ShootDirection)
 {
 	ProjectileMovementComponent->Velocity = ShootDirection * ProjectileMovementComponent->InitialSpeed;
 }
 
+/* 총알이 무언가에 맞았을 때 실행되는 함수 */
 void APro4Projectile::ProjectileBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, OtherActor->GetName());
@@ -110,7 +94,6 @@ void APro4Projectile::ProjectileBeginOverlap(UPrimitiveComponent* OverlappedComp
 	if (OtherActor->ActorHasTag("Player"))
 	{
 		ProjectileParticle->SetTemplate(Particle_Blood);
-		Mesh->SetRelativeRotation(NewRotation);
 		
 		APro4Character* PlayerCharacter = Cast<APro4Character>(OtherActor);
 		PlayerCharacter->GetDamaged(30.0f);
@@ -118,7 +101,6 @@ void APro4Projectile::ProjectileBeginOverlap(UPrimitiveComponent* OverlappedComp
 	else if(OtherActor->ActorHasTag("Zombie"))
 	{
 		ProjectileParticle->SetTemplate(Particle_Blood);
-		Mesh->SetRelativeRotation(NewRotation);
 
 		APro4Zombie* Zombie = Cast<APro4Zombie>(OtherActor);
 		Zombie->ZombieGetDamaged(30.0f);
@@ -126,9 +108,10 @@ void APro4Projectile::ProjectileBeginOverlap(UPrimitiveComponent* OverlappedComp
 	else
 	{
 		ProjectileParticle->SetTemplate(Particle_Ceramic);
-		Mesh->SetRelativeRotation(NewRotation);
 	}
 
 	ProjectileParticle->ToggleActive();
+	ProjectileParticle->SetRelativeRotation(NewRotation);
+
 	SetLifeSpan(1.0f);
 }

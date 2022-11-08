@@ -15,8 +15,9 @@ bool UBTDecorator_ZombieSleepOrWake::CalculateRawConditionValue(UBehaviorTreeCom
 {
 	bool bResult = Super::CalculateRawConditionValue(OwnerComp, NodeMemory);
 
+	// 빙의된 좀비 캐릭터 가져오기
 	auto ControllingPawn = Cast<APro4Zombie>(OwnerComp.GetAIOwner()->GetPawn());
 	if (ControllingPawn == nullptr)
 		return false;
-	return ControllingPawn->ZombieDowning();
+	return ControllingPawn->ZombieDowning(); // 좀비 캐릭터의 상태 변수에서 누워있는지 확인
 }

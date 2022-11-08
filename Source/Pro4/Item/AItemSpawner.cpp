@@ -5,6 +5,9 @@
 #include "AArmor.h"
 #include "AGrenade.h"
 #include "AWeapon.h"
+#include "Ammo.h"
+#include "Recovery.h"
+#include "Vaccine.h"
 
 #include "Math/UnrealMathUtility.h"
 #include "Net/UnrealNetwork.h"
@@ -39,16 +42,16 @@ void AAItemSpawner::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (GetWorld()->IsServer())
+	/*if (GetWorld()->IsServer())
 	{
-		if (3.0f < Seconds)
+		if (10.0f < Seconds)
 		{
 			Seconds = 0.0f;
 			Server_SpawnItem();
 		}
 
 		Seconds += DeltaTime;
-	}
+	}*/
 }
 
 void AAItemSpawner::Server_SpawnItem()
@@ -59,8 +62,7 @@ void AAItemSpawner::Server_SpawnItem()
 		return;
 	}
 
-	RandomSpawnNum = 1;
-		// FMath::RandRange(1, 3);
+	RandomSpawnNum = FMath::RandRange(1, 5);
 	
 	UWorld* World = GetWorld();
 
@@ -69,7 +71,7 @@ void AAItemSpawner::Server_SpawnItem()
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Owner = this;
 		SpawnParams.Instigator = GetInstigator();
-		FRotator Rot;
+		FRotator Rot = FRotator::ZeroRotator;
 		FVector SpawnLocation = GetActorLocation();
 
 		SpawnLocation.X += FMath::RandRange(500, 1000);
@@ -77,34 +79,41 @@ void AAItemSpawner::Server_SpawnItem()
 
 		switch (RandomSpawnNum) {
 		case 1:
-		{
-			AAWeapon* InstanceItem = World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), SpawnLocation, Rot, SpawnParams);
-		}
+			World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), SpawnLocation, Rot, SpawnParams);
 		break;
 		case 2:
-		{
-			AAArmor* InstanceItem = World->SpawnActor<AAArmor>(AAArmor::StaticClass(), SpawnLocation, Rot, SpawnParams);
-		}
+			World->SpawnActor<AAArmor>(AAArmor::StaticClass(), SpawnLocation, Rot, SpawnParams);
 		break;
 		case 3:
-		{
-			AAGrenade* InstanceItem = World->SpawnActor<AAGrenade>(AAGrenade::StaticClass(), SpawnLocation, Rot, SpawnParams);
-		}
+			World->SpawnActor<AAGrenade>(AAGrenade::StaticClass(), SpawnLocation, Rot, SpawnParams);
 		break;
 		case 4:
-			// InstanceItem->ItemType = AABaseItem::BaseItemType::Recovery;
+			World->SpawnActor<ARecovery>(ARecovery::StaticClass(), SpawnLocation, Rot, SpawnParams);
 			break;
 		case 5:
-			// InstanceItem->ItemType = AABaseItem::BaseItemType::Ammo;
-			break;
-		case 6:
-			// InstanceItem->ItemType = AABaseItem::BaseItemType::Vaccine;
+			World->SpawnActor<AAmmo>(AAmmo::StaticClass(), SpawnLocation, Rot, SpawnParams);
 			break;
 		default:
 			UE_LOG(Pro4, Warning, TEXT("Spawn Item ERROR."));
 			return;
 			break;
 		}
+	}
+}
+
+void AAItemSpawner::SpawnVaccine()
+{
+	UWorld* World = GetWorld();
+
+	if (World)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+		SpawnParams.Instigator = GetInstigator();
+		FRotator Rot = FRotator::ZeroRotator;
+		FVector SpawnLocation = GetActorLocation();
+
+		World->SpawnActor<AVaccine>(AVaccine::StaticClass(), SpawnLocation, Rot, SpawnParams);
 	}
 }
 

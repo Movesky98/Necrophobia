@@ -3,3 +3,8 @@
 
 #include "Bullet.h"
 
+ABullet::ABullet()
+{
+	ItemType = BaseItemType::Ammo;
+
+}

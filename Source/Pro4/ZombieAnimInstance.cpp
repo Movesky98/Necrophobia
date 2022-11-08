@@ -19,6 +19,12 @@ UZombieAnimInstance::UZombieAnimInstance()
 	{
 		WakeUpMontage = WAKEUP_MONTAGE.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> DEAD_MONTAGE(TEXT("/Game/Character_Animation/Zombie/NormalMaleZombie/Zombie_Dead_Montage.Zombie_Dead_Montage"));
+	if (DEAD_MONTAGE.Succeeded())
+	{
+		DeadMontage = DEAD_MONTAGE.Object;
+	}
 }
 
 void UZombieAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -34,22 +40,32 @@ void UZombieAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		{
 			IsRun = Character->ZombieRunning();
 			IsDown = Character->DownAnimCheck();
+			IsDead = Character->ZombieDead();
 		}
 	}
 }
 
-void UZombieAnimInstance::PlayAttackMontage()
+void UZombieAnimInstance::AnimNotify_AttackHitCheck()
 {
-	if (!Montage_IsPlaying(AttackMontage))
+	auto Pawn = TryGetPawnOwner();
+	if (IsValid(Pawn))
 	{
-		Montage_Play(AttackMontage, 1.0f);
+		APro4Zombie* Zombie = Cast<APro4Zombie>(Pawn);
+		Zombie->DrawAttackField();
 	}
 }
 
-void UZombieAnimInstance::PlayWakeUpMontage()
+UAnimMontage* UZombieAnimInstance::GetAttackMontage()
 {
-	if (!Montage_IsPlaying(WakeUpMontage))
-	{
-		Montage_Play(WakeUpMontage, 1.0f);
-	}
+	return AttackMontage;
+}
+
+UAnimMontage* UZombieAnimInstance::GetWakeUpMontage()
+{
+	return WakeUpMontage;
+}
+
+UAnimMontage* UZombieAnimInstance::GetDeadMontage()
+{
+	return DeadMontage;
 }

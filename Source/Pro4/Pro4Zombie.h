@@ -25,17 +25,28 @@ protected:
 
 private:
 #pragma region ZombieState
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = State, Meta = (AllowPrivateAccess = true))
 	float CurrentHP;
 	float Damage;
 	float Velocity;
 
 #pragma endregion
+	UPROPERTY(Replicated)
 	bool IsFind;
+	UPROPERTY(Replicated)
 	bool IsAttacking;
+	UPROPERTY(Replicated)
 	bool IsDowning;
+	UPROPERTY(Replicated)
 	bool IsRun = false;
+	UPROPERTY(Replicated)
 	bool IsDown;
+	UPROPERTY(Replicated)
 	bool IsMontagePlay;
+	UPROPERTY(Replicated)
+	bool IsDead;
+	UPROPERTY(Replicated)
+	bool IsDeading;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
 	float CountWakeUp;
@@ -49,6 +60,8 @@ private:
 		void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	UFUNCTION()
 		void OnWakeUpMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	UFUNCTION()
+		void OnDeadMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 	/* Zombie Spanwer Collision */
 	UPROPERTY(VisibleAnywhere, Category = "ZombieCollision")
@@ -67,11 +80,29 @@ public:
 	virtual void PostInitializeComponents() override;
 	void MovementSetting();
 
+	/* Set Zombie Target */
+	UFUNCTION()
+	void SetZombieTarget(APawn* TargetPlayer);
+
+	/* Zombie Attack */
+	UFUNCTION()
+	void DrawAttackField();
+
 	/* Zombie Get Damaged */
 	void ZombieGetDamaged(float _Damage);
 
 	UFUNCTION(Server, Reliable)
 	void ZombieGetDamagedOnServer(float _Damage);
+
+	/* Zombie State Syncronization */
+	UFUNCTION(Server, Reliable)
+	void SetZombieStateOnServer(const FString& State, bool bIsState);
+
+	UFUNCTION(Server, Reliable)
+	void PlayMontageOnServer(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0);
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void PlayMontageOnClient(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0);
 
 	float GetCurrentHP()
 	{
@@ -143,8 +174,14 @@ public:
 		IsFind = false;
 	}
 
+	bool ZombieDead()
+	{
+		return IsDead;
+	}
+
 	void Attack();
 	void WakeUp();
+	void Dead();
 
 	FOnAttackEndDelegate OnAttackEnd;
 	FOnWakeUpEndDelegate OnWakeUpEnd;

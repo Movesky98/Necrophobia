@@ -30,7 +30,7 @@ public:
 	void ViewWeaponName();
 
 	UFUNCTION(NetMulticast, Reliable)
-	void NetMulticast_SetUp(USkeletalMesh* SK_Weapon, const FString& _ItemName, const FString& _IconPath, const FString& _ImagePath, uint16 _ItemNum);
+	void NetMulticast_SetUp(USkeletalMesh* SK_Weapon, UStaticMesh* SM_Scope, const FString& _ItemName, const FString& _IconPath, const FString& _ImagePath, uint16 _ItemNum);
 
 #pragma region Get_Set
 
@@ -104,9 +104,6 @@ public:
 
 	virtual void BeginPlay();
 
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
 protected:
 	void NotifyActorBeginOverlap(AActor* OtherActor) override;
 	void NotifyActorEndOverlap(AActor* OtherActor) override;
@@ -133,7 +130,6 @@ private:
 	UPROPERTY(VisibleDefaultsOnly, Category = "Scope")
 	UStaticMeshComponent* AccMesh;
 	USkeletalMesh* SK_WeaponItem;
-	UStaticMesh* SM_WeaponItem;
 	UStaticMesh* SK_WeaponSight;
 
 	class UItemNameWidget* WBP_NameWidget;

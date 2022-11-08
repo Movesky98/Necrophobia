@@ -17,6 +17,9 @@ class PRO4_API UPro4AnimInstance : public UAnimInstance
 public:
 	UPro4AnimInstance();
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+	UAnimMontage* GetEquipMontage();
+	UAnimMontage* GetReloadMontage();
+	UAnimMontage* GetAttackMontage();
 
 	void PlayEquipMontage();
 	void PlayReloadMontage();
@@ -33,6 +36,7 @@ public:
 		UAnimMontage* AttackMontage;
 
 private:
+	// 좀비 애니메이션 컨트롤을 위한 변수들
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Pawn, Meta = (AllowPrivateAccess = true))
 		float CurrentPawnSpeed;
 
@@ -41,9 +45,6 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 		bool IsCrouch;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
-		bool IsProne;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 		bool IsRun;
@@ -59,6 +60,9 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 		float CharacterRotationPitch;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
+		float CharacterRotationYaw;
 
 	FName GetEquipMontageSectionName(int32 Section);
 };

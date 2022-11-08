@@ -27,6 +27,11 @@ void APro4PlayerController::BeginPlay()
 		this->PlayerMenu = InGameInstance->PlayerMenu;
 	}
 
+	if (GetWorld()->IsServer())
+	{
+		bIsServer = true;
+	}
+
 }
 
 void APro4PlayerController::Tick(float DeltaTime)
@@ -34,11 +39,14 @@ void APro4PlayerController::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	
 	// 시간 차이가 있음 수정 필요.
-	Time += DeltaTime;
-	if (Time >= 1.0f) 
+	if (!bIsServer)
 	{
-		Time = 0.0f;
-		UpdatePlayerTimeState();
+		Time += DeltaTime;
+		if (Time >= 1.0f)
+		{
+			Time = 0.0f;
+			UpdatePlayerTimeState();
+		}
 	}
 }
 
@@ -55,6 +63,7 @@ void APro4PlayerController::UpdatePlayerTimeState()
 	{
 		PlayerMenu->SetTimeText(InGameState->GetInGameMinutes(), InGameState->GetInGameSeconds());
 
+		// 인게임 시간이 밤이되면 밤으로 낮이되면 낮으로
 		if (InGameState->GetIsNight())
 		{
 			PlayerMenu->SetImage(PlayerMenu->Night);
@@ -66,17 +75,20 @@ void APro4PlayerController::UpdatePlayerTimeState()
 	}
 }
 
-void APro4PlayerController::SpawnArmorOnServer_Implementation(FVector Location, USkeletalMesh* _ArmorMesh, const FString& _ArmorName, float _AP)
+bool APro4PlayerController::SetHelicopterSpawn()
 {
-	UWorld* World = GetWorld();
-
-	if (World)
+	if (InGameState->GetIsHelicopterSpawn())
 	{
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.Owner = this;
-		SpawnParams.Instigator = GetInstigator();
-		FRotator Rotation;
-
-		AAArmor* DropItem = World->SpawnActor<AAArmor>(AAArmor::StaticClass(), Location, Rotation, SpawnParams);
+		return false;
 	}
+	else
+	{
+		InGameState->SetIsHelicopterSpawn(true);
+		return true;
+	}
+}
+
+void APro4PlayerController::AvaialbleHelicopterSpawnOnServer_Implementation()
+{
+	InGameState->SetIsHelicopterSpawn(false);
 }

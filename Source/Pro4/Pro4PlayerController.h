@@ -17,21 +17,17 @@ class PRO4_API APro4PlayerController : public APlayerController
 public:
 	APro4PlayerController();
 
-	void SetPlayerCharacter(class APro4Character* _Character)
-	{
-		PlayerCharacter = Cast<class APro4Character>(_Character);
-	}
+	UFUNCTION(BlueprintImplementableEvent)
+	void SetServerToSpectator();
 
-	AActor* GetPlayerCharacter()
-	{
-		return Cast<AActor>(PlayerCharacter);
-	}
-	/* PlayerCharacter <-> Item Sector */
+	bool SetHelicopterSpawn();
+
 	UFUNCTION(Server, Reliable)
-	void SpawnArmorOnServer(FVector Location, USkeletalMesh* _ArmorMesh, const FString& _ArmorName, float _AP);
+	void AvaialbleHelicopterSpawnOnServer();
 
 protected:
 
+	// 플레이어가 캐릭터에 빙의하기 위한 함수
 	virtual void OnPossess(APawn* InPawn);
 
 	void BeginPlay() override;
@@ -44,6 +40,9 @@ private:
 	void UpdatePlayerTimeState();
 	float Time = 0.0f;
 
+	bool bIsServer = false;
+
+	// 빙의할 캐릭터 클래스와 사용할 변수, 상태를 저장하고 가져올 클래스 변수들
 	class APro4Character* PlayerCharacter;
 
 	class AInGameState* InGameState;

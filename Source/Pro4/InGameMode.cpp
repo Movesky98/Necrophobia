@@ -7,45 +7,39 @@
 #include "NecrophobiaGameInstance.h"
 #include "InGameState.h"
 #include "InGamePlayerState.h"
+#include "D_EncroachField.h"
+#include "Item/AItemSpawner.h"
 #include "UserInterface/PlayerMenu.h"
 
-
-#include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
+#include "Kismet/GameplayStatics.h"
 
+#include "DrawDebugHelpers.h"
 #include "TimerManager.h"
 #include "UObject/ConstructorHelpers.h"
-
-/*
-#include <Steamworks/Steamv153/sdk/public/steam/steam_api.h>
- 스팀 라이브러리를 명시적으로 연결함
-#pragma comment(lib, "ThirdParty/Steamworks/Steamv153/sdk/redistributable_bin/win64/steam_api64.lib")
-*/
 
 AInGameMode::AInGameMode()
 {
     PrimaryActorTick.bCanEverTick = true;
     // set default pawn class to our Blueprinted character
 
-    // static ConstructorHelpers::FClassFinder<APro4Character> BP_PlayerCharacter(TEXT("/Game/BLUEPRINT(JunJae)/BP_Pro4Character"));
-
-    /*if (BP_PlayerCharacter.Succeeded())   BP_PlayerCharacter은 아예 C++로 구현해놓겠음.
+    static ConstructorHelpers::FClassFinder<APro4PlayerController> BP_PlayerController(TEXT("/Game/Blueprints/BP_PlayerController"));
+    if (BP_PlayerController.Succeeded())
     {
-        DefaultPawnClass = BP_PlayerCharacter.Class;
-        UE_LOG(Pro4, Warning, TEXT("Set PawnClass : BP_PlayerCharacter"));
+        PlayerControllerClass = BP_PlayerController.Class;
     }
     else
     {
-    
-    }*/
+        PlayerControllerClass = APro4PlayerController::StaticClass();
+    }
 
     DefaultPawnClass = APro4Character::StaticClass();
     UE_LOG(Pro4, Warning, TEXT("Set PawnClass : APro4Character"));
-    PlayerControllerClass = APro4PlayerController::StaticClass();
     GameStateClass = AInGameState::StaticClass();
     PlayerStateClass = AInGamePlayerState::StaticClass();
 }
 
+/* 월드에 생성되었을 때 실행되는 함수 */
 void AInGameMode::BeginPlay()
 {
     Super::BeginPlay();
@@ -61,8 +55,19 @@ void AInGameMode::BeginPlay()
     {
         UE_LOG(Pro4, Warning, TEXT("GameState is NULL"));
     }
+
+    // 월드에서 배치된 아이템 스포너들을 받아서 ItemSpawnerArray에 저장
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AAItemSpawner::StaticClass(), ItemSpawnerArray);
+    
+    FVector SpawnLocation = FVector(-47769.0f, 30816.0f, 92.0f);
+    FRotator SpawnRotation = FRotator(0.0f);
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.Owner = this;
+
+    GetWorld()->SpawnActor<AD_EncroachField>(AD_EncroachField::StaticClass(), SpawnLocation, SpawnRotation, SpawnParams);
 }
 
+/* 매 프레임마다 실행되는 함수 */
 void AInGameMode::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
@@ -76,6 +81,20 @@ void AInGameMode::Tick(float DeltaTime)
         if (InGameState->GetIsTimeToSpawnBoss())
         {
             SpawnBossZombie();
+        }
+
+        // 아이템 생성 시기에, 아이템 스포너에서 생성.
+        if (InGameState->GetIsTimeToSpawnItem())
+        {
+            InGameState->SetIsTimeToSpawnItem(false);
+
+            for (AActor* ItemSpawnerActor : ItemSpawnerArray)
+            {
+                AAItemSpawner* ItemSpawner = Cast<AAItemSpawner>(ItemSpawnerActor);
+                
+                ItemSpawner->Server_SpawnItem();
+            }
+            
         }
     }
 }
@@ -91,7 +110,7 @@ void AInGameMode::PostLogin(APlayerController* NewPlayer)
     if (NumberOfPlayers >= 3 && !isGameStart)
     {
         UE_LOG(Pro4, Warning, TEXT("Start Timer..."));
-        GetWorldTimerManager().SetTimer(GameStartTimer, this, &AInGameMode::CountingTheSeconds, 1.0f, true, 5.0f);
+        GetWorldTimerManager().SetTimer(GameStartTimer, this, &AInGameMode::CountingTheSeconds, 1.0f, true);
         isGameStart = true;
     }
 
@@ -121,6 +140,28 @@ void AInGameMode::StartGame()
     UEngine* Engine = GameInstance->GetEngine();
     if (Engine == nullptr) return;
     Engine->AddOnScreenDebugMessage(0, 10.0f, FColor::Red, TEXT("Game Start!"));
+
+    TArray<FVector> SpawnArray;
+    SpawnArray.Add(FVector(0.0f, 0.0f, -1000.0f));
+    SpawnArray.Add(FVector(-45470.0f, 19260.0f, -840.0f));
+    SpawnArray.Add(FVector(-55546, 28496, 910));
+    SpawnArray.Add(FVector(-53433.0f, 36765.0f, 1110.0f));
+    SpawnArray.Add(FVector(-50113.0f, 30207.0f, 363.0f));
+
+    InGameState->SpawnPlayerToStartLocation(SpawnArray);
+    InGameState->SetIsTimeToSpawnItem(true);
+
+    int32 NumberOfSpawner = ItemSpawnerArray.Num();
+
+    // 아이템 스포너에 백신 생성
+    for (int i = 0; i < 3; i++)
+    {
+        int32 Rand = FMath::RandRange(0, NumberOfSpawner);
+        AAItemSpawner* ItemSpawner = Cast<AAItemSpawner>(ItemSpawnerArray[Rand]);
+
+        ItemSpawner->SpawnVaccine();
+    }
+
 }
 
 /* 충분한 인원이 모이고 시간초를 세는 함수 */
@@ -134,6 +175,7 @@ void AInGameMode::CountingTheSeconds()
     }
 }
 
+/* 서버가 보스를 생성하는 함수 */
 void AInGameMode::SpawnBossZombie()
 {
     FVector SpawnLocation = FVector(-47632.0f, 19246.0f, 40.0f);

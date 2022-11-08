@@ -9,9 +9,6 @@
 
 AAWeapon::AAWeapon()
 {
-	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
 	ItemType = BaseItemType::Weapon;
 	AccMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Accesory"));
 
@@ -28,26 +25,19 @@ AAWeapon::AAWeapon()
 	WBP_NameWidget = Cast<UItemNameWidget>(NameWidget->GetUserWidgetObject());
 }
 
-void AAWeapon::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	// ItemName Draw
-	DrawDebugString(GetWorld(), FVector(0, 0, 50), ItemName, this, FColor::Green, DeltaTime);
-}
-
+/* 아이템이 월드에 생성되었을 때, 실행되는 함수 */
 void AAWeapon::BeginPlay()
 {
 	Super::BeginPlay();
 	
 	if (GetWorld()->IsServer())
 	{
-		NetMulticast_SetUp(SK_WeaponItem, TemporaryName, ItemIconPath, WeaponBoxImagePath, 1);
+		NetMulticast_SetUp(SK_WeaponItem, SK_WeaponSight, TemporaryName, ItemIconPath, WeaponBoxImagePath, 1);
 	}
 }
 
 /* 클라이언트들에게 아이템 정보를 뿌려줌 */
-void AAWeapon::NetMulticast_SetUp_Implementation(USkeletalMesh* SK_Weapon, const FString& _ItemName, const FString& _IconPath, const FString& _ImagePath, uint16 _ItemNum)
+void AAWeapon::NetMulticast_SetUp_Implementation(USkeletalMesh* SK_Weapon, UStaticMesh* SM_Scope, const FString& _ItemName, const FString& _IconPath, const FString& _ImagePath, uint16 _ItemNum)
 {
 	// 스코프 메쉬와 무기 메쉬 설정
 	if (WBP_NameWidget == nullptr)
@@ -62,22 +52,21 @@ void AAWeapon::NetMulticast_SetUp_Implementation(USkeletalMesh* SK_Weapon, const
 	WeaponBoxImagePath = _ImagePath;
 	ItemNum = _ItemNum;
 
-	if (SK_WeaponSight != nullptr)
+	AccMesh->SetStaticMesh(SM_Scope);
+	if (SK_Mesh->DoesSocketExist("b_gun_scopeSocket"))
 	{
-		AccMesh->SetStaticMesh(SK_WeaponSight);
-		if (SK_Mesh->DoesSocketExist("b_gun_scopeSocket"))
-		{
-			AccMesh->AttachToComponent(SK_Mesh, FAttachmentTransformRules::SnapToTargetIncludingScale, "b_gun_scopeSocket");
-		}
+		AccMesh->AttachToComponent(SK_Mesh, FAttachmentTransformRules::SnapToTargetIncludingScale, "b_gun_scopeSocket");
 	}
 }
 
+/* 아이템의 이름을 가진 UI를 보여주는 함수 */
 void AAWeapon::ViewWeaponName()
 {
 	bIsObservable = !bIsObservable;
 	WBP_NameWidget->ToggleVisibility();
 }
 
+/* 아이템과 겹치기 시작하는 액터가 있을 때 실행되는 함수*/
 void AAWeapon::NotifyActorBeginOverlap(AActor* OtherActor)
 {
 	if (OtherActor->ActorHasTag("Player"))
@@ -88,6 +77,7 @@ void AAWeapon::NotifyActorBeginOverlap(AActor* OtherActor)
 	}
 }
 
+/* 아이템과 겹치고 있던 액터가 벗어날 때 실행되는 함수*/
 void AAWeapon::NotifyActorEndOverlap(AActor* OtherActor)
 {
 	if (OtherActor->ActorHasTag("Player"))
@@ -99,6 +89,7 @@ void AAWeapon::NotifyActorEndOverlap(AActor* OtherActor)
 	}
 }
 
+/* 무기 종류 중, 랜덤으로 무기의 정보를 설정하는 함수 */
 void AAWeapon::RandomSpawn(int32 Random)
 {
 	CurrentWeapon = static_cast<WeaponType>(Random); 
@@ -134,6 +125,12 @@ void AAWeapon::RandomSpawn(int32 Random)
 		if (SK_Weapon.Succeeded())
 		{
 			SK_WeaponItem = SK_Weapon.Object;
+		}
+
+		static ConstructorHelpers::FObjectFinder<UStaticMesh> SK_Scope(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/Accessories/SM_Scope_25x56_Y.SM_Scope_25x56_Y"));
+		if (SK_Scope.Succeeded())
+		{
+			SK_WeaponSight = SK_Scope.Object;
 		}
 
 		WeaponBoxImagePath = "/Game/UI/Sprites/Weapon_Icon/KA_val_Image";
@@ -174,6 +171,7 @@ void AAWeapon::RandomSpawn(int32 Random)
 	}
 }
 
+/* 아이템에서 서버와 클라이언트에 복제되는 변수들을 설정하는 함수 */
 void AAWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

@@ -8,11 +8,12 @@
 #include "Net/UnrealNetwork.h"
 #include "DrawDebugHelpers.h"
 
-// Sets default values
+// 기초 설정
 AHeli_AH64D::AHeli_AH64D()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	bReplicates = true;
 
 	SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
 	MachineGunFX = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("MachineGunFX"));
@@ -65,13 +66,14 @@ AHeli_AH64D::AHeli_AH64D()
 	}
 }
 
+/* 생성되었을 때, 실행되는 기초 설정 */
 void AHeli_AH64D::CallEscape()
 {
-	SetMainRotorSpeed(100.0f);
-	SetTailRotorSpeed(100.0f);
+	SetMainRotorSpeed(300.0f);
+	SetTailRotorSpeed(300.0f);
 }
 
-// Called when the game starts or when spawned
+/* 월드에 생성되었을 때, 실행되는 함수 */
 void AHeli_AH64D::BeginPlay()
 {
 	Super::BeginPlay();
@@ -97,6 +99,7 @@ void AHeli_AH64D::Tick(float DeltaTime)
 	}
 }
 
+// 헬기가 목적지에 도착했을 때, 탈출용 콜리전 활성화
 void AHeli_AH64D::ActiveEscapeCollision()
 {
 	FHitResult HitResult;
@@ -119,6 +122,7 @@ void AHeli_AH64D::ActiveEscapeCollision()
 	}
 }
 
+/* 탈출을 위한 콜리전에 플레이어가 들어왔을 경우 실행되는 함수 */ 
 void AHeli_AH64D::CheckEscapeCollision(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor->ActorHasTag("Player"))
@@ -126,4 +130,13 @@ void AHeli_AH64D::CheckEscapeCollision(UPrimitiveComponent* OverlappedComp, AAct
 		APro4Character* PlayerChracter = Cast<APro4Character>(OtherActor);
 		PlayerChracter->PlayerEscape();
 	}
+}
+
+/* 아이템에서 서버와 클라이언트에 복제되는 변수들을 설정하는 함수 */
+void AHeli_AH64D::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AHeli_AH64D, TargetPlayerLocation);
+	DOREPLIFETIME(AHeli_AH64D, IsReachPlayer);
 }

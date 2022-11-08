@@ -5,6 +5,8 @@
 #include "ABaseItem.h"
 #include "../UserInterface/ItemNameWidget.h"
 
+#include "Components/AudioComponent.h"
+#include "Sound/SoundCue.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "AGrenade.generated.h"
 
@@ -19,6 +21,9 @@ class PRO4_API AAGrenade : public AABaseItem
 public:
 	AAGrenade();
 
+	class UAudioComponent* AC;
+	class USoundCue* SC;
+
 	enum class GrenadeType : int32
 	{
 		Grenade,	// 수류탄
@@ -29,6 +34,13 @@ public:
 	};
 
 	void ViewItemName();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void PlayGrenadeSound();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void SetStateToExplosion();
+
 
 	UFUNCTION()
 	void GrenadeExplosion();
@@ -66,9 +78,6 @@ public:
 #pragma endregion
 
 	virtual void BeginPlay();
-
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
 
 protected:
 	void NotifyActorBeginOverlap(AActor* OtherActor) override;
