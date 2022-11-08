@@ -18,9 +18,9 @@ public:
 	UZombieAnimInstance();
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
-	void PlayAttackMontage();
-	void PlayWakeUpMontage();
-	void PlayDeadMontage();
+	UAnimMontage* GetAttackMontage();
+	UAnimMontage* GetWakeUpMontage();
+	UAnimMontage* GetDeadMontage();
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
 		UAnimMontage* AttackMontage;

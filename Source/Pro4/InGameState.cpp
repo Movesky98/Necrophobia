@@ -94,6 +94,7 @@ void AInGameState::AddInGameSeconds() {
 			UE_LOG(Pro4, Warning, TEXT("The day has passed."));
 			AddInGameDay();
 			SetIsNight(false);
+			SetIsTimeToSpawnItem(true);
 
 			bool isServer = true;
 			
