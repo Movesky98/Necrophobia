@@ -17,18 +17,6 @@ class PRO4_API APro4PlayerController : public APlayerController
 public:
 	APro4PlayerController();
 
-	// 캐릭터 지정
-	void SetPlayerCharacter(class APro4Character* _Character)
-	{
-		PlayerCharacter = Cast<class APro4Character>(_Character);
-	}
-
-	// 현재 캐릭터 전달을 위한 함수
-	AActor* GetPlayerCharacter()
-	{
-		return Cast<AActor>(PlayerCharacter);
-	}
-
 	UFUNCTION(BlueprintImplementableEvent)
 	void SetServerToSpectator();
 
