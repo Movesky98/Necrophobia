@@ -25,7 +25,7 @@ APro4Character::APro4Character()
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 	bNetLoadOnClient = true;
-
+	NetCullDistanceSquared = 9000000202358128640.0f;
  
 	/* 캐릭터 클래스를 구성하는 컴포넌트(카메라, 방어구, 무기..) */
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
@@ -1238,7 +1238,6 @@ void APro4Character::NotifyActorEndOverlap(AActor* Act)
 	}
 }
 
-
 #pragma region PlayerUI_Inventory_Section
 
 /* 플레이어가 무기를 획득할 경우 실행되는 함수 */
@@ -1757,7 +1756,7 @@ void APro4Character::EquipPlayerWeaponOnClient_Implementation(const WeaponMode& 
 		break;
 	case WeaponMode::ATW:
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("ATW"));
-		if (PlayerGrenade.GrenadeNum > 0)
+		if (PlayerGrenade.GrenadeNum >= 0)
 		{
 			Grenade->SetStaticMesh(GrenadeMesh);
 		}
@@ -1800,6 +1799,15 @@ void APro4Character::CallHelicopterToEscapeOnServer_Implementation()
 		return;
 	}
 
+	APro4PlayerController* NecrophobiaPlayerController = Cast<APro4PlayerController>(GetController());
+
+	if (!NecrophobiaPlayerController->SetHelicopterSpawn())
+	{
+		// 헬리콥터를 부를 수 없을 때 실행되는 함수
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Can't spawn helicopter."));
+		return;
+	}
+
 	DrawDebugSolidBox(GetWorld(), GetActorLocation(), FVector(20.0f), FColor::Blue, true);
 
 	FActorSpawnParameters SpawnParams;
@@ -1830,6 +1838,11 @@ void APro4Character::CallHelicopterToEscapeOnServer_Implementation()
 void APro4Character::PlayerEscape()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Purple, TEXT("Player Escape"));
+
+	APro4PlayerController* NecrophobiaPlayerController = Cast<APro4PlayerController>(GetController());
+
+	NecrophobiaPlayerController->AvaialbleHelicopterSpawnOnServer();
+
 }
 #pragma endregion
 

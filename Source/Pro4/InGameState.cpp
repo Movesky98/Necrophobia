@@ -208,4 +208,5 @@ void AInGameState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLi
 	DOREPLIFETIME(AInGameState, InGameMin);
 	DOREPLIFETIME(AInGameState, InGameDay);
 	DOREPLIFETIME(AInGameState, isStateChanged);
+	DOREPLIFETIME(AInGameState, isHelicopterSpawn);
 }

@@ -80,10 +80,13 @@ public:
 	virtual void PostInitializeComponents() override;
 	void MovementSetting();
 
+	/* Set Zombie Target */
+	UFUNCTION()
+	void SetZombieTarget(APawn* TargetPlayer);
+
 	/* Zombie Attack */
 	UFUNCTION()
 	void DrawAttackField();
-
 
 	/* Zombie Get Damaged */
 	void ZombieGetDamaged(float _Damage);

@@ -77,8 +77,11 @@ void AZombieSpawner::SpawnZombieOnServer_Implementation(APawn* PlayerInstigator)
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.Owner = this;	// Server
 			SpawnParams.Instigator = PlayerInstigator;	// Target Player
+			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue, PlayerInstigator->GetName());
 
 			APro4Zombie* SpawnZombie = World->SpawnActor<APro4Zombie>(Zombie, SpawnLocation, SpawnRotation, SpawnParams);
+			SpawnZombie->SetZombieTarget(PlayerInstigator);
+			
 			PlayerCharacter->SetSpawnZombieCurCount(PlayerCharacter->GetSpawnZombieCurCount() + 1);
 		}
 

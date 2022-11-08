@@ -7,6 +7,7 @@
 #include "NecrophobiaGameInstance.h"
 #include "InGameState.h"
 #include "InGamePlayerState.h"
+#include "D_EncroachField.h"
 #include "Item/AItemSpawner.h"
 #include "UserInterface/PlayerMenu.h"
 
@@ -57,7 +58,13 @@ void AInGameMode::BeginPlay()
 
     // 월드에서 배치된 아이템 스포너들을 받아서 ItemSpawnerArray에 저장
     UGameplayStatics::GetAllActorsOfClass(GetWorld(), AAItemSpawner::StaticClass(), ItemSpawnerArray);
+    
+    FVector SpawnLocation = FVector(-47769.0f, 30816.0f, 92.0f);
+    FRotator SpawnRotation = FRotator(0.0f);
+    FActorSpawnParameters SpawnParams;
+    SpawnParams.Owner = this;
 
+    GetWorld()->SpawnActor<AD_EncroachField>(AD_EncroachField::StaticClass(), SpawnLocation, SpawnRotation, SpawnParams);
 }
 
 /* 매 프레임마다 실행되는 함수 */

@@ -35,6 +35,13 @@ public:
 
 	void ViewItemName();
 
+	UFUNCTION(NetMulticast, Reliable)
+	void PlayGrenadeSound();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void SetStateToExplosion();
+
+
 	UFUNCTION()
 	void GrenadeExplosion();
 

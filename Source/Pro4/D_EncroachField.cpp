@@ -27,7 +27,10 @@ AD_EncroachField::AD_EncroachField()
 
 	EncroachPivotComponent->SetupAttachment(RootComponent);
 	EncroachPivotComponent->InitSphereRadius(200.0f);
+	EncroachPivotComponent->SetIsReplicated(true);
 	EncroachPivotComponent->SetCollisionProfileName(TEXT("EncroachField"));
+
+	FieldSize = 1.0f;
 
 	Tags.Add("Encroach");
 }
@@ -40,6 +43,8 @@ void AD_EncroachField::BeginPlay()
 	FVector Center = GetActorLocation();
 	float SearchRadius = 50.0f;
 	DrawDebugSphere(World, Center, SearchRadius, 16, FColor::Green, false, 0.2f);
+
+	GetWorldTimerManager().SetTimer(EncroachFieldTimer, this, &AD_EncroachField::GrowEncroachField, 0.1f, true);
 }
 
 /* EncroachField와 겹치기 시작하는 액터가 있을 때 실행되는 함수*/
@@ -65,4 +70,11 @@ void AD_EncroachField::NotifyActorEndOverlap(AActor* Act)
 		PlayerCharacter->UnEncroached();
 		PlayerCharacter->StopEncroachTimer();
 	}
+}
+
+void AD_EncroachField::GrowEncroachField_Implementation()
+{
+	FieldSize += 0.1f;
+
+	GetDecal()->SetRelativeScale3D(FVector(FieldSize));
 }
