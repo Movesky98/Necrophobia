@@ -17,6 +17,8 @@ public:
 
 	void Server_SpawnItem();
 
+	void SpawnVaccine();
+
 	UPROPERTY(VisibleDefaultsOnly, Category = TimeSecond, meta = (AllowPrivateAccess = true))
 	float Seconds = 0.0f;
 

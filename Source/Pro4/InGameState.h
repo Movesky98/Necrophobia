@@ -59,6 +59,16 @@ public:
 		isTimeToSpawnBoss = TimetoSpawnBoss;
 	}
 
+	bool GetIsTimeToSpawnItem()
+	{
+		return bIsTimeToSpawnItem;
+	}
+
+	void SetIsTimeToSpawnItem(bool TimeToSpawnItem)
+	{
+		bIsTimeToSpawnItem = TimeToSpawnItem;
+	}
+
 	void SpawnPlayerToStartLocation(TArray<FVector> SpawnArray);
 
 private:
@@ -76,4 +86,6 @@ private:
 	bool isBossSpawn = false;
 	UPROPERTY(Replicated)
 	bool isTimeToSpawnBoss = false;
+
+	bool bIsTimeToSpawnItem = false;
 };

@@ -7,12 +7,13 @@
 #include "NecrophobiaGameInstance.h"
 #include "InGameState.h"
 #include "InGamePlayerState.h"
+#include "Item/AItemSpawner.h"
 #include "UserInterface/PlayerMenu.h"
 
-
-#include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
+#include "Kismet/GameplayStatics.h"
 
+#include "DrawDebugHelpers.h"
 #include "TimerManager.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -53,6 +54,10 @@ void AInGameMode::BeginPlay()
     {
         UE_LOG(Pro4, Warning, TEXT("GameState is NULL"));
     }
+
+    // 월드에서 배치된 아이템 스포너들을 받아서 ItemSpawnerArray에 저장
+    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AAItemSpawner::StaticClass(), ItemSpawnerArray);
+
 }
 
 /* 매 프레임마다 실행되는 함수 */
@@ -70,6 +75,20 @@ void AInGameMode::Tick(float DeltaTime)
         {
             SpawnBossZombie();
         }
+
+        // 아이템 생성 시기에, 아이템 스포너에서 생성.
+        if (InGameState->GetIsTimeToSpawnItem())
+        {
+            InGameState->SetIsTimeToSpawnItem(false);
+
+            for (AActor* ItemSpawnerActor : ItemSpawnerArray)
+            {
+                AAItemSpawner* ItemSpawner = Cast<AAItemSpawner>(ItemSpawnerActor);
+                
+                ItemSpawner->Server_SpawnItem();
+            }
+            
+        }
     }
 }
 
@@ -84,7 +103,7 @@ void AInGameMode::PostLogin(APlayerController* NewPlayer)
     if (NumberOfPlayers >= 3 && !isGameStart)
     {
         UE_LOG(Pro4, Warning, TEXT("Start Timer..."));
-        GetWorldTimerManager().SetTimer(GameStartTimer, this, &AInGameMode::CountingTheSeconds, 1.0f, true, 5.0f);
+        GetWorldTimerManager().SetTimer(GameStartTimer, this, &AInGameMode::CountingTheSeconds, 1.0f, true);
         isGameStart = true;
     }
 
@@ -123,6 +142,19 @@ void AInGameMode::StartGame()
     SpawnArray.Add(FVector(-50113.0f, 30207.0f, 363.0f));
 
     InGameState->SpawnPlayerToStartLocation(SpawnArray);
+    InGameState->SetIsTimeToSpawnItem(true);
+
+    int32 NumberOfSpawner = ItemSpawnerArray.Num();
+
+    // 아이템 스포너에 백신 생성
+    for (int i = 0; i < 3; i++)
+    {
+        int32 Rand = FMath::RandRange(0, NumberOfSpawner);
+        AAItemSpawner* ItemSpawner = Cast<AAItemSpawner>(ItemSpawnerArray[Rand]);
+
+        ItemSpawner->SpawnVaccine();
+    }
+
 }
 
 /* 충분한 인원이 모이고 시간초를 세는 함수 */

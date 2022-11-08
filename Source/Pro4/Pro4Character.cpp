@@ -24,6 +24,7 @@ APro4Character::APro4Character()
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 	bNetLoadOnClient = true;
+
  
 	/* 캐릭터 클래스를 구성하는 컴포넌트(카메라, 방어구, 무기..) */
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
@@ -1838,7 +1839,7 @@ void APro4Character::EquipPlayerWeaponOnClient_Implementation(const WeaponMode& 
 		break;
 	case WeaponMode::ATW:
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("ATW"));
-		if (PlayerGrenade.GrenadeNum >= 0)
+		if (PlayerGrenade.GrenadeNum > 0)
 		{
 			Grenade->SetStaticMesh(GrenadeMesh);
 		}

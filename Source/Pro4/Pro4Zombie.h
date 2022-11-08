@@ -31,13 +31,21 @@ private:
 	float Velocity;
 
 #pragma endregion
+	UPROPERTY(Replicated)
 	bool IsFind;
+	UPROPERTY(Replicated)
 	bool IsAttacking;
+	UPROPERTY(Replicated)
 	bool IsDowning;
+	UPROPERTY(Replicated)
 	bool IsRun = false;
+	UPROPERTY(Replicated)
 	bool IsDown;
+	UPROPERTY(Replicated)
 	bool IsMontagePlay;
+	UPROPERTY(Replicated)
 	bool IsDead;
+	UPROPERTY(Replicated)
 	bool IsDeading;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
@@ -82,6 +90,16 @@ public:
 
 	UFUNCTION(Server, Reliable)
 	void ZombieGetDamagedOnServer(float _Damage);
+
+	/* Zombie State Syncronization */
+	UFUNCTION(Server, Reliable)
+	void SetZombieStateOnServer(const FString& State, bool bIsState);
+
+	UFUNCTION(Server, Reliable)
+	void PlayMontageOnServer(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0);
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void PlayMontageOnClient(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0);
 
 	float GetCurrentHP()
 	{

@@ -42,7 +42,7 @@ void AAItemSpawner::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (GetWorld()->IsServer())
+	/*if (GetWorld()->IsServer())
 	{
 		if (10.0f < Seconds)
 		{
@@ -51,7 +51,7 @@ void AAItemSpawner::Tick(float DeltaTime)
 		}
 
 		Seconds += DeltaTime;
-	}
+	}*/
 }
 
 void AAItemSpawner::Server_SpawnItem()
@@ -62,7 +62,7 @@ void AAItemSpawner::Server_SpawnItem()
 		return;
 	}
 
-	RandomSpawnNum = FMath::RandRange(1, 6);
+	RandomSpawnNum = FMath::RandRange(1, 5);
 	
 	UWorld* World = GetWorld();
 
@@ -93,14 +93,27 @@ void AAItemSpawner::Server_SpawnItem()
 		case 5:
 			World->SpawnActor<AAmmo>(AAmmo::StaticClass(), SpawnLocation, Rot, SpawnParams);
 			break;
-		case 6:
-			World->SpawnActor<AVaccine>(AVaccine::StaticClass(), SpawnLocation, Rot, SpawnParams);
-			break;
 		default:
 			UE_LOG(Pro4, Warning, TEXT("Spawn Item ERROR."));
 			return;
 			break;
 		}
+	}
+}
+
+void AAItemSpawner::SpawnVaccine()
+{
+	UWorld* World = GetWorld();
+
+	if (World)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this;
+		SpawnParams.Instigator = GetInstigator();
+		FRotator Rot = FRotator::ZeroRotator;
+		FVector SpawnLocation = GetActorLocation();
+
+		World->SpawnActor<AVaccine>(AVaccine::StaticClass(), SpawnLocation, Rot, SpawnParams);
 	}
 }
 

@@ -38,6 +38,7 @@ private:
 	int CountSeconds = 30;
 
 	float Time = 0;
+	TArray<AActor*> ItemSpawnerArray;
 
 	FTimerHandle GameStartTimer;
 
