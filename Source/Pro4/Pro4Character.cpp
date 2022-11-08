@@ -554,12 +554,12 @@ void APro4Character::UpDown(float NewAxisValue)
 			IsForward = true;
 			if (NewAxisValue < 0)
 			{
-				Moveflag = 1;
+				SetPlayerFlagOnServer("MoveFlag", 1);
 				Updownflag = -1;
 			}
 			else
 			{
-				Moveflag = 0;
+				SetPlayerFlagOnServer("MoveFlag", 0);
 				Updownflag = 1;
 			}
 		}
@@ -584,12 +584,12 @@ void APro4Character::LeftRight(float NewAxisValue)
 			IsForward = false;
 			if (NewAxisValue < 0)
 			{
-				Moveflag = 1;
+				SetPlayerFlagOnServer("MoveFlag", 1);
 				LeftRightflag = 1;
 			}
 			else
 			{
-				Moveflag = 0;
+				SetPlayerFlagOnServer("MoveFlag", 0);
 				LeftRightflag = -1;
 			}
 		}
@@ -617,8 +617,9 @@ void APro4Character::Turn(float NewAxisValue)
 // 달리기
 void APro4Character::Run()
 {
-	if(CurrentCharacterState==CharacterState::Standing)
-	IsRun = !IsRun;
+	if (CurrentCharacterState == CharacterState::Standing)
+		SetPlayerStateOnServer("Run", !IsRun);
+
 	if (IsZoom)
 		Zoom();
 }
@@ -743,14 +744,15 @@ void APro4Character::EquipMain1()
 		// 무기 장착
 		if (CurrentWeaponMode == WeaponMode::Main1)
 		{
-			Equipflag = 0;
+			SetPlayerFlagOnServer("EquipFlag", 0);
 			CurrentWeaponMode = WeaponMode::Disarming;
 		}
 		else
 		{
 			if (IsZoom)
 				Zoom();
-			Equipflag = 1;
+
+			SetPlayerFlagOnServer("EquipFlag", 1);
 			PlayMontageOnServer(Pro4Anim->GetEquipMontage(), 1);
 			IsMontagePlay = true;
 			IsEquipping = true;
@@ -777,14 +779,15 @@ void APro4Character::EquipMain2()
 		// 무기 장착
 		if (CurrentWeaponMode == WeaponMode::Main2)
 		{
-			Equipflag = 0;
+			SetPlayerFlagOnServer("EquipFlag", 0);
 			CurrentWeaponMode = WeaponMode::Disarming;
 		}
 		else
 		{
 			if (IsZoom)
 				Zoom();
-			Equipflag = 1;
+
+			SetPlayerFlagOnServer("EquipFlag", 1);
 			PlayMontageOnServer(Pro4Anim->GetEquipMontage(), 2);
 			IsMontagePlay = true;
 			IsEquipping = true;
@@ -811,14 +814,15 @@ void APro4Character::EquipSub()
 		// 무기 장착
 		if (CurrentWeaponMode == WeaponMode::Sub)
 		{
-			Equipflag = 0;
+			SetPlayerFlagOnServer("EquipFlag", 0);
 			CurrentWeaponMode = WeaponMode::Disarming;
 		}
 		else
 		{
 			if (IsZoom)
 				Zoom();
-			Equipflag = 2;
+
+			SetPlayerFlagOnServer("EquipFlag", 2);
 			PlayMontageOnServer(Pro4Anim->GetEquipMontage(), 2);
 			IsMontagePlay = true;
 			IsEquipping = true;
@@ -990,7 +994,7 @@ void APro4Character::Zoom()
 			// 줌 인 가능한 상태일시 카메라 위치 설정과 스코프 종류에 따라 확대
 			if (IsZoom)
 			{
-				IsZoom = false;
+				SetPlayerStateOnServer("Zoom", false);
 				SpringArm->AttachToComponent(GetCapsuleComponent(), FAttachmentTransformRules::SnapToTargetIncludingScale);
 				SpringArm->TargetArmLength = 450.0f;
 				SpringArm->SocketOffset = FVector(0.0f, 100.0f, 50.0f);
@@ -998,7 +1002,7 @@ void APro4Character::Zoom()
 			}
 			else
 			{
-				IsZoom = true;
+				SetPlayerStateOnServer("Zoom", true);
 				SpringArm->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetIncludingScale, "b_gun_scopeCamera");
 				SpringArm->TargetArmLength = 0.0f;
 				SpringArm->SocketOffset = FVector(0.0f, 0.0f, 0.0f);
@@ -1009,7 +1013,7 @@ void APro4Character::Zoom()
 				}
 				// 달리기 상태였을시 해제
 				if (IsRun)
-					IsRun = false;
+					SetPlayerStateOnServer("Run", false);
 			}
 
 			// 장착무기가 SR일시 스코프 UI로 변경
@@ -1981,25 +1985,29 @@ void APro4Character::PlayMontageOnClient_Implementation(UAnimMontage* AnimationM
 	}
 }
 
-//void APro4Character::SetPlayerState_Implementation(FString State)
-//{
-//	if (State == "Run")
-//	{
-//
-//	}
-//	else if (State == "Zoom")
-//	{
-//
-//	}
-//	else if (State == "EquipFlag")
-//	{
-//
-//	}
-//	else if (State == "MoveFlag")
-//	{
-//
-//	}
-//}
+void APro4Character::SetPlayerStateOnServer_Implementation(const FString& State, bool bIsState)
+{
+	if (State == "Run")
+	{
+		IsRun = bIsState;
+	}
+	else if (State == "Zoom")
+	{
+		IsZoom = bIsState;
+	}
+}
+
+void APro4Character::SetPlayerFlagOnServer_Implementation(const FString& State, int32 Flag)
+{
+	if (State == "EquipFlag")
+	{
+		Equipflag = Flag;
+	}
+	else if (State == "MoveFlag")
+	{
+		Moveflag = Flag;
+	}
+}
 
 void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
