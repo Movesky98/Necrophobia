@@ -232,6 +232,12 @@ void APro4Zombie::DrawAttackField()
 	}
 }
 
+void APro4Zombie::SetZombieTarget(APawn* TargetPlayer)
+{
+	APro4ZombieAI* ZombieAI = Cast<APro4ZombieAI>(GetController());
+	ZombieAI->SetZombieTarget(TargetPlayer);
+}
+
 void APro4Zombie::PlayMontageOnServer_Implementation(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0)
 {
 	PlayMontageOnClient(AnimationMontage, SectionNumber);
@@ -249,7 +255,6 @@ void APro4Zombie::PlayMontageOnClient_Implementation(UAnimMontage* AnimationMont
 		}
 	}
 }
-
 
 void APro4Zombie::SetZombieStateOnServer_Implementation(const FString& State, bool bIsState)
 {

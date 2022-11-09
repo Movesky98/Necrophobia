@@ -179,9 +179,7 @@ void AAGrenade::SetGrenadeExplosion()
 
 	DrawDebugSphere(GetWorld(), ExplosionLocation, GrenadeColSphere.GetSphereRadius(), 30, FColor::Green, true, 5.0f);
 
-	BoxMesh->SetVisibility(false);
-	GrenadeProjectile->bSimulationEnabled = false;
-	GrenadeParticle->ToggleActive();
+	SetStateToExplosion();
 
 	bool bIsHit = GetWorld()->SweepMultiByProfile(OutHits, ExplosionLocation, ExplosionLocation, FQuat::Identity, ProfileName, GrenadeColSphere);
 
@@ -203,8 +201,9 @@ void AAGrenade::SetGrenadeExplosion()
 			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Orange, Hit.GetActor()->GetName());
 		}
 	}
-	AC->SetSound(Cast<USoundBase>(SC));
-	AC->Play();
+
+	PlayGrenadeSound();
+
 	GetWorldTimerManager().SetTimer(SetExplosionTimer, this, &AAGrenade::GrenadeExplosion, 1.5f);
 }
 
@@ -224,6 +223,19 @@ void AAGrenade::SetSimulatePhysics(const FVector& ThrowDirection)
 	GrenadeProjectile->Velocity = ThrowDirection * GrenadeProjectile->MaxSpeed;
 
 	GetWorldTimerManager().SetTimer(SetExplosionTimer, this, &AAGrenade::SetGrenadeExplosion, 5.0f);
+}
+
+void AAGrenade::PlayGrenadeSound_Implementation()
+{
+	AC->SetSound(Cast<USoundBase>(SC));
+	AC->Play();
+}
+
+void AAGrenade::SetStateToExplosion_Implementation()
+{
+	BoxMesh->SetVisibility(false);
+	GrenadeProjectile->bSimulationEnabled = false;
+	GrenadeParticle->ToggleActive();
 }
 
 /* 아이템에서 서버와 클라이언트에 복제되는 변수들을 설정하는 함수 */

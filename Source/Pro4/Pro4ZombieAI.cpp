@@ -24,6 +24,8 @@ APro4ZombieAI::APro4ZombieAI()
 
 	RepeatInterval = 3.0f;
 	bSetControlRotationFromPawnOrientation = false;
+
+	Target = nullptr;
 }
 
 void APro4ZombieAI::OnPossess(APawn* InPawn)
@@ -60,4 +62,10 @@ void APro4ZombieAI::OnRepeatTimer()
 	{
 		UAIBlueprintHelperLibrary::SimpleMoveToLocation(this, NextLocation.Location);
 	}
+}
+
+void APro4ZombieAI::SetZombieTarget(APawn* Player)
+{		
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, Player->GetName());
+	Target = Player;
 }

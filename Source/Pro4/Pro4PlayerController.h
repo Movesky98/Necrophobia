@@ -20,6 +20,11 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void SetServerToSpectator();
 
+	bool SetHelicopterSpawn();
+
+	UFUNCTION(Server, Reliable)
+	void AvaialbleHelicopterSpawnOnServer();
+
 protected:
 
 	// 플레이어가 캐릭터에 빙의하기 위한 함수
