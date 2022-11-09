@@ -50,9 +50,9 @@ struct FWeaponInfo // 무기 정보
 UENUM()
 enum class WeaponMode // 무기 유형
 {
-	Main1, // 주무기 1번
-	Main2, // 주무기 2번
+	Main, // 주무기 1번
 	Sub, // 보조무기
+	Knife, // 칼
 	ATW, // 투척무기
 	Disarming // 비무장
 };
@@ -76,7 +76,6 @@ protected:
 	{
 		Standing,
 		Crouching,
-		Proning,
 	};
 
 	CharacterState CurrentCharacterState; // 현재 캐릭터 위상
@@ -151,6 +150,15 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = "Player")
 	UStaticMeshComponent* Grenade;
+
+	UPROPERTY(VisibleAnywhere, Category = "View")
+		FVector TargetLocation;
+
+	UPROPERTY(VisibleAnywhere, Category = "View")
+		FVector CharacLocation;
+
+	UPROPERTY(VisibleAnywhere, Category = "View")
+		FVector CheckView;
 	/* 무기, 방어구 */
 
 	
@@ -164,9 +172,10 @@ public:
 	void SetIsPossibleEscapeOnServer(bool Escape);
 
 	/* 다른 클래스에서 캐릭터 상태 확인과 수정을 위한 함수들 */
-	bool IsProning()
+
+	bool GetIsDead()
 	{
-		if (CurrentCharacterState == CharacterState::Proning)
+		if (IsDead)
 			return true;
 		else
 			return false;
@@ -206,11 +215,6 @@ public:
 	float CharacterPitch()
 	{
 		return CharacterRotationPitch;
-	}
-
-	float CharacterYaw()
-	{
-		return CharacterRotationYaw;
 	}
 	/* 캐릭터와 카메라 회전값을 애니메이션에 반영하기 위한 함수*/
 
@@ -367,10 +371,10 @@ private:
 	void Turn(float NewAxisValue);
 	void Run();
 	void beCrouch();
-	void Prone();
 	void Jump();
 	float UpdownSpeed();
 	float LeftRightSpeed();
+	void ViewPoint();
 
 	// 공격 관련 함수
 	void Zoom();
@@ -383,9 +387,9 @@ private:
 	void Punch();
 
 	// 장착 함수
-	void EquipMain1();
-	void EquipMain2();
+	void EquipMain();
 	void EquipSub();
+	void EquipKnife();
 	void EquipATW();
 	void Reload();
 	void InteractPressed();
@@ -403,12 +407,15 @@ private:
 	bool FireMod;
 	UPROPERTY(Replicated)
 	bool IsZoom;
+	UPROPERTY(Replicated)
+	bool IsDead;
 	bool bHit;
 	bool IsForward;
 	bool IsFire;
 	bool IsMontagePlay;
 	bool IsPossibleEscape;
 	bool CanZoom;
+	bool PlayerRun;
 
 	int32 Updownflag;
 	int32 LeftRightflag;
@@ -428,7 +435,6 @@ private:
 
 	// 캐릭터 애니메이션 컨트롤에 사용할 회전값 저장 변수
 	float CharacterRotationPitch;
-	float CharacterRotationYaw;
 
 	// 연사속도 조절 변수
 	FTimerHandle FireDelay;
@@ -545,6 +551,12 @@ private:
 	UFUNCTION(NetMulticast, Reliable)
 	void PlayMontageOnClient(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0);
 
-	/*UFUNCTION(Server, Reliable)
-	void SetPlayerState(FString State);*/
+	UFUNCTION(Server, Reliable)
+	void SetPlayerStateOnServer(const FString& State, bool bIsState);
+	
+	UFUNCTION(Server, Reliable)
+	void SetPlayerFlagOnServer(const FString& State, int32 Flag);
+
+	UFUNCTION(Client, Reliable)
+	void PlayerDead();
 };

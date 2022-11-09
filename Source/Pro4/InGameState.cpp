@@ -94,6 +94,7 @@ void AInGameState::AddInGameSeconds() {
 			UE_LOG(Pro4, Warning, TEXT("The day has passed."));
 			AddInGameDay();
 			SetIsNight(false);
+			SetIsTimeToSpawnItem(true);
 
 			bool isServer = true;
 			
@@ -101,13 +102,17 @@ void AInGameState::AddInGameSeconds() {
 			{
 				if (isServer)
 				{
-					continue;
 					isServer = false;
+					continue;
 				}
 
 				AInGamePlayerState* Player = Cast<AInGamePlayerState>(_PlayerState);
 				APro4Character* PlayerCharacter = Cast<APro4Character>(Player->GetPawn());
-				PlayerCharacter->DetectZombieSpawner(false);
+				
+				if (PlayerCharacter->GetIsDead())
+					continue;
+				else
+					PlayerCharacter->DetectZombieSpawner(false);
 			}
 		}
 		else
@@ -121,12 +126,16 @@ void AInGameState::AddInGameSeconds() {
 			{
 				if (isServer)
 				{
-					continue;
 					isServer = false;
+					continue;
 				}
+
 				AInGamePlayerState* Player = Cast<AInGamePlayerState>(_PlayerState);
 				APro4Character* PlayerCharacter = Cast<APro4Character>(Player->GetPawn());
-				PlayerCharacter->DetectZombieSpawner(true);
+				if (PlayerCharacter->GetIsDead())
+					continue;
+				else 
+					PlayerCharacter->DetectZombieSpawner(true);
 			}
 
 			if (InGameDay == 2)
@@ -206,4 +215,5 @@ void AInGameState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLi
 	DOREPLIFETIME(AInGameState, InGameMin);
 	DOREPLIFETIME(AInGameState, InGameDay);
 	DOREPLIFETIME(AInGameState, isStateChanged);
+	DOREPLIFETIME(AInGameState, isHelicopterSpawn);
 }

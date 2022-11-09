@@ -38,38 +38,65 @@ void UZombie_BTService_SearchTarget::TickNode(UBehaviorTreeComponent& OwnerComp,
 	TArray<FOverlapResult> OverlapResults;
 	FCollisionQueryParams QueryParams(NAME_None, false, CurrentPawn);
 
-	bool bResult = World->OverlapMultiByChannel(
-		OverlapResults,
-		Center,
-		FQuat::Identity,
-		ECollisionChannel::ECC_GameTraceChannel1,
-		FCollisionShape::MakeSphere(SearchRadius),
-		QueryParams);
+	APro4ZombieAI* ZombieAI = Cast<APro4ZombieAI>(OwnerComp.GetAIOwner());
 
-	if (bResult)
+	if (ZombieAI->GetZombieTarget() != nullptr)
 	{
-		for (auto& OverlapResult : OverlapResults)
-		{
-			APro4Character* PlayerCharacter = Cast<APro4Character>(OverlapResult.GetActor());
-			if (PlayerCharacter && PlayerCharacter->GetController()->IsPlayerController())
-			{
-				OwnerComp.GetBlackboardComponent()->SetValueAsObject(FName(TEXT("Target")), PlayerCharacter);
-
-				DrawDebugSphere(World, Center, SearchRadius, 16, FColor::Green, false, 0.2f);
-
-				CurrentPawn->ZombieRun();
-				if (!CurrentPawn->ZombieDowning())
-				{
-					OwnerComp.GetBlackboardComponent()->SetValueAsBool(FName(TEXT("Sleep")), true);
-				}
-				return;
-			}
-		}
-		//
-		//DrawDebugSphere(World, Center, SearchRadius, 16, FColor::Red, false, 0.2f);
-		//CurrentPawn->ZombieRunf();
+		OwnerComp.GetBlackboardComponent()->SetValueAsObject(FName(TEXT("Target")), ZombieAI->GetZombieTarget());
+		ZombieAI->SetIsTracking(true);
 	}
-	OwnerComp.GetBlackboardComponent()->SetValueAsObject(FName(TEXT("Target")), nullptr);
-	DrawDebugSphere(World, Center, SearchRadius, 16, FColor::Red, false, 0.2f);
-	CurrentPawn->ZombieRunf();
+	else
+	{
+
+		DrawDebugSphere(World, Center, SearchRadius, 16, FColor::Red, false, 0.2f);
+
+		bool bResult = World->OverlapMultiByChannel(
+			OverlapResults,
+			Center,
+			FQuat::Identity,
+			ECollisionChannel::ECC_GameTraceChannel1,
+			FCollisionShape::MakeSphere(SearchRadius),
+			QueryParams);
+
+		if (bResult)
+		{
+			for (auto& OverlapResult : OverlapResults)
+			{
+				APro4Character* PlayerCharacter = Cast<APro4Character>(OverlapResult.GetActor());
+				if (PlayerCharacter && PlayerCharacter->GetController()->IsPlayerController())
+				{
+					ZombieAI->SetZombieTarget(PlayerCharacter);
+					ZombieAI->SetIsTracking(true);
+
+					OwnerComp.GetBlackboardComponent()->SetValueAsObject(FName(TEXT("Target")), PlayerCharacter);
+
+					DrawDebugSphere(World, Center, SearchRadius, 16, FColor::Green, false, 0.2f);
+
+					CurrentPawn->ZombieRun();
+					return;
+				}
+			}
+
+			//DrawDebugSphere(World, Center, SearchRadius, 16, FColor::Red, false, 0.2f);
+			//CurrentPawn->ZombieRunf();
+		}
+		else
+		{
+			ZombieAI->SetIsTracking(false);
+		}
+	}
+
+	if (!CurrentPawn->ZombieDowning())
+	{
+		OwnerComp.GetBlackboardComponent()->SetValueAsBool(FName(TEXT("Sleep")), true);
+	}
+
+	if (!ZombieAI->GetIsTracking())
+	{
+		CurrentPawn->ZombieRunf();
+	}
+	else {
+		CurrentPawn->ZombieRun();
+	}
+	
 }

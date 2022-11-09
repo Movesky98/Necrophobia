@@ -17,9 +17,13 @@ class PRO4_API APro4PlayerController : public APlayerController
 public:
 	APro4PlayerController();
 
-	
 	UFUNCTION(BlueprintImplementableEvent)
 	void SetServerToSpectator();
+
+	bool SetHelicopterSpawn();
+
+	UFUNCTION(Server, Reliable)
+	void AvaialbleHelicopterSpawnOnServer();
 
 protected:
 

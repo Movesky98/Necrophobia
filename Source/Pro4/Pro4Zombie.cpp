@@ -8,6 +8,7 @@
 #include "Pro4Character.h"
 
 #include "DrawDebugHelpers.h"
+#include "Net/UnrealNetwork.h"
 
 /*
 * 나중에 좀비 죽었을 때, 플레이어가 소환한 좀비의 수를 줄이도록 구현해야합니다.
@@ -111,7 +112,7 @@ void APro4Zombie::Tick(float DeltaTime)
 		CountWakeUp += DeltaTime;
 		if (CountWakeUp > 1.0f)
 		{
-			IsDown = false;
+			SetZombieStateOnServer("Down", false);
 		}
 	}
 }
@@ -127,48 +128,36 @@ void APro4Zombie::Attack()
 {
 	if (IsAttacking) return;
 	AttackNum = FMath::RandRange(1, 2);
-	ZombieAnim->PlayAttackMontage();
+	PlayMontageOnServer(ZombieAnim->GetAttackMontage(), AttackNum);
 
-	switch (AttackNum)
-	{
-	case 1:
-		ZombieAnim->Montage_JumpToSection(FName("1"), ZombieAnim->AttackMontage);
-		break;
-	case 2:
-		ZombieAnim->Montage_JumpToSection(FName("2"), ZombieAnim->AttackMontage);
-		break;
-	default:
-		break;
-	}
-
-	IsAttacking = true;
-	IsMontagePlay = true;
+	SetZombieStateOnServer("Attack", true);
+	SetZombieStateOnServer("MontagePlay", true);
 }
 
 void APro4Zombie::WakeUp()
 {
 	if (!IsDowning) return;
-	ZombieAnim->PlayWakeUpMontage();
-	IsMontagePlay = true;
+	PlayMontageOnServer(ZombieAnim->GetWakeUpMontage());
+	SetZombieStateOnServer("MontagePlay", true);
 }
 
 void APro4Zombie::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	IsAttacking = false;
-	IsMontagePlay = false;
+	SetZombieStateOnServer("Attack", false);
+	SetZombieStateOnServer("MontagePlay", false);
 	OnAttackEnd.Broadcast();
 }
 
 void APro4Zombie::OnWakeUpMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	IsMontagePlay = false;
-	IsDowning = false;
+	SetZombieStateOnServer("MontagePlay", false);
+	SetZombieStateOnServer("Downing", false);
 }
 
 void APro4Zombie::OnDeadMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	IsMontagePlay = false;
-	IsDeading = false;
+	SetZombieStateOnServer("MontagePlay", false);
+	SetZombieStateOnServer("Deading", false);
 }
 
 void APro4Zombie::ZombieEndOverlapToSpawner(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -201,7 +190,8 @@ void APro4Zombie::ZombieGetDamagedOnServer_Implementation(float _Damage)
 		if (IsDead) return;
 		if (IsMontagePlay)
 			ZombieAnim->Montage_Stop(0.0f);
-		ZombieAnim->PlayDeadMontage();
+
+		PlayMontageOnServer(ZombieAnim->GetDeadMontage());
 		IsDead = true;
 		IsMontagePlay = true;
 		IsDeading = true;
@@ -240,5 +230,78 @@ void APro4Zombie::DrawAttackField()
 			PlayerCharacter->GetDamaged(Damage);
 		}
 	}
+}
 
+void APro4Zombie::SetZombieTarget(APawn* TargetPlayer)
+{
+	APro4ZombieAI* ZombieAI = Cast<APro4ZombieAI>(GetController());
+	ZombieAI->SetZombieTarget(TargetPlayer);
+}
+
+void APro4Zombie::PlayMontageOnServer_Implementation(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0)
+{
+	PlayMontageOnClient(AnimationMontage, SectionNumber);
+}
+
+void APro4Zombie::PlayMontageOnClient_Implementation(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0)
+{
+	if (!ZombieAnim->Montage_IsPlaying(AnimationMontage))
+	{
+		ZombieAnim->Montage_Play(AnimationMontage, 1.0f);
+		if (SectionNumber)
+		{
+			FName Section(FString::FromInt(SectionNumber));
+			ZombieAnim->Montage_JumpToSection(Section, AnimationMontage);
+		}
+	}
+}
+
+void APro4Zombie::SetZombieStateOnServer_Implementation(const FString& State, bool bIsState)
+{
+	if (State == "Find")
+	{
+		IsFind = bIsState;
+	}
+	else if (State == "Attack")
+	{
+		IsAttacking = bIsState;
+	}
+	else if (State == "Downing")
+	{
+		IsDowning = bIsState;
+	}
+	else if (State == "Run")
+	{
+		IsRun= bIsState;
+	}
+	else if (State == "Down")
+	{
+		IsDown = bIsState;
+	}
+	else if (State == "MontagePlay")
+	{
+		IsMontagePlay = bIsState;
+	}
+	else if (State == "Dead")
+	{
+		IsDead = bIsState;
+	}
+	else if (State == "Deading")
+	{
+		IsDeading = bIsState;
+	}
+}
+
+void APro4Zombie::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(APro4Zombie, IsFind);
+	DOREPLIFETIME(APro4Zombie, IsAttacking);
+	DOREPLIFETIME(APro4Zombie, IsDowning);
+	DOREPLIFETIME(APro4Zombie, IsRun);
+	DOREPLIFETIME(APro4Zombie, IsDown);
+	DOREPLIFETIME(APro4Zombie, IsMontagePlay);
+	DOREPLIFETIME(APro4Zombie, IsDead);
+	DOREPLIFETIME(APro4Zombie, IsDeading);
 }

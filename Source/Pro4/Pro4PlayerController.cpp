@@ -74,3 +74,21 @@ void APro4PlayerController::UpdatePlayerTimeState()
 		}
 	}
 }
+
+bool APro4PlayerController::SetHelicopterSpawn()
+{
+	if (InGameState->GetIsHelicopterSpawn())
+	{
+		return false;
+	}
+	else
+	{
+		InGameState->SetIsHelicopterSpawn(true);
+		return true;
+	}
+}
+
+void APro4PlayerController::AvaialbleHelicopterSpawnOnServer_Implementation()
+{
+	InGameState->SetIsHelicopterSpawn(false);
+}

@@ -16,6 +16,7 @@
 #include "Sound/SoundCue.h"
 #include "DrawDebugHelpers.h"
 #include "Net/UnrealNetwork.h"
+#include "Kismet/KismetMathLibrary.h"
 
 // Sets default values
 APro4Character::APro4Character()
@@ -24,6 +25,7 @@ APro4Character::APro4Character()
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 	bNetLoadOnClient = true;
+	NetCullDistanceSquared = 9000000202358128640.0f;
  
 	/* 캐릭터 클래스를 구성하는 컴포넌트(카메라, 방어구, 무기..) */
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SPRINGARM"));
@@ -164,6 +166,7 @@ void APro4Character::MovementSetting()
 	IsHold = false;
 	IsZoom = false;
 	IsForward = true;
+	PlayerRun = false;
 	Moveflag = 0;
 	Updownflag=0;
 	LeftRightflag=0;
@@ -293,26 +296,12 @@ void APro4Character::Tick(float DeltaTime)
 	if (IsHold)
 	{
 		HoldTime += DeltaTime;
-		switch (HoldFlag)
+		if (HoldTime >= 0.3f)
 		{
-		case 1:
-			if (HoldTime >= 0.3f)
-			{
-				IsHold = false;
-				HoldTime = 0.0f;
-				HoldFlag = 0;
-				CanZoom = true;
-			}
-			break;
-		case 2:
-			if (HoldTime >= 1.2f)
-			{
-				IsHold = false;
-				HoldTime = 0.0f;
-				HoldFlag = 0;
-				CanZoom = true;
-			}
-			break;
+			IsHold = false;
+			HoldTime = 0.0f;
+			HoldFlag = 0;
+			CanZoom = true;
 		}
 	}
 
@@ -335,14 +324,9 @@ void APro4Character::Tick(float DeltaTime)
 		GetCharacterMovement()->bOrientRotationToMovement = false;
 		SpringArm->SetRelativeRotation(FRotator::ZeroRotator);
 	}
-
-	// 캐릭터 회전값을 애니메이션에 반영하기 위해 변수 저장
+	
+	
 	CharacterRotationPitch = GetControlRotation().Pitch;
-
-	if ((GetControlRotation().Yaw >= 325.0f && GetControlRotation().Yaw < 360.0) || (GetControlRotation().Yaw >= 0.0f && GetControlRotation().Yaw < 35.0))
-	{
-		CharacterRotationYaw = GetControlRotation().Yaw;
-	}
 	// Character Role Test.
 	// DrawDebugString(GetWorld(), FVector(0, 0, 150), GetEnumRole(GetLocalRole()), this, FColor::Green, DeltaTime);
 }
@@ -416,10 +400,9 @@ void APro4Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 	PlayerInputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Pressed, this, &APro4Character::Jump);
 	PlayerInputComponent->BindAction(TEXT("Crouch"), EInputEvent::IE_Pressed, this, &APro4Character::beCrouch);
-	PlayerInputComponent->BindAction(TEXT("Prone"), EInputEvent::IE_Pressed, this, &APro4Character::Prone);
-	PlayerInputComponent->BindAction(TEXT("Key1"), EInputEvent::IE_Pressed, this, &APro4Character::EquipMain1);
-	PlayerInputComponent->BindAction(TEXT("Key2"), EInputEvent::IE_Pressed, this, &APro4Character::EquipMain2);
-	PlayerInputComponent->BindAction(TEXT("Key3"), EInputEvent::IE_Pressed, this, &APro4Character::EquipSub);
+	PlayerInputComponent->BindAction(TEXT("Key1"), EInputEvent::IE_Pressed, this, &APro4Character::EquipMain);
+	PlayerInputComponent->BindAction(TEXT("Key2"), EInputEvent::IE_Pressed, this, &APro4Character::EquipSub);
+	PlayerInputComponent->BindAction(TEXT("Key3"), EInputEvent::IE_Pressed, this, &APro4Character::EquipKnife);
 	PlayerInputComponent->BindAction(TEXT("Key4"), EInputEvent::IE_Pressed, this, &APro4Character::EquipATW);
 	PlayerInputComponent->BindAction(TEXT("Run"), EInputEvent::IE_Pressed, this, &APro4Character::Run);
 	PlayerInputComponent->BindAction(TEXT("Reload"), EInputEvent::IE_Pressed, this, &APro4Character::Reload);
@@ -442,9 +425,12 @@ float APro4Character::UpdownSpeed()
 	switch (CurrentCharacterState)
 	{
 	case CharacterState::Standing:
-		if (IsRun)
+		if (Updownflag == 1)
 		{
-			if (Updownflag == 1)
+			if (PlayerRun)
+				SetPlayerStateOnServer("Run", true);
+
+			if (IsRun)
 			{
 				return 1.0f;
 			}
@@ -455,27 +441,12 @@ float APro4Character::UpdownSpeed()
 		}
 		else
 		{
-			if (Updownflag == 1)
-			{
-				return 0.5f;
-			}
-			else
-			{
-				return 0.3f;
-			}
+			if(IsRun)
+				SetPlayerStateOnServer("Run", false);
+			return 0.3f;
 		}
 		break;
 	case CharacterState::Crouching:
-		if (Updownflag == 1)
-		{
-			return 0.3f;
-		}
-		else
-		{
-			return 0.3f;
-		}
-		break;
-	case CharacterState::Proning:
 		if (Updownflag == 1)
 		{
 			return 0.3f;
@@ -496,7 +467,8 @@ float APro4Character::LeftRightSpeed()
 	switch (CurrentCharacterState)
 	{
 	case CharacterState::Standing:
-		if (IsRun)
+		SetPlayerStateOnServer("Run", false);
+		if (PlayerRun)
 		{
 			if (LeftRightflag == 1)
 			{
@@ -520,16 +492,6 @@ float APro4Character::LeftRightSpeed()
 		}
 		break;
 	case CharacterState::Crouching:
-		if (Updownflag == 1)
-		{
-			return 0.3f;
-		}
-		else
-		{
-			return 0.3f;
-		}
-		break;
-	case CharacterState::Proning:
 		if (Updownflag == 1)
 		{
 			return 0.3f;
@@ -554,12 +516,12 @@ void APro4Character::UpDown(float NewAxisValue)
 			IsForward = true;
 			if (NewAxisValue < 0)
 			{
-				Moveflag = 1;
+				SetPlayerFlagOnServer("MoveFlag", 1);
 				Updownflag = -1;
 			}
 			else
 			{
-				Moveflag = 0;
+				SetPlayerFlagOnServer("MoveFlag", 0);
 				Updownflag = 1;
 			}
 		}
@@ -584,12 +546,12 @@ void APro4Character::LeftRight(float NewAxisValue)
 			IsForward = false;
 			if (NewAxisValue < 0)
 			{
-				Moveflag = 1;
+				SetPlayerFlagOnServer("MoveFlag", 1);
 				LeftRightflag = 1;
 			}
 			else
 			{
-				Moveflag = 0;
+				SetPlayerFlagOnServer("MoveFlag", 0);
 				LeftRightflag = -1;
 			}
 		}
@@ -617,8 +579,11 @@ void APro4Character::Turn(float NewAxisValue)
 // 달리기
 void APro4Character::Run()
 {
-	if(CurrentCharacterState==CharacterState::Standing)
-	IsRun = !IsRun;
+	if (CurrentCharacterState == CharacterState::Standing)
+		SetPlayerStateOnServer("Run", !IsRun);
+
+	PlayerRun = !PlayerRun;
+
 	if (IsZoom)
 		Zoom();
 }
@@ -638,10 +603,7 @@ void APro4Character::Jump()
 			Super::UnCrouch();
 			CurrentCharacterState = CharacterState::Standing;
 			break;
-		case CharacterState::Proning:
-			HoldFlag = 2;
-			UE_LOG(Pro4, Log, TEXT("Stand."));
-			CurrentCharacterState = CharacterState::Standing;
+		default:
 			break;
 		}
 
@@ -673,44 +635,9 @@ void APro4Character::beCrouch()
 				HoldFlag = 1;
 				CurrentCharacterState = CharacterState::Standing;
 				break;
-			case CharacterState::Proning:
-				Super::Crouch();
-				HoldFlag = 1;
-				CurrentCharacterState = CharacterState::Crouching;
+			default:
 				break;
 			}
-		}
-
-		if (IsZoom)
-			Zoom();
-
-		CanZoom = false;
-	}
-}
-
-// 엎드리기
-void APro4Character::Prone()
-{
-	if (!IsHold)
-	{
-		IsHold = true;
-		switch (CurrentCharacterState)
-		{
-		case CharacterState::Standing:
-			UE_LOG(Pro4, Log, TEXT("Prone."));
-			HoldFlag = 2;
-			CurrentCharacterState = CharacterState::Proning;
-			break;
-		case CharacterState::Crouching:
-			Super::UnCrouch();
-			HoldFlag = 2;
-			CurrentCharacterState = CharacterState::Proning;
-			break;
-		case CharacterState::Proning:
-			UE_LOG(Pro4, Log, TEXT("Stand."));
-			HoldFlag = 2;
-			CurrentCharacterState = CharacterState::Standing;
-			break;
 		}
 
 		if (IsZoom)
@@ -728,7 +655,7 @@ void APro4Character::Prone()
 /// </summary>
 
 // 1번 무기
-void APro4Character::EquipMain1()
+void APro4Character::EquipMain()
 {
 	// 메인무기 보유시 장착 가능
 	if (MainWeapon.bHaveWeapon)
@@ -741,20 +668,21 @@ void APro4Character::EquipMain1()
 		}
 
 		// 무기 장착
-		if (CurrentWeaponMode == WeaponMode::Main1)
+		if (CurrentWeaponMode == WeaponMode::Main)
 		{
-			Equipflag = 0;
+			SetPlayerFlagOnServer("EquipFlag", 0);
 			CurrentWeaponMode = WeaponMode::Disarming;
 		}
 		else
 		{
 			if (IsZoom)
 				Zoom();
-			Equipflag = 1;
+
+			SetPlayerFlagOnServer("EquipFlag", 1);
 			PlayMontageOnServer(Pro4Anim->GetEquipMontage(), 1);
 			IsMontagePlay = true;
 			IsEquipping = true;
-			CurrentWeaponMode = WeaponMode::Main1;
+			CurrentWeaponMode = WeaponMode::Main;
 		}
 	}
 
@@ -762,7 +690,7 @@ void APro4Character::EquipMain1()
 }
 
 // 2번 무기
-void APro4Character::EquipMain2()
+void APro4Character::EquipSub()
 {
 	// 보조무기 보유시 장착 가능
 	if (SubWeapon.bHaveWeapon)
@@ -775,20 +703,21 @@ void APro4Character::EquipMain2()
 		}
 
 		// 무기 장착
-		if (CurrentWeaponMode == WeaponMode::Main2)
+		if (CurrentWeaponMode == WeaponMode::Sub)
 		{
-			Equipflag = 0;
+			SetPlayerFlagOnServer("EquipFlag", 0);
 			CurrentWeaponMode = WeaponMode::Disarming;
 		}
 		else
 		{
 			if (IsZoom)
 				Zoom();
-			Equipflag = 1;
+
+			SetPlayerFlagOnServer("EquipFlag", 1);
 			PlayMontageOnServer(Pro4Anim->GetEquipMontage(), 2);
 			IsMontagePlay = true;
 			IsEquipping = true;
-			CurrentWeaponMode = WeaponMode::Main2;
+			CurrentWeaponMode = WeaponMode::Sub;
 		}
 	}
 
@@ -796,7 +725,7 @@ void APro4Character::EquipMain2()
 }
 
 // 보조 무기
-void APro4Character::EquipSub()
+void APro4Character::EquipKnife()
 {
 	// 칼 보유중일시 장착 가능
 	if (Knife.bHaveWeapon)
@@ -809,20 +738,21 @@ void APro4Character::EquipSub()
 		}
 
 		// 무기 장착
-		if (CurrentWeaponMode == WeaponMode::Sub)
+		if (CurrentWeaponMode == WeaponMode::Knife)
 		{
-			Equipflag = 0;
+			SetPlayerFlagOnServer("EquipFlag", 0);
 			CurrentWeaponMode = WeaponMode::Disarming;
 		}
 		else
 		{
 			if (IsZoom)
 				Zoom();
-			Equipflag = 2;
+
+			SetPlayerFlagOnServer("EquipFlag", 2);
 			PlayMontageOnServer(Pro4Anim->GetEquipMontage(), 2);
 			IsMontagePlay = true;
 			IsEquipping = true;
-			CurrentWeaponMode = WeaponMode::Sub;
+			CurrentWeaponMode = WeaponMode::Knife;
 		}
 	}
 
@@ -854,11 +784,13 @@ void APro4Character::Reload()
 		return;
 	if (!IsMontagePlay)
 	{
+		if (IsZoom)
+			Zoom();
 		// 무기 유형마다 다른 애니메이션, 각각 변수 설정
 		switch (CurrentWeaponMode)
 		{
 		// 주무기 장전
-		case WeaponMode::Main1:
+		case WeaponMode::Main:
 			if (CurrentCharacterState == CharacterState::Standing)
 			{
 				PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 1);
@@ -866,10 +798,6 @@ void APro4Character::Reload()
 				IsReloading = true;
 			}
 			else if (CurrentCharacterState == CharacterState::Crouching)
-			{
-				UE_LOG(Pro4, Log, TEXT("Reload."));
-			}
-			else if (CurrentCharacterState == CharacterState::Proning)
 			{
 				UE_LOG(Pro4, Log, TEXT("Reload."));
 			}
@@ -887,21 +815,18 @@ void APro4Character::Reload()
 			}
 			break;
 		// 보조무기 장전
-		case WeaponMode::Main2:
+		case WeaponMode::Sub:
 			if (CurrentCharacterState == CharacterState::Standing)
 			{
-				PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 1);
+				PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 2);
 				IsMontagePlay = true;
 				IsReloading = true;
 			}
-			else if (CurrentCharacterState == CharacterState::Crouching)
+			else
 			{
 				UE_LOG(Pro4, Log, TEXT("Reload."));
 			}
-			else if (CurrentCharacterState == CharacterState::Proning)
-			{
-				UE_LOG(Pro4, Log, TEXT("Reload."));
-			}
+
 
 			// 현재 가지고 있는 탄약 수 = 현재 가지고 있는 탄약 수 - (주무기의 탄창에 들어갈 수 있는 탄약 수 - 현재 탄창에 들어가있는 탄약 수)
 			if (SubWeapon.TotalRound <= SubWeapon.Magazine)
@@ -915,32 +840,9 @@ void APro4Character::Reload()
 				SubWeapon.CurrentRound = SubWeapon.Magazine;
 			}
 			break;
-		case WeaponMode::Sub:
-			if (CurrentCharacterState == CharacterState::Standing)
-			{
-				PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 2);
-				IsMontagePlay = true;
-				IsReloading = true;
-			}
-			else if (CurrentCharacterState == CharacterState::Crouching)
-			{
-				UE_LOG(Pro4, Log, TEXT("Reload."));
-			}
-			else if (CurrentCharacterState == CharacterState::Proning)
-			{
-				UE_LOG(Pro4, Log, TEXT("Reload."));
-			}
-			break;
-		case WeaponMode::ATW:
-			UE_LOG(Pro4, Log, TEXT("Reload."));
-			break;
-		case WeaponMode::Disarming:
-			UE_LOG(Pro4, Log, TEXT("Reload."));
+		default:
 			break;
 		}
-
-		if (IsZoom)
-			Zoom();
 	}
 }
 /// <summary>
@@ -958,14 +860,14 @@ void APro4Character::Attack()
 		switch (CurrentWeaponMode)
 		{
 		// 총은 Fire
-		case WeaponMode::Main1:
+		case WeaponMode::Main:
 			Fire();
 			break;
-		case WeaponMode::Main2:
+		case WeaponMode::Sub:
 			Fire();
 			break;
 		// 칼은 Swing
-		case WeaponMode::Sub:
+		case WeaponMode::Knife:
 			break;
 		// 투척무기는 Throw
 		case WeaponMode::ATW:
@@ -985,12 +887,12 @@ void APro4Character::Zoom()
 	if (Weapon != nullptr && CanZoom == true && !IsEquipping && !IsReloading)
 	{
 		// 장착 무기가 총기류일때 줌 가능
-		if (CurrentWeaponMode == WeaponMode::Main1 || CurrentWeaponMode == WeaponMode::Main2 || CurrentWeaponMode == WeaponMode::Sub)
+		if (CurrentWeaponMode == WeaponMode::Main || CurrentWeaponMode == WeaponMode::Sub)
 		{
 			// 줌 인 가능한 상태일시 카메라 위치 설정과 스코프 종류에 따라 확대
 			if (IsZoom)
 			{
-				IsZoom = false;
+				SetPlayerStateOnServer("Zoom", false);
 				SpringArm->AttachToComponent(GetCapsuleComponent(), FAttachmentTransformRules::SnapToTargetIncludingScale);
 				SpringArm->TargetArmLength = 450.0f;
 				SpringArm->SocketOffset = FVector(0.0f, 100.0f, 50.0f);
@@ -998,7 +900,7 @@ void APro4Character::Zoom()
 			}
 			else
 			{
-				IsZoom = true;
+				SetPlayerStateOnServer("Zoom", true);
 				SpringArm->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetIncludingScale, "b_gun_scopeCamera");
 				SpringArm->TargetArmLength = 0.0f;
 				SpringArm->SocketOffset = FVector(0.0f, 0.0f, 0.0f);
@@ -1009,7 +911,7 @@ void APro4Character::Zoom()
 				}
 				// 달리기 상태였을시 해제
 				if (IsRun)
-					IsRun = false;
+					SetPlayerStateOnServer("Run", false);
 			}
 
 			// 장착무기가 SR일시 스코프 UI로 변경
@@ -1025,7 +927,7 @@ void APro4Character::Zoom()
 // 총기 조종간
 void APro4Character::Fire_Mod()
 {
-	if (CurrentWeaponMode == WeaponMode::Main1 || CurrentWeaponMode == WeaponMode::Main2)
+	if ((CurrentWeaponMode == WeaponMode::Main && MainWeapon.Name == "AR") || CurrentWeaponMode == WeaponMode::Sub)
 		FireMod = !FireMod;
 }
 
@@ -1065,7 +967,7 @@ void APro4Character::Fire()
 
 		}
 
-		if (CurrentWeaponMode == WeaponMode::Main1) // 주무기일 때의 총알 발사 (탄창 상태 반영 안함)
+		if (CurrentWeaponMode == WeaponMode::Main) // 주무기일 때의 총알 발사 (탄창 상태 반영 안함)
 		{
 			if (MainWeapon.CurrentRound <= 0)
 			{
@@ -1083,7 +985,7 @@ void APro4Character::Fire()
 
 			MainWeapon.CurrentRound--;
 		}
-		else if (CurrentWeaponMode == WeaponMode::Main2) // 보조무기일 때의 총알 발사
+		else if (CurrentWeaponMode == WeaponMode::Sub) // 보조무기일 때의 총알 발사
 		{
 			if (SubWeapon.CurrentRound <= 0)
 			{
@@ -1317,7 +1219,6 @@ void APro4Character::NotifyActorEndOverlap(AActor* Act)
 		UnEncroached();
 	}
 }
-
 
 #pragma region PlayerUI_Inventory_Section
 
@@ -1707,9 +1608,20 @@ void APro4Character::RecoverPlayerHealthOnServer_Implementation()
 	}
 }
 
+/* 체력이 회복되었음을 서버에 알리기 전에, 체크하는 함수 */
 bool APro4Character::RecoverPlayerHealthOnServer_Validate()
 {
 	return true;
+}
+
+/* UFUNCTION(Client)로 실행, 해당 캐릭터를 조종하고 있는 클라이언트에게 죽었다는 메세지를 날려주는 함수 */
+void APro4Character::PlayerDead_Implementation()
+{
+	NecGameInstance->PlayerMenu->ActiveGameOverUI();
+	
+	IsDead = true;
+	
+	Server_DestroyItem(this);
 }
 
 // 플레이어 체력이 닳았을 때
@@ -1721,7 +1633,9 @@ void APro4Character::PlayerHealthGetDamagedOnServer_Implementation(float Damage)
 	if (CurrentHP < 0)
 	{
 		CurrentHP = 0;
-		UE_LOG(Pro4, Warning, TEXT("Player is dead."));
+
+		// Player Dead
+		PlayerDead();
 	}
 
 	/* 플레이어가 공격받지 않는 상황에서 맞았을 경우 */
@@ -1799,6 +1713,7 @@ void APro4Character::ZombieSpawnerEndOverlap(UPrimitiveComponent* OverlappedComp
 
 void APro4Character::DetectZombieSpawner(bool isNight)
 {
+	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Detect Zombie Spawner"));
 	DetectZSpawnerCol->SetGenerateOverlapEvents(isNight);
 }
 
@@ -1816,19 +1731,19 @@ void APro4Character::EquipPlayerWeaponOnClient_Implementation(const WeaponMode& 
 {
 	switch (_CurWeaponMode)
 	{
-	case WeaponMode::Main1:
+	case WeaponMode::Main:
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("MainWeapon"));
 		Weapon->SetSkeletalMesh(MainWeapon.Weapon);
 		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
 		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(1);
 		break;
-	case WeaponMode::Main2:
+	case WeaponMode::Sub:
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("SubWeapon"));
 		Weapon->SetSkeletalMesh(SubWeapon.Weapon);
 		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
 		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(2);
 		break;
-	case WeaponMode::Sub:
+	case WeaponMode::Knife:
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("Knife"));
 		Weapon->SetSkeletalMesh(Knife.Weapon);
 		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
@@ -1879,6 +1794,15 @@ void APro4Character::CallHelicopterToEscapeOnServer_Implementation()
 		return;
 	}
 
+	APro4PlayerController* NecrophobiaPlayerController = Cast<APro4PlayerController>(GetController());
+
+	if (!NecrophobiaPlayerController->SetHelicopterSpawn())
+	{
+		// 헬리콥터를 부를 수 없을 때 실행되는 함수
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Can't spawn helicopter."));
+		return;
+	}
+
 	DrawDebugSolidBox(GetWorld(), GetActorLocation(), FVector(20.0f), FColor::Blue, true);
 
 	FActorSpawnParameters SpawnParams;
@@ -1909,6 +1833,11 @@ void APro4Character::CallHelicopterToEscapeOnServer_Implementation()
 void APro4Character::PlayerEscape()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Purple, TEXT("Player Escape"));
+
+	APro4PlayerController* NecrophobiaPlayerController = Cast<APro4PlayerController>(GetController());
+
+	NecrophobiaPlayerController->AvaialbleHelicopterSpawnOnServer();
+
 }
 #pragma endregion
 
@@ -1983,25 +1912,29 @@ void APro4Character::PlayMontageOnClient_Implementation(UAnimMontage* AnimationM
 	}
 }
 
-//void APro4Character::SetPlayerState_Implementation(FString State)
-//{
-//	if (State == "Run")
-//	{
-//
-//	}
-//	else if (State == "Zoom")
-//	{
-//
-//	}
-//	else if (State == "EquipFlag")
-//	{
-//
-//	}
-//	else if (State == "MoveFlag")
-//	{
-//
-//	}
-//}
+void APro4Character::SetPlayerStateOnServer_Implementation(const FString& State, bool bIsState)
+{
+	if (State == "Run")
+	{
+		IsRun = bIsState;
+	}
+	else if (State == "Zoom")
+	{
+		IsZoom = bIsState;
+	}
+}
+
+void APro4Character::SetPlayerFlagOnServer_Implementation(const FString& State, int32 Flag)
+{
+	if (State == "EquipFlag")
+	{
+		Equipflag = Flag;
+	}
+	else if (State == "MoveFlag")
+	{
+		Moveflag = Flag;
+	}
+}
 
 void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -2014,4 +1947,5 @@ void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(APro4Character, IsZoom);
 	DOREPLIFETIME(APro4Character, Equipflag);
 	DOREPLIFETIME(APro4Character, Moveflag);
+	DOREPLIFETIME(APro4Character, IsDead);
 }

@@ -13,7 +13,6 @@ UPro4AnimInstance::UPro4AnimInstance()
 	CurrentPawnSpeed = 0.0f;
 	IsInAir = false;
 	IsCrouch = false;
-	IsProne = false;
 	IsRun = false;
 	Equipflag = 0;
 
@@ -55,13 +54,11 @@ void UPro4AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		{
 			IsInAir = Character->GetMovementComponent()->IsFalling();
 			IsCrouch = Character->GetMovementComponent()->IsCrouching();
-			IsProne = Character->IsProning();
 			IsRun = Character->IsRunning();
 			IsZoom = Character->IsZooming();
 			Equipflag = Character->IsEquip();
 			Moveflag = Character->MoveMode();
 			CharacterRotationPitch = Character->CharacterPitch();
-			CharacterRotationYaw = Character->CharacterYaw();
 		}
 	}
 }

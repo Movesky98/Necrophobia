@@ -22,8 +22,15 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	float FieldSize;
+
+	UFUNCTION(Server, Reliable)
+	void GrowEncroachField();
+
 	void NotifyActorBeginOverlap(AActor* Act) override;
 	void NotifyActorEndOverlap(AActor* Act) override;
+
+	FTimerHandle EncroachFieldTimer;
 
 	UPROPERTY(VisibleDefaultsOnly, Category = Pivot)
 	USphereComponent* EncroachPivotComponent;

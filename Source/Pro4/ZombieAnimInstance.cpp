@@ -55,26 +55,17 @@ void UZombieAnimInstance::AnimNotify_AttackHitCheck()
 	}
 }
 
-void UZombieAnimInstance::PlayAttackMontage()
+UAnimMontage* UZombieAnimInstance::GetAttackMontage()
 {
-	if (!Montage_IsPlaying(AttackMontage))
-	{
-		Montage_Play(AttackMontage, 1.0f);
-	}
+	return AttackMontage;
 }
 
-void UZombieAnimInstance::PlayWakeUpMontage()
+UAnimMontage* UZombieAnimInstance::GetWakeUpMontage()
 {
-	if (!Montage_IsPlaying(WakeUpMontage))
-	{
-		Montage_Play(WakeUpMontage, 1.0f);
-	}
+	return WakeUpMontage;
 }
 
-void UZombieAnimInstance::PlayDeadMontage()
+UAnimMontage* UZombieAnimInstance::GetDeadMontage()
 {
-	if (!Montage_IsPlaying(DeadMontage))
-	{
-		Montage_Play(DeadMontage, 1.0f);
-	}
+	return DeadMontage;
 }

@@ -59,6 +59,26 @@ public:
 		isTimeToSpawnBoss = TimetoSpawnBoss;
 	}
 
+	bool GetIsTimeToSpawnItem()
+	{
+		return bIsTimeToSpawnItem;
+	}
+
+	void SetIsTimeToSpawnItem(bool TimeToSpawnItem)
+	{
+		bIsTimeToSpawnItem = TimeToSpawnItem;
+	}
+
+	bool GetIsHelicopterSpawn()
+	{
+		return isHelicopterSpawn;
+	}
+
+	void SetIsHelicopterSpawn(bool HelicopterSpawn)
+	{
+		isHelicopterSpawn = HelicopterSpawn;
+	}
+
 	void SpawnPlayerToStartLocation(TArray<FVector> SpawnArray);
 
 private:
@@ -76,4 +96,9 @@ private:
 	bool isBossSpawn = false;
 	UPROPERTY(Replicated)
 	bool isTimeToSpawnBoss = false;
+
+	UPROPERTY(Replicated)
+	bool isHelicopterSpawn = false;
+
+	bool bIsTimeToSpawnItem = false;
 };
