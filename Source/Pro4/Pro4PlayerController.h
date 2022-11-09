@@ -42,9 +42,6 @@ private:
 
 	bool bIsServer = false;
 
-	// 빙의할 캐릭터 클래스와 사용할 변수, 상태를 저장하고 가져올 클래스 변수들
-	class APro4Character* PlayerCharacter;
-
 	class AInGameState* InGameState;
 	class UPlayerMenu* PlayerMenu;
 };

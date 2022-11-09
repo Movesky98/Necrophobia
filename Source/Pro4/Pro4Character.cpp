@@ -1943,6 +1943,8 @@ void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(APro4Character, CurrentHP);
 	DOREPLIFETIME(APro4Character, MaxHP);
 	DOREPLIFETIME(APro4Character, CurrentAP);
+	DOREPLIFETIME(APro4Character, bIsPlayerGetAttacked);
+	DOREPLIFETIME(APro4Character, bIsRecoveryTimerStarted);
 	DOREPLIFETIME(APro4Character, IsRun);
 	DOREPLIFETIME(APro4Character, IsZoom);
 	DOREPLIFETIME(APro4Character, Equipflag);
