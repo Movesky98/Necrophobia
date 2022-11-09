@@ -39,8 +39,8 @@ public:
 	void ChangePlayerWidget();
 	void PlayerZoomWidget();
 
-	void ActiveGameOverUI();
-
+	void ActiveGameOverUI(uint16 PlayerKill, uint16 ZombieKill, uint16 PlayerRanking, uint16 TotalPlayer);
+	void SetRankingUI(uint16 PlayerRanking, uint16 TotalPlayer);
 
 	/* 플레이어가 아이템을 획득했을 때, 정보를 저장하는 함수 */
 	void AddItemToGrenade(const FString& GrenadeName, uint16 Num);

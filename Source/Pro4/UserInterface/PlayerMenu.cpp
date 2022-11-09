@@ -166,13 +166,21 @@ void UPlayerMenu::PlayerZoomWidget()
 }
 
 /* 게임 오버 UI를 활성화 하는 함수 */
-void UPlayerMenu::ActiveGameOverUI()
+void UPlayerMenu::ActiveGameOverUI(uint16 PlayerKill, uint16 ZombieKill, uint16 PlayerRanking, uint16 TotalPlayer)
 {
 	UWorld* World = GetWorld();
 	if (!ensure(World != nullptr)) return;
 
 	APlayerController* PlayerController = World->GetFirstPlayerController();
 	if (!ensure(PlayerController != nullptr)) return;
+
+	FString PlayerKillNum = FString::FromInt(PlayerKill);
+	FString ZombieKillNum = FString::FromInt(ZombieKill);
+	
+	KillPlayerText->SetText(FText::FromString(PlayerKillNum));
+	KillZombieText->SetText(FText::FromString(ZombieKillNum));
+
+	SetRankingUI(PlayerRanking, TotalPlayer);
 
 	UISwitcher->SetActiveWidgetIndex(3);
 
@@ -182,6 +190,89 @@ void UPlayerMenu::ActiveGameOverUI()
 	PlayerController->SetInputMode(InputModeData);
 	PlayerController->SetShowMouseCursor(true);
 }
+
+void UPlayerMenu::SetRankingUI(uint16 PlayerRanking, uint16 TotalPlayer)
+{
+	FString CurrentRankingPath;
+	FString TotalRankingPath;
+
+	// 이미지 랭킹에 따른 이미지 경로 연결
+	switch (PlayerRanking)
+	{
+	case 1:
+		CurrentRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_1";
+		break;
+	case 2:
+		CurrentRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_2";
+		break;
+	case 3:
+		CurrentRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_3";
+		break;
+	case 4:
+		CurrentRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_4";
+		break;
+	case 5:
+		CurrentRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_5";
+		break;
+	case 6:
+		CurrentRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_6";
+		break;
+	case 7:
+		CurrentRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_7";
+		break;
+	case 8:
+		CurrentRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_8";
+		break;
+	case 9:
+		CurrentRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_9";
+		break;
+	default:
+		CurrentRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_0";
+		break;
+	}
+
+	// 이미지 랭킹에 따른 이미지 경로 연결
+	switch (TotalPlayer)
+	{
+	case 1:
+		TotalRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_1";
+		break;
+	case 2:
+		TotalRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_2";
+		break;
+	case 3:
+		TotalRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_3";
+		break;
+	case 4:
+		TotalRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_4";
+		break;
+	case 5:
+		TotalRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_5";
+		break;
+	case 6:
+		TotalRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_6";
+		break;
+	case 7:
+		TotalRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_7";
+		break;
+	case 8:
+		TotalRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_8";
+		break;
+	case 9:
+		TotalRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_9";
+		break;
+	default:
+		TotalRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_0";
+		break;
+	}
+
+	UTexture2D* CurrentRankingImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *CurrentRankingPath), NULL, LOAD_None, NULL);
+	UTexture2D* TotalRankingImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *TotalRankingPath), NULL, LOAD_None, NULL);
+
+	CurrentRanking->SetBrushFromTexture(CurrentRankingImage);
+	MaxRanking->SetBrushFromTexture(TotalRankingImage);
+}
+
 
 /* 플레이어가 Item을 획득했을 때, 실행되는 함수 */
 void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
@@ -250,18 +341,8 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		if (!ensure(Armor != nullptr)) return;
 
 		MyPawn->SetPlayerArmor(Armor);
-		/*if (Armor->GetItemName() == "Helmet")
-		{
-			ActiveArmorImage(true);
-		}
-		else
-		{
-
-		}*/
 
 		(Armor->GetItemName() == "Helmet") ? ActiveArmorImage(true) : ActiveArmorImage(false);
-		
-
 	}
 		break;
 	case AABaseItem::BaseItemType::Grenade:

@@ -2,6 +2,7 @@
 
 #include "AGrenade.h"
 #include "../Pro4Character.h"
+#include "../Pro4Zombie.h"
 
 #include "TimerManager.h"
 #include "Components/WidgetComponent.h"
@@ -195,8 +196,17 @@ void AAGrenade::SetGrenadeExplosion()
 				DrawDebugSolidBox(GetWorld(), Hit.GetActor()->GetActorLocation(), FVector(50.0f), FColor::Red, true, -1);
 				APro4Character* PlayerCharacter = Cast<APro4Character>(Hit.GetActor());
 
-				PlayerCharacter->GetDamaged(40.0f);
+				PlayerCharacter->GetDamaged(40.0f, GetOwner());
 			}
+			else if (Hit.GetActor()->ActorHasTag("Zombie"))
+			{
+				DrawDebugSolidBox(GetWorld(), Hit.GetActor()->GetActorLocation(), FVector(50.0f), FColor::Red, true, -1);
+				APro4Zombie* Zombie = Cast<APro4Zombie>(Hit.GetActor());
+
+				Zombie->ZombieGetDamaged(40.0f, GetOwner());
+			}
+
+
 
 			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Orange, Hit.GetActor()->GetName());
 		}

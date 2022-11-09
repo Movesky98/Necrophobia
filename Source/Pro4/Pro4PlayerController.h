@@ -22,6 +22,12 @@ public:
 
 	bool SetHelicopterSpawn();
 
+	uint16 SetPlayerRankning(); 
+	uint16 GetTotalRanking();
+	
+	UFUNCTION(Server, Reliable)
+	void DiscountSurvivePlayer();
+
 	UFUNCTION(Server, Reliable)
 	void AvaialbleHelicopterSpawnOnServer();
 
