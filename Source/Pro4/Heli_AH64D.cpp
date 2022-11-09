@@ -35,6 +35,12 @@ AHeli_AH64D::AHeli_AH64D()
 	EscapeCollision->SetIsReplicated(true);
 	EscapeCollision->SetCollisionProfileName(TEXT("Escape"));
 
+	static ConstructorHelpers::FObjectFinder<USoundCue>HeliSound(TEXT("SoundCue'/Game/StarterContent/Audio/HeliSound.HeliSound'"));
+	Helis = HeliSound.Object;
+	Heli = CreateDefaultSubobject<UAudioComponent>(TEXT("Heli"));
+	Heli->bAutoActivate = false;
+	Heli->SetupAttachment(SkeletalMesh);
+
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_Heli(TEXT("/Game/VigilanteContent/Vehicles/West_Heli_AH64D/SK_West_Heli_AH64D"));
 	if (SK_Heli.Succeeded())
 	{

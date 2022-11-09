@@ -56,6 +56,9 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	class UAudioComponent* Heli;
+	class USoundCue* Helis;
+
 private:
 	void ActiveEscapeCollision();
 	UFUNCTION()

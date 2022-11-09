@@ -1039,6 +1039,10 @@ void APro4Character::StartFire()
 // 마우스에서 때면 실행
 void APro4Character::StopFire()
 {
+	if (FireMod)
+	{
+		FireA->Stop();
+	}
 	IsFire = false;
 }
 
@@ -1049,7 +1053,6 @@ void APro4Character::Fire()
 	{
 		FVector MuzzleLocation;
 		FRotator MuzzleRotation;
-
 		// 무기 장착중일 때 총알 스폰 지점 설정
 		if (Weapon != nullptr)
 		{
