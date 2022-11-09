@@ -59,7 +59,6 @@ void UPro4AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			Equipflag = Character->IsEquip();
 			Moveflag = Character->MoveMode();
 			CharacterRotationPitch = Character->CharacterPitch();
-			CharacterRotationYaw = Character->CharacterYaw();
 		}
 	}
 }

@@ -151,8 +151,14 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Player")
 	UStaticMeshComponent* Grenade;
 
-	UPROPERTY(VisibleAnywhere, Category = "Player")
-	float CharacterRotationYaw;
+	UPROPERTY(VisibleAnywhere, Category = "View")
+		FVector TargetLocation;
+
+	UPROPERTY(VisibleAnywhere, Category = "View")
+		FVector CharacLocation;
+
+	UPROPERTY(VisibleAnywhere, Category = "View")
+		FVector CheckView;
 	/* 무기, 방어구 */
 
 	
@@ -209,11 +215,6 @@ public:
 	float CharacterPitch()
 	{
 		return CharacterRotationPitch;
-	}
-
-	float CharacterYaw()
-	{
-		return CharacterRotationYaw;
 	}
 	/* 캐릭터와 카메라 회전값을 애니메이션에 반영하기 위한 함수*/
 
@@ -434,7 +435,6 @@ private:
 
 	// 캐릭터 애니메이션 컨트롤에 사용할 회전값 저장 변수
 	float CharacterRotationPitch;
-	//float CharacterRotationYaw;
 
 	// 연사속도 조절 변수
 	FTimerHandle FireDelay;
