@@ -108,7 +108,11 @@ void AInGameState::AddInGameSeconds() {
 
 				AInGamePlayerState* Player = Cast<AInGamePlayerState>(_PlayerState);
 				APro4Character* PlayerCharacter = Cast<APro4Character>(Player->GetPawn());
-				PlayerCharacter->DetectZombieSpawner(false);
+				
+				if (PlayerCharacter->GetIsDead())
+					continue;
+				else
+					PlayerCharacter->DetectZombieSpawner(false);
 			}
 		}
 		else
@@ -128,7 +132,10 @@ void AInGameState::AddInGameSeconds() {
 
 				AInGamePlayerState* Player = Cast<AInGamePlayerState>(_PlayerState);
 				APro4Character* PlayerCharacter = Cast<APro4Character>(Player->GetPawn());
-				PlayerCharacter->DetectZombieSpawner(true);
+				if (PlayerCharacter->GetIsDead())
+					continue;
+				else 
+					PlayerCharacter->DetectZombieSpawner(true);
 			}
 
 			if (InGameDay == 2)

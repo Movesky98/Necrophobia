@@ -1626,9 +1626,20 @@ void APro4Character::RecoverPlayerHealthOnServer_Implementation()
 	}
 }
 
+/* 체력이 회복되었음을 서버에 알리기 전에, 체크하는 함수 */
 bool APro4Character::RecoverPlayerHealthOnServer_Validate()
 {
 	return true;
+}
+
+/* UFUNCTION(Client)로 실행, 해당 캐릭터를 조종하고 있는 클라이언트에게 죽었다는 메세지를 날려주는 함수 */
+void APro4Character::PlayerDead_Implementation()
+{
+	NecGameInstance->PlayerMenu->ActiveGameOverUI();
+	
+	IsDead = true;
+	
+	Server_DestroyItem(this);
 }
 
 // 플레이어 체력이 닳았을 때
@@ -1640,7 +1651,9 @@ void APro4Character::PlayerHealthGetDamagedOnServer_Implementation(float Damage)
 	if (CurrentHP < 0)
 	{
 		CurrentHP = 0;
-		UE_LOG(Pro4, Warning, TEXT("Player is dead."));
+
+		// Player Dead
+		PlayerDead();
 	}
 
 	/* 플레이어가 공격받지 않는 상황에서 맞았을 경우 */
@@ -1952,4 +1965,5 @@ void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(APro4Character, IsZoom);
 	DOREPLIFETIME(APro4Character, Equipflag);
 	DOREPLIFETIME(APro4Character, Moveflag);
+	DOREPLIFETIME(APro4Character, IsDead);
 }

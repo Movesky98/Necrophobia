@@ -166,6 +166,15 @@ public:
 	void SetIsPossibleEscapeOnServer(bool Escape);
 
 	/* 다른 클래스에서 캐릭터 상태 확인과 수정을 위한 함수들 */
+
+	bool GetIsDead()
+	{
+		if (IsDead)
+			return true;
+		else
+			return false;
+	}
+
 	bool IsRunning()
 	{
 		if (IsRun)
@@ -397,6 +406,8 @@ private:
 	bool FireMod;
 	UPROPERTY(Replicated)
 	bool IsZoom;
+	UPROPERTY(Replicated)
+	bool IsDead;
 	bool bHit;
 	bool IsForward;
 	bool IsFire;
@@ -545,4 +556,7 @@ private:
 	
 	UFUNCTION(Server, Reliable)
 	void SetPlayerFlagOnServer(const FString& State, int32 Flag);
+
+	UFUNCTION(Client, Reliable)
+	void PlayerDead();
 };

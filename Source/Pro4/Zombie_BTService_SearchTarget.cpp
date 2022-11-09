@@ -47,6 +47,7 @@ void UZombie_BTService_SearchTarget::TickNode(UBehaviorTreeComponent& OwnerComp,
 	}
 	else
 	{
+
 		DrawDebugSphere(World, Center, SearchRadius, 16, FColor::Red, false, 0.2f);
 
 		bool bResult = World->OverlapMultiByChannel(
@@ -78,6 +79,10 @@ void UZombie_BTService_SearchTarget::TickNode(UBehaviorTreeComponent& OwnerComp,
 
 			//DrawDebugSphere(World, Center, SearchRadius, 16, FColor::Red, false, 0.2f);
 			//CurrentPawn->ZombieRunf();
+		}
+		else
+		{
+			ZombieAI->SetIsTracking(false);
 		}
 	}
 
