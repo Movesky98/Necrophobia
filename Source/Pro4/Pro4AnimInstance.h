@@ -61,8 +61,5 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 		float CharacterRotationPitch;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
-		float CharacterRotationYaw;
-
 	FName GetEquipMontageSectionName(int32 Section);
 };

@@ -326,7 +326,7 @@ void APro4Character::Tick(float DeltaTime)
 	}
 	
 	
-	ViewPoint();
+	CharacterRotationPitch = GetControlRotation().Pitch;
 	// Character Role Test.
 	// DrawDebugString(GetWorld(), FVector(0, 0, 150), GetEnumRole(GetLocalRole()), this, FColor::Green, DeltaTime);
 }
@@ -418,27 +418,6 @@ void APro4Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 /// <summary>
 ////////////////////////////////////////////////////// 캐릭터 움직임 코드 ////////////////////////////////////////////////////////////
 /// </summary>
-
-void APro4Character::ViewPoint()
-{
-	FHitResult HitResult;
-	UWorld* World = GetWorld();
-	FVector Start = Camera->GetComponentLocation();
-	FVector End= Camera->GetComponentLocation() + (Camera->GetComponentRotation().Vector()*10000);
-	FCollisionQueryParams TraceParams;
-
-	bHit = World->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, TraceParams);
-	if (bHit)
-	{
-		FVector TargetLocation = HitResult.ImpactPoint;
-		FRotator LookAtRotator = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), TargetLocation);
-		FRotator NewRotator = FRotator(GetActorRotation().Pitch, (LookAtRotator.Yaw - 90.0f), GetActorRotation().Roll);
-
-		GetMesh()->SetWorldRotation(NewRotator);
-	}
-	//CharacterRotationPitch = GetControlRotation().Pitch;
-	//CharacterRotationYaw = GetControlRotation().Yaw;
-}
 
 // 앞 뒤 이동시 속도 조정
 float APro4Character::UpdownSpeed()
