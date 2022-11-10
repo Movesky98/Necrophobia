@@ -764,18 +764,24 @@ void APro4Character::EquipKnife()
 // 투척 무기
 void APro4Character::EquipATW()
 {
-	if (CurrentWeaponMode == WeaponMode::ATW)
+	EquipGrenade();
+
+	UStaticMesh* EquipGrenadeMesh = nullptr;
+
+	if (PlayerGrenade.EquipGrenade == "Grenade")
 	{
-		UE_LOG(Pro4, Log, TEXT("Disarming."));
-		CurrentWeaponMode = WeaponMode::Disarming;
+		EquipGrenadeMesh =  PlayerGrenade.SM_Grenade;
 	}
-	else
+	else if (PlayerGrenade.EquipGrenade == "Smoke")
 	{
-		UE_LOG(Pro4, Log, TEXT("ATW."));
-		CurrentWeaponMode = WeaponMode::ATW;
+		EquipGrenadeMesh = PlayerGrenade.SM_Smoke;
+	}
+	else if (PlayerGrenade.EquipGrenade == "Flash")
+	{
+		EquipGrenadeMesh = PlayerGrenade.SM_Flash;
 	}
 
-	EquipPlayerWeaponOnServer(CurrentWeaponMode, PlayerGrenade.SM_Grenade);
+	EquipPlayerWeaponOnServer(CurrentWeaponMode, EquipGrenadeMesh);
 }
 
 // 장전
@@ -1116,8 +1122,7 @@ void APro4Character::SpawnGrenadeOnServer_Implementation(FVector Location, FRota
 
 		if (SpawnGrenade)
 		{
-			FString GrenadeName = "Grenade";
-			SpawnGrenade->NetMulticast_SetUp(Grenade->GetStaticMesh(), GrenadeName, 1);
+			SpawnGrenade->ThrowGrenade(PlayerGrenade.EquipGrenade, Grenade->GetStaticMesh());
 			SpawnGrenade->SetSimulatePhysics(LaunchDirection);
 		}
 	}
@@ -1761,6 +1766,66 @@ void APro4Character::DetectZombieSpawner(bool isNight)
 #pragma endregion
 
 #pragma region EquipPlayerWeapon
+void APro4Character::EquipGrenade()
+{
+	CurrentWeaponMode = WeaponMode::ATW;
+
+	if (PlayerGrenade.EquipGrenade == "Grenade")	// 현재 들고 있는 투척무기가 수류탄인 경우
+	{
+		if (PlayerGrenade.SmokeNum > 0)
+		{
+			PlayerGrenade.EquipGrenade = "Smoke";
+		}
+		else if (PlayerGrenade.FlashNum > 0)
+		{
+			PlayerGrenade.EquipGrenade = "Flash";
+		}
+		else
+		{
+			CurrentWeaponMode = WeaponMode::Disarming;
+			PlayerGrenade.EquipGrenade = "None";
+		}
+
+		return;
+	}
+	else if(PlayerGrenade.EquipGrenade == "Smoke")	// 현재 들고 있는 투척무기가 연막탄인 경우
+	{
+		if (PlayerGrenade.FlashNum > 0)
+		{
+			PlayerGrenade.EquipGrenade = "Flash";
+		}
+		else
+		{
+			CurrentWeaponMode = WeaponMode::Disarming;
+			PlayerGrenade.EquipGrenade = "None";
+		}
+	}
+	else if (PlayerGrenade.EquipGrenade == "Flash")	// 현재 들고 있는 투척무기가 섬광탄인 경우
+	{
+		CurrentWeaponMode = WeaponMode::Disarming;
+		PlayerGrenade.EquipGrenade = "None";
+	}
+	else // 현재 아무것도 들고 있지 않은 경우
+	{
+		if (PlayerGrenade.GrenadeNum > 0)
+		{
+			PlayerGrenade.EquipGrenade = "Grenade";
+		}
+		else if (PlayerGrenade.SmokeNum > 0)
+		{
+			PlayerGrenade.EquipGrenade = "Smoke";
+		}
+		else if (PlayerGrenade.FlashNum > 0)
+		{
+			PlayerGrenade.EquipGrenade = "Flash";
+		}
+		else
+		{
+			CurrentWeaponMode = WeaponMode::Disarming;
+			PlayerGrenade.EquipGrenade = "None";
+		}
+	}
+}
 
 void APro4Character::EquipPlayerWeaponOnServer_Implementation(const WeaponMode& _CurWeaponMode, UStaticMesh* GrenadeMesh = nullptr)
 {
@@ -1792,17 +1857,16 @@ void APro4Character::EquipPlayerWeaponOnClient_Implementation(const WeaponMode& 
 		break;
 	case WeaponMode::ATW:
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("ATW"));
-		if (PlayerGrenade.GrenadeNum >= 0)
-		{
-			Grenade->SetStaticMesh(GrenadeMesh);
-		}
-
+		Grenade->SetStaticMesh(GrenadeMesh);
+		
 		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(4);
 		break;
 	case WeaponMode::Disarming:
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("Disarming"));
 		Weapon->SetSkeletalMesh(nullptr);
 		Grenade->SetStaticMesh(nullptr);
+		Scope->SetStaticMesh(nullptr);
+		PlayerGrenade.EquipGrenade = "None";
 		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(0);
 		break;
 	default:

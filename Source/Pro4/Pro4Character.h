@@ -14,12 +14,13 @@ USTRUCT()
 struct FGrenadeInfo // ÅõÃ´¹«±â Á¤º¸
 {
 	GENERATED_BODY()
-	UStaticMesh* SM_Grenade = nullptr; // ¼ö·ùÅº ¸Þ½Ã
-	uint16 GrenadeNum = 0; // ¼ö·ùÅº º¸À¯¼ö
-	UStaticMesh* SM_Smoke = nullptr; // ¿¬¸·Åº ¸Þ½Ã
-	uint16 SmokeNum = 0; // ¿¬¸·Åº º¸À¯¼ö
-	UStaticMesh* SM_Flash = nullptr; // ¼¶±¤Åº ¸Þ½Ã
-	uint16 FlashNum = 0; // ¼¶±¤Åº º¸À¯¼ö
+	UStaticMesh* SM_Grenade = nullptr;	// ¼ö·ùÅº ¸Þ½Ã
+	uint16 GrenadeNum = 0;				// ¼ö·ùÅº º¸À¯¼ö
+	UStaticMesh* SM_Smoke = nullptr;	// ¿¬¸·Åº ¸Þ½Ã
+	uint16 SmokeNum = 0;				// ¿¬¸·Åº º¸À¯¼ö
+	UStaticMesh* SM_Flash = nullptr;	// ¼¶±¤Åº ¸Þ½Ã
+	uint16 FlashNum = 0;				// ¼¶±¤Åº º¸À¯¼ö
+	FString EquipGrenade = "";			// ÇöÀç µé°íÀÖ´Â ÅõÃ´¹«±â 
 };
 
 USTRUCT()
@@ -93,6 +94,7 @@ public:
 	void SetPlayerWeapon(class AAWeapon* SetWeapon);
 	void SetPlayerArmor(class AAArmor* Armor);
 	void AddPlayerGrenade(class AAGrenade* _Grenade);
+	void EquipGrenade();
 
 	void DetectZombieSpawner(bool isNight); //
 	
