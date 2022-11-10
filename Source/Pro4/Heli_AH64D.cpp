@@ -83,7 +83,8 @@ void AHeli_AH64D::CallEscape()
 void AHeli_AH64D::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	Heli->SetSound(Cast<USoundBase>(Helis));
+	Heli->Play();
 	CallEscape();
 	EscapeCollision->OnComponentBeginOverlap.AddDynamic(this, &AHeli_AH64D::CheckEscapeCollision);
 }
