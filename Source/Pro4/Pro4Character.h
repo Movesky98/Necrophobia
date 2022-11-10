@@ -319,6 +319,7 @@ public:
 
 	/* 공격 효과음 */
 	class UAudioComponent* FireA;
+	class USoundCue* SRSound;
 	class USoundCue* SubS;
 	class USoundCue* EmptyS;
 	class USoundCue* FireS;

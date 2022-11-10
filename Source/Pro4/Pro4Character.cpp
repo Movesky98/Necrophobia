@@ -113,6 +113,8 @@ APro4Character::APro4Character()
 	SubS = SubSound.Object;
 	static ConstructorHelpers::FObjectFinder<USoundCue>EmptySound(TEXT("SoundCue'/Game/StarterContent/Audio/EmptyShoots.EmptyShoots'"));
 	EmptyS = EmptySound.Object;
+	static ConstructorHelpers::FObjectFinder<USoundCue>SRSounds(TEXT("SoundCue'/Game/StarterContent/Audio/SRSounds.SRSounds'"));
+	SRSound = SRSounds.Object;
 	FireA = CreateDefaultSubobject<UAudioComponent>(TEXT("FireA"));
 	FireA->bAutoActivate = false;
 	FireA->SetupAttachment(GetMesh());
@@ -987,7 +989,14 @@ void APro4Character::Fire()
 			}
 			else
 			{
-				FireA->SetSound(FireS);
+				if (MainWeapon.Name == "SR")
+				{
+					FireA->SetSound(SRSound);
+				}
+				else
+				{
+					FireA->SetSound(FireS);
+				}
 				FireA->Play();
 			}
 
