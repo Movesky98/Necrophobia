@@ -107,12 +107,14 @@ void AInGameState::AddInGameSeconds() {
 				}
 
 				AInGamePlayerState* Player = Cast<AInGamePlayerState>(_PlayerState);
-				APro4Character* PlayerCharacter = Cast<APro4Character>(Player->GetPawn());
 				
-				if (PlayerCharacter->GetIsDead())
+				if (Player->GetIsDead())
 					continue;
 				else
+				{
+					APro4Character* PlayerCharacter = Cast<APro4Character>(Player->GetPawn());
 					PlayerCharacter->DetectZombieSpawner(false);
+				}
 			}
 		}
 		else
@@ -131,11 +133,14 @@ void AInGameState::AddInGameSeconds() {
 				}
 
 				AInGamePlayerState* Player = Cast<AInGamePlayerState>(_PlayerState);
-				APro4Character* PlayerCharacter = Cast<APro4Character>(Player->GetPawn());
-				if (PlayerCharacter->GetIsDead())
+
+				if (Player->GetIsDead())
 					continue;
 				else 
+				{
+					APro4Character* PlayerCharacter = Cast<APro4Character>(Player->GetPawn());
 					PlayerCharacter->DetectZombieSpawner(true);
+				}
 			}
 
 			if (InGameDay == 2)
@@ -203,11 +208,29 @@ void AInGameState::SpawnPlayerToStartLocation(TArray<FVector> SpawnArray)
 	InGameSec = 0;
 }
 
+/* 현재 남은 인원수 (== 죽은 플레이어의 순위로 표현 가능)를 세팅하는 함수 */
+void AInGameState::SetRanking()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("Survive Player : %d"), SurvivePlayer));
+	if (SurvivePlayer <= 1)
+	{
+		return;
+	}
+	else
+	{
+		SurvivePlayer--;
+	}
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("Changed Survive Player : %d"), SurvivePlayer));
+}
+
+
 /* 서버 <-> 클라이언트 간에 필요한 정보를 복사하는 것을 설정하는 함수 */
 void AInGameState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	DOREPLIFETIME(AInGameState, SurvivePlayer);
+	DOREPLIFETIME(AInGameState, TotalPlayer);
 	DOREPLIFETIME(AInGameState, isBossSpawn);
 	DOREPLIFETIME(AInGameState, isTimeToSpawnBoss);
 	DOREPLIFETIME(AInGameState, isNight);

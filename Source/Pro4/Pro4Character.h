@@ -300,16 +300,20 @@ public:
 	float CurrentAP;
 	/* 캐릭터 체력, 방어력 */
 
-	/* 서버에서 캐릭터 체력관련 정보를 갱신하기 위한 함수 */
+	/* 서버에서 캐릭터 체력 회복 정보를 갱신하기 위한 함수 */
 	UFUNCTION(Server, Reliable, WithValidation)
 	void RecoverPlayerHealthOnServer();
-	
+
+	/* 서버에서 캐릭터 피격 정보를 갱신하기 위한 함수 */
 	UFUNCTION(Server, Reliable, WithValidation)
-	void PlayerHealthGetDamagedOnServer(float Damage);
-	/* 서버에서 캐릭터 체력관련 정보를 갱신하기 위한 함수 */
+	void PlayerHealthGetDamagedOnServer(float Damage, AActor* AttackActor);
 
 	// 캐릭터 피격
-	void GetDamaged(float Damage);
+	void GetDamaged(float Damage, AActor* AttackActor);
+
+	/* 플레이어의 킬 정보를 저장하는 함수 */
+	UFUNCTION(Server, Reliable)
+	void RecordPlayerKill(AActor* AttackActor);
 
 	/* 공격 효과음 */
 	class UAudioComponent* FireA;

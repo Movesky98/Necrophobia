@@ -9,6 +9,8 @@
 #include "Item/AArmor.h"
 #include "Item/AGrenade.h"
 #include "Item/Ammo.h"
+#include "InGamePlayerState.h"
+
 #include "ZombieSpawner.h"
 #include "Heli_AH64D.h"
 #include "Door.h"
@@ -1034,7 +1036,7 @@ void APro4Character::Fire()
 
 		MuzzleFlash->ToggleActive();
 		SpawnProjectileOnServer(MuzzleLocation, MuzzleRotation, MuzzleRotation.Vector(), this);
-
+		
 		if (FireMod) // 연사 상태이면 함수 딜레이 후 다시 콜 (주무기 종류에 따라서 연사속도 변경)
 		{
 			GetWorld()->GetTimerManager().SetTimer(FireDelay, this, &APro4Character::Fire, .075f, false);
@@ -1626,23 +1628,32 @@ bool APro4Character::RecoverPlayerHealthOnServer_Validate()
 /* UFUNCTION(Client)로 실행, 해당 캐릭터를 조종하고 있는 클라이언트에게 죽었다는 메세지를 날려주는 함수 */
 void APro4Character::PlayerDead_Implementation()
 {
-	NecGameInstance->PlayerMenu->ActiveGameOverUI();
-	
-	IsDead = true;
+	AInGamePlayerState* ThisPlayerState = Cast<AInGamePlayerState>(GetPlayerState());
+	APro4PlayerController* ThisPlayerController = Cast<APro4PlayerController>(GetController());
+
+	NecGameInstance->PlayerMenu->ActiveGameOverUI(
+		ThisPlayerState->GetPlayerKill(),
+		ThisPlayerState->GetZombieKill(),
+		ThisPlayerController->SetPlayerRankning(),
+		ThisPlayerController->GetTotalRanking()
+	);
 	
 	Server_DestroyItem(this);
 }
 
 // 플레이어 체력이 닳았을 때
-void APro4Character::PlayerHealthGetDamagedOnServer_Implementation(float Damage)
+void APro4Character::PlayerHealthGetDamagedOnServer_Implementation(float Damage, AActor* AttackActor)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue, "Processing Player get Damage On Server");
 	CurrentHP -= Damage;
 
-	if (CurrentHP < 0)
+	if (CurrentHP <= 0)
 	{
 		CurrentHP = 0;
+		AInGamePlayerState* ThisPlayerState = Cast<AInGamePlayerState>(GetPlayerState());
 
+		ThisPlayerState->SetIsDead(true);
+
+		RecordPlayerKill(AttackActor);
 		// Player Dead
 		PlayerDead();
 	}
@@ -1658,7 +1669,7 @@ void APro4Character::PlayerHealthGetDamagedOnServer_Implementation(float Damage)
 	GetWorldTimerManager().SetTimer(HealthRecoveryTimer, this, &APro4Character::RecoverPlayerHealthOnServer, 1.0f, true, 5.0f);
 }
 
-bool APro4Character::PlayerHealthGetDamagedOnServer_Validate(float Damage)
+bool APro4Character::PlayerHealthGetDamagedOnServer_Validate(float Damage, AActor* AttackActor)
 {
 
 	if (Damage >= 100.0f || Damage < 0.0f)
@@ -1670,13 +1681,43 @@ bool APro4Character::PlayerHealthGetDamagedOnServer_Validate(float Damage)
 }
 
 // 플레이어 피격시
-void APro4Character::GetDamaged(float Damage)
+void APro4Character::GetDamaged(float Damage, AActor* AttackActor)
 {
 	if (GetWorld()->IsServer())
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Player Get Damaged"));
-		PlayerHealthGetDamagedOnServer(Damage);
+		PlayerHealthGetDamagedOnServer(Damage, AttackActor);
 	}
+}
+
+void APro4Character::RecordPlayerKill_Implementation(AActor* AttackActor)
+{
+	if (AttackActor->ActorHasTag("Player"))
+	{
+		// 다른 플레이어에게 죽은 경우, 다른 플레이어의 킬수를 올려줌.
+		APro4Character* OtherPlayer = Cast<APro4Character>(AttackActor);
+		AInGamePlayerState* AttackPlayerState = Cast<AInGamePlayerState>(OtherPlayer->GetPlayerState());
+
+		// 다른 플레이어의 플레이어 스테이트가 없다면!
+		// 이 함수는 서버에서 실행되기 때문의 모든 플레이어의 스테이트를 보존하고 있음!
+		if (!AttackPlayerState)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, TEXT("There are no Playerstate in Other Player Pawn."));
+		}
+		else
+		{
+			FString TargetType = "Player";
+			AttackPlayerState->UpdatePlayerKillInfo(TargetType, AttackActor);
+		}
+
+	}
+	else
+	{
+		// 좀비한테 죽은 경우
+		;
+	}
+
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Record Player Kill"));
 }
 
 #pragma endregion

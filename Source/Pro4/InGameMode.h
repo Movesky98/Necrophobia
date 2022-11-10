@@ -33,11 +33,11 @@ private:
 
 	void StartGame();
 
-	uint32 NumberOfPlayers = -1;
-	bool isGameStart = false;
-	int CountSeconds = 30;
+	uint16 NumberOfPlayers;
+	bool isGameStart;
+	int CountSeconds;
 
-	float Time = 0;
+	float Time;
 	TArray<AActor*> ItemSpawnerArray;
 
 	FTimerHandle GameStartTimer;

@@ -5,7 +5,9 @@
 #include "Pro4ZombieAI.h"
 #include "ZombieAnimInstance.h"
 #include "ZombieSpawner.h"
+
 #include "Pro4Character.h"
+#include "InGamePlayerState.h"
 
 #include "DrawDebugHelpers.h"
 #include "Net/UnrealNetwork.h"
@@ -173,15 +175,15 @@ void APro4Zombie::ZombieEndOverlapToSpawner(UPrimitiveComponent* OverlappedComp,
 	}
 }
 
-void APro4Zombie::ZombieGetDamaged(float _Damage)
+void APro4Zombie::ZombieGetDamaged(float _Damage, AActor* AttackActor)
 {
 	if (GetWorld()->IsServer())
 	{
-		ZombieGetDamagedOnServer(_Damage);
+		ZombieGetDamagedOnServer(_Damage, AttackActor);
 	}
 }
 
-void APro4Zombie::ZombieGetDamagedOnServer_Implementation(float _Damage)
+void APro4Zombie::ZombieGetDamagedOnServer_Implementation(float _Damage, AActor* AttackActor)
 {
 	CurrentHP -= _Damage;
 
@@ -190,11 +192,23 @@ void APro4Zombie::ZombieGetDamagedOnServer_Implementation(float _Damage)
 		if (IsDead) return;
 		if (IsMontagePlay)
 			ZombieAnim->Montage_Stop(0.0f);
-
+		
 		PlayMontageOnServer(ZombieAnim->GetDeadMontage());
 		IsDead = true;
 		IsMontagePlay = true;
 		IsDeading = true;
+
+		// 좀비 킬수를 플레이어에게 저장하도록 구현 필요.
+		if (AttackActor->ActorHasTag("Player"))
+		{
+			APro4Character* AttackPlayer = Cast<APro4Character>(AttackActor);
+
+			AInGamePlayerState* AttackPlayerState = Cast<AInGamePlayerState>(AttackPlayer->GetPlayerState());
+
+			FString TargetType = "Zombie";
+			AttackPlayerState->UpdatePlayerKillInfo(TargetType, AttackActor);
+		}
+
 
 		Dead();
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Zombie is dead."));
@@ -224,10 +238,8 @@ void APro4Zombie::DrawAttackField()
 	{
 		if (AttackHit.GetActor()->ActorHasTag("Player"))
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue, TEXT("Player get damaged."));
-
 			APro4Character* PlayerCharacter = Cast<APro4Character>(AttackHit.GetActor());
-			PlayerCharacter->GetDamaged(Damage);
+			PlayerCharacter->GetDamaged(Damage, this);
 		}
 	}
 }
