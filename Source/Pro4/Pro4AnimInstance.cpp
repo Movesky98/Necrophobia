@@ -36,6 +36,12 @@ UPro4AnimInstance::UPro4AnimInstance()
 	{
 		AttackMontage = ATTACK_MONTAGE.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> PUNCH_MONTAGE(TEXT("/Game/Character_Animation/Mannequin/Animations/Punch_Montage.Punch_Montage"));
+	if (PUNCH_MONTAGE.Succeeded())
+	{
+		PunchMontage = PUNCH_MONTAGE.Object;
+	}
 }
 
 void UPro4AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -59,6 +65,7 @@ void UPro4AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			Equipflag = Character->IsEquip();
 			Moveflag = Character->MoveMode();
 			CharacterRotationPitch = Character->CharacterPitch();
+			CharacterArmControl = Character->CharacterArmPitch();
 		}
 	}
 }
@@ -77,6 +84,12 @@ void UPro4AnimInstance::PlayReloadMontage()
 
 // 傍拜 根鸥林 角青
 void UPro4AnimInstance::PlayAttackMontage()
+{
+	Montage_Play(AttackMontage, 1.0f);
+}
+
+// 戚摹 根鸥林 角青
+void UPro4AnimInstance::PlayPunchMontage()
 {
 	Montage_Play(AttackMontage, 1.0f);
 }
@@ -107,4 +120,9 @@ UAnimMontage* UPro4AnimInstance::GetReloadMontage()
 UAnimMontage* UPro4AnimInstance::GetAttackMontage()
 {
 	return AttackMontage;
+}
+
+UAnimMontage* UPro4AnimInstance::GetPunchMontage()
+{
+	return PunchMontage;
 }

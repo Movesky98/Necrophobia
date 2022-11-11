@@ -327,6 +327,14 @@ void APro4Character::Tick(float DeltaTime)
 	
 	
 	CharacterRotationPitch = GetControlRotation().Pitch;
+	if (IsZoom)
+	{
+		CharacterArmControl= GetControlRotation().Pitch;
+	}
+	else
+	{
+		CharacterArmControl = 0.0f;
+	}
 	// Character Role Test.
 	// DrawDebugString(GetWorld(), FVector(0, 0, 150), GetEnumRole(GetLocalRole()), this, FColor::Green, DeltaTime);
 }
@@ -861,9 +869,11 @@ void APro4Character::Attack()
 		{
 		// 총은 Fire
 		case WeaponMode::Main:
+			IsFire = true;
 			Fire();
 			break;
 		case WeaponMode::Sub:
+			IsFire = true;
 			Fire();
 			break;
 		// 칼은 Swing
@@ -875,6 +885,7 @@ void APro4Character::Attack()
 			break;
 		// 비무장은 Punch
 		case WeaponMode::Disarming:
+			IsPunch = true;
 			Punch();
 			break;
 		}
@@ -934,7 +945,6 @@ void APro4Character::Fire_Mod()
 // 마우스 클릭시 실행
 void APro4Character::StartFire()
 {
-	IsFire = true;
 	Attack();
 }
 
@@ -946,6 +956,7 @@ void APro4Character::StopFire()
 		FireA->Stop();
 	}
 	IsFire = false;
+	IsPunch = false;
 }
 
 // 총 발사
@@ -1066,10 +1077,13 @@ void APro4Character::Throw()
 
 void APro4Character::Punch() // 주먹질
 {
-	/*
-	* 주먹질 애니메이션 꾹 눌렀을 때 주먹질 계속하도록
-	*/
-	UE_LOG(Pro4, Log, TEXT("Punch"));
+	/* 주먹질 애니메이션 꾹 눌렀을 때 주먹질 계속하도록 */
+	if (!IsMontagePlay)
+	{
+		PlayMontageOnServer(Pro4Anim->GetPunchMontage(), 1);
+		IsMontagePlay = true;
+		IsAttacking = true;
+	}
 }
 
 /* 플레이어가 서버에게 총알을 스폰해달라고 요청하는 함수 */
