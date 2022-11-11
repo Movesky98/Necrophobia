@@ -29,7 +29,7 @@ AAGrenade::AAGrenade()
 	GrenadeParticle->bAutoActivate = false;
 
 	/* 사운드 세팅 */
-	static ConstructorHelpers::FObjectFinder<USoundCue> SC_Grenade(TEXT("/Game/StarterContent/Audio/ThrowFires"));
+	static ConstructorHelpers::FObjectFinder<USoundCue> SC_Grenade(TEXT("/Game/Sounds/Grenade-Explosion_Cue"));
 	if (SC_Grenade.Succeeded())
 	{
 		ExplosionSound = SC_Grenade.Object;
@@ -41,7 +41,7 @@ AAGrenade::AAGrenade()
 		SmokeSound = SC_Smoke.Object;
 	}
 
-	static ConstructorHelpers::FObjectFinder<USoundCue> SC_Flash(TEXT("/Game/StarterContent/Audio/ThrowFires"));
+	static ConstructorHelpers::FObjectFinder<USoundCue> SC_Flash(TEXT("/Game/Sounds/FlashBang_Cue"));
 	if (SC_Flash.Succeeded())
 	{
 		FlashSound = SC_Flash.Object;
