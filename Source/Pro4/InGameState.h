@@ -39,6 +39,28 @@ public:
 	bool GetIsStateChanged();
 	void SetIsStateChanged(bool StateChanged_);
 
+	void SetRanking();
+
+	uint16 GetSurvivePlayer()
+	{
+		return SurvivePlayer;
+	}
+
+	void SetSurvivePlayer(uint16 CurrentPlayer)
+	{
+		SurvivePlayer = CurrentPlayer;
+	}
+
+	uint16 GetTotalPlayer()
+	{
+		return TotalPlayer;
+	}
+
+	void SetTotalPlayer(uint16 _TotalPlayer)
+	{
+		TotalPlayer = _TotalPlayer;
+	}
+
 	bool GetIsBossSpawn()
 	{
 		return isBossSpawn;
@@ -84,19 +106,31 @@ public:
 private:
 	UPROPERTY(Replicated)
 	uint8 InGameDay = 1;
+
 	UPROPERTY(Replicated)
 	uint8 InGameMin = 0;
+
 	UPROPERTY(Replicated)
 	uint8 InGameSec = 0;
+
 	UPROPERTY(Replicated)
 	bool isNight = false;
+
 	UPROPERTY(Replicated)
 	bool isStateChanged = false;
+
 	UPROPERTY(Replicated)
 	bool isBossSpawn = false;
+
 	UPROPERTY(Replicated)
 	bool isTimeToSpawnBoss = false;
 
+	UPROPERTY(Replicated)
+	uint16 SurvivePlayer;
+	
+	UPROPERTY(Replicated)
+	uint16 TotalPlayer;
+	
 	UPROPERTY(Replicated)
 	bool isHelicopterSpawn = false;
 

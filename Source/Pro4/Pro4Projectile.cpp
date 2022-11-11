@@ -96,14 +96,14 @@ void APro4Projectile::ProjectileBeginOverlap(UPrimitiveComponent* OverlappedComp
 		ProjectileParticle->SetTemplate(Particle_Blood);
 		
 		APro4Character* PlayerCharacter = Cast<APro4Character>(OtherActor);
-		PlayerCharacter->GetDamaged(30.0f);
+		PlayerCharacter->GetDamaged(30.0f, GetOwner());
 	}
 	else if(OtherActor->ActorHasTag("Zombie"))
 	{
 		ProjectileParticle->SetTemplate(Particle_Blood);
 
 		APro4Zombie* Zombie = Cast<APro4Zombie>(OtherActor);
-		Zombie->ZombieGetDamaged(30.0f);
+		Zombie->ZombieGetDamaged(30.0f, GetOwner());
 	}
 	else
 	{

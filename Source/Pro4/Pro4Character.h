@@ -14,12 +14,13 @@ USTRUCT()
 struct FGrenadeInfo // 투척무기 정보
 {
 	GENERATED_BODY()
-	UStaticMesh* SM_Grenade = nullptr; // 수류탄 메시
-	uint16 GrenadeNum = 0; // 수류탄 보유수
-	UStaticMesh* SM_Smoke = nullptr; // 연막탄 메시
-	uint16 SmokeNum = 0; // 연막탄 보유수
-	UStaticMesh* SM_Flash = nullptr; // 섬광탄 메시
-	uint16 FlashNum = 0; // 섬광탄 보유수
+	UStaticMesh* SM_Grenade = nullptr;	// 수류탄 메시
+	uint16 GrenadeNum = 0;				// 수류탄 보유수
+	UStaticMesh* SM_Smoke = nullptr;	// 연막탄 메시
+	uint16 SmokeNum = 0;				// 연막탄 보유수
+	UStaticMesh* SM_Flash = nullptr;	// 섬광탄 메시
+	uint16 FlashNum = 0;				// 섬광탄 보유수
+	FString EquipGrenade = "";			// 현재 들고있는 투척무기 
 };
 
 USTRUCT()
@@ -93,6 +94,7 @@ public:
 	void SetPlayerWeapon(class AAWeapon* SetWeapon);
 	void SetPlayerArmor(class AAArmor* Armor);
 	void AddPlayerGrenade(class AAGrenade* _Grenade);
+	void EquipGrenade();
 
 	void DetectZombieSpawner(bool isNight); //
 	
@@ -305,19 +307,24 @@ public:
 	float CurrentAP;
 	/* 캐릭터 체력, 방어력 */
 
-	/* 서버에서 캐릭터 체력관련 정보를 갱신하기 위한 함수 */
+	/* 서버에서 캐릭터 체력 회복 정보를 갱신하기 위한 함수 */
 	UFUNCTION(Server, Reliable, WithValidation)
 	void RecoverPlayerHealthOnServer();
-	
+
+	/* 서버에서 캐릭터 피격 정보를 갱신하기 위한 함수 */
 	UFUNCTION(Server, Reliable, WithValidation)
-	void PlayerHealthGetDamagedOnServer(float Damage);
-	/* 서버에서 캐릭터 체력관련 정보를 갱신하기 위한 함수 */
+	void PlayerHealthGetDamagedOnServer(float Damage, AActor* AttackActor);
 
 	// 캐릭터 피격
-	void GetDamaged(float Damage);
+	void GetDamaged(float Damage, AActor* AttackActor);
+
+	/* 플레이어의 킬 정보를 저장하는 함수 */
+	UFUNCTION(Server, Reliable)
+	void RecordPlayerKill(AActor* AttackActor);
 
 	/* 공격 효과음 */
 	class UAudioComponent* FireA;
+	class USoundCue* SRSound;
 	class USoundCue* SubS;
 	class USoundCue* EmptyS;
 	class USoundCue* FireS;

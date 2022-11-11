@@ -37,6 +37,12 @@ AInGameMode::AInGameMode()
     UE_LOG(Pro4, Warning, TEXT("Set PawnClass : APro4Character"));
     GameStateClass = AInGameState::StaticClass();
     PlayerStateClass = AInGamePlayerState::StaticClass();
+
+    // 게임에 입장한 플레이어 수 (총 플레이어 수, 서버 제외)
+    NumberOfPlayers = -1;
+    isGameStart = false;
+    CountSeconds = 30;
+    Time = 0;
 }
 
 /* 월드에 생성되었을 때 실행되는 함수 */
@@ -150,6 +156,10 @@ void AInGameMode::StartGame()
 
     InGameState->SpawnPlayerToStartLocation(SpawnArray);
     InGameState->SetIsTimeToSpawnItem(true);
+    InGameState->SetSurvivePlayer(NumberOfPlayers);
+    InGameState->SetTotalPlayer(NumberOfPlayers);
+
+    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Emerald, FString::Printf(TEXT("Total Player Num : %d"), NumberOfPlayers));
 
     int32 NumberOfSpawner = ItemSpawnerArray.Num();
 

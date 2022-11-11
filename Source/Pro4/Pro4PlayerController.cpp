@@ -92,3 +92,22 @@ void APro4PlayerController::AvaialbleHelicopterSpawnOnServer_Implementation()
 {
 	InGameState->SetIsHelicopterSpawn(false);
 }
+
+uint16 APro4PlayerController::SetPlayerRankning()
+{
+	uint16 ThisPlayerRanking = InGameState->GetSurvivePlayer();
+	
+	DiscountSurvivePlayer();
+
+	return ThisPlayerRanking;
+}
+
+uint16 APro4PlayerController::GetTotalRanking()
+{
+	return InGameState->GetTotalPlayer();
+}
+
+void APro4PlayerController::DiscountSurvivePlayer_Implementation()
+{
+	InGameState->SetRanking();
+}
