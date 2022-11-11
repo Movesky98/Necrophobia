@@ -88,6 +88,10 @@ void UPlayerMenu::SetUp()
 	MainWeaponBox->SetVisibility(ESlateVisibility::Hidden);
 	SubWeaponBox->SetVisibility(ESlateVisibility::Hidden);
 	KnifeBox->SetVisibility(ESlateVisibility::Hidden);
+
+	RoundsText->SetText(FText::FromString(FString("0 / 0")));
+
+	PlayerFlashDegree = 0;
 }
 
 /* 인게임 내 플레이 시간을 표기하는 함수 */
@@ -110,13 +114,13 @@ void UPlayerMenu::Client_SetTimeText_Implementation(uint16 min_, uint16 sec_)
 /* PlayeDefaultUI <-> Inventory UI랑 변경하기 위한 함수 */
 void UPlayerMenu::ChangePlayerWidget()
 {
-
 	UWorld* World = GetWorld();
 	if (!ensure(World != nullptr)) return;
 
 	APlayerController* PlayerController = World->GetFirstPlayerController();
 	if (!ensure(PlayerController != nullptr)) return;
 
+	/* PlayerDefault UI -> Inventory UI */
 	if (UISwitcher->GetActiveWidgetIndex() == 0)
 	{
 		UISwitcher->SetActiveWidgetIndex(1);
@@ -129,6 +133,7 @@ void UPlayerMenu::ChangePlayerWidget()
 	}
 	else
 	{
+		/* Inventory UI -> PlayerDefault UI*/
 		UISwitcher->SetActiveWidgetIndex(0);
 
 		FInputModeGameOnly InputModeData;
@@ -273,12 +278,12 @@ void UPlayerMenu::SetRankingUI(uint16 PlayerRanking, uint16 TotalPlayer)
 	MaxRanking->SetBrushFromTexture(TotalRankingImage);
 }
 
-
 /* 플레이어가 Item을 획득했을 때, 실행되는 함수 */
 void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 {
 	AABaseItem* BaseItem = Cast<AABaseItem>(ItemActor);
 	APro4Character* MyPawn = Cast<APro4Character>(GetWorld()->GetFirstPlayerController()->GetPawn());
+	bool isUpdated;
 
 	switch (BaseItem->ItemType)
 	{
@@ -357,10 +362,15 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 	{
 		// TO DO : Implement Item of Recovery
 		ARecovery* Recovery = Cast<ARecovery>(BaseItem);
+		
+		isUpdated = UpdateInventoryBox(Recovery->GetItemName(), Recovery->GetItemNum());
 
-		UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
-		InventoryItem->SetUp("Recovery", Recovery->GetItemName(), Recovery->GetItemNum(), Recovery->GetIconPath());
-		InventoryBox->AddChildToWrapBox(InventoryItem);
+		if (!isUpdated)
+		{
+			UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
+			InventoryItem->SetUp("Recovery", Recovery->GetItemName(), Recovery->GetItemNum(), Recovery->GetIconPath());
+			InventoryBox->AddChildToWrapBox(InventoryItem);
+		}
 	}
 		break;
 	case AABaseItem::BaseItemType::Ammo:
@@ -368,11 +378,18 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		// TO DO : Implement Item of Ammo
 		AAmmo* Ammo = Cast<AAmmo>(BaseItem);
 
-		UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
-		InventoryItem->SetUp("Ammo", Ammo->GetItemName(), Ammo->GetItemNum(), Ammo->GetIconPath());
-		InventoryBox->AddChildToWrapBox(InventoryItem);
+		isUpdated = UpdateInventoryBox(Ammo->GetItemName(), Ammo->GetItemNum());
+
+		if (!isUpdated)
+		{
+			UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
+			InventoryItem->SetUp("Ammo", Ammo->GetItemName(), Ammo->GetItemNum(), Ammo->GetIconPath());
+
+			InventoryBox->AddChildToWrapBox(InventoryItem);
+		}
 
 		MyPawn->SetPlayerRound(Ammo);
+		MyPawn->IsEquip();
 	}
 		break;
 	case AABaseItem::BaseItemType::Vaccine:
@@ -381,9 +398,14 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		AVaccine* Vaccine = Cast<AVaccine>(BaseItem);
 		MyPawn->SetIsPossibleEscapeOnServer(true);
 
-		UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
-		InventoryItem->SetUp("Vaccine", Vaccine->GetItemName(), Vaccine->GetItemNum(), Vaccine->GetIconPath());
-		InventoryBox->AddChildToWrapBox(InventoryItem);
+		isUpdated = UpdateInventoryBox(Vaccine->GetItemName(), Vaccine->GetItemNum());
+
+		if (!isUpdated)
+		{
+			UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
+			InventoryItem->SetUp("Vaccine", Vaccine->GetItemName(), Vaccine->GetItemNum(), Vaccine->GetIconPath());
+			InventoryBox->AddChildToWrapBox(InventoryItem);
+		}
 	}
 		break;
 	default:
@@ -425,22 +447,16 @@ void UPlayerMenu::AddItemToWeapon(FString _ImagePath, FString _IconPath, FString
 	{
 		SubWeaponBox->SetBrushFromTexture(ItemImage);
 		SubWeaponSlot->SetBrushFromTexture(ItemIcon);
-
-		UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *SubWeaponBox->Brush.GetResourceName().ToString());
 	}
 	else if (_WeaponName == "Knife")
 	{
 		KnifeBox->SetBrushFromTexture(ItemImage);
 		KnifeSlot->SetBrushFromTexture(ItemIcon);
-
-		UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *KnifeBox->Brush.GetResourceName().ToString());
 	}
 	else
 	{
 		MainWeaponBox->SetBrushFromTexture(ItemImage);
 		MainWeaponSlot->SetBrushFromTexture(ItemIcon);
-
-		UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *MainWeaponBox->Brush.GetResourceName().ToString());
 	}
 }
 
@@ -489,10 +505,88 @@ void UPlayerMenu::ActiveArmorImage(bool IsHelmet)
 	}
 }
 
+void UPlayerMenu::UpdatePlayerRounds(uint16 CurrentRound, uint16 TotalRound)
+{
+	FString RoundText = FString::FromInt(CurrentRound) + " / " + FString::FromInt(TotalRound);
+
+	RoundsText->SetText(FText::FromString(RoundText));
+}
+
+bool UPlayerMenu::UpdateInventoryBox(FString ItemName, uint16 Num)
+{
+	TArray<UWidget*> PlayerInventory = InventoryBox->GetAllChildren();
+
+	// 인벤토리 안에 아이템이 존재한다면
+	if (PlayerInventory.Num())
+	{
+		for (UWidget* ItemWidget : PlayerInventory)
+		{
+			UInventorySlot* ItemSlot = Cast<UInventorySlot>(ItemWidget);
+
+			if (ItemSlot->GetItemName() == ItemName)
+			{
+				ItemSlot->SetItemNum(ItemSlot->GetItemNum() + Num);
+				ItemSlot->UpdateSlotCount();
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+void UPlayerMenu::UpdatePlayerWeaponAmmo(uint16 MainWeaponRounds, uint16 SubWeaponRounds)
+{
+	TArray<UWidget*> PlayerInventory = InventoryBox->GetAllChildren();
+
+	// 인벤토리 안에 아이템이 존재한다면
+	if (PlayerInventory.Num())
+	{
+		for (UWidget* ItemWidget : PlayerInventory)
+		{
+			UInventorySlot* ItemSlot = Cast<UInventorySlot>(ItemWidget);
+
+			if (ItemSlot->GetItemType() == "Ammo")
+			{
+				if (ItemSlot->GetItemName() == "MainWeaponAmmo")
+				{
+					ItemSlot->SetItemNum(MainWeaponRounds);
+				}
+				else
+				{
+					ItemSlot->SetItemNum(SubWeaponRounds);
+				}
+			}
+
+			ItemSlot->UpdateSlotCount();
+		}
+	}
+}
+
 /* 인게임 -> 메인메뉴로 나갈때 실행되는 함수 */
 void UPlayerMenu::ExitInGame()
 {
 	UNecrophobiaGameInstance* NecGameInstance = Cast<UNecrophobiaGameInstance>(GetGameInstance());
 
 	NecGameInstance->LoadMainMenu();
+}
+
+/* 플레이어가 섬광탄에 맞았을 때 실행되는 함수 */
+void UPlayerMenu::SetFlashBangImage()
+{
+	PlayerFlashDegree = 1.0f;
+
+	GetWorld()->GetTimerManager().SetTimer(FlashBangTimer, this, &UPlayerMenu::RecoverPlayerFlashbang, 0.01f, true, 3.0f);
+}
+
+void UPlayerMenu::RecoverPlayerFlashbang()
+{
+	PlayerFlashDegree -= 0.005f;
+
+	if (PlayerFlashDegree <= 0)
+	{
+		PlayerFlashDegree = 0;
+
+		GetWorld()->GetTimerManager().ClearTimer(FlashBangTimer);
+	}
 }

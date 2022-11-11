@@ -28,6 +28,8 @@ AAGrenade::AAGrenade()
 	GrenadeParticle->SetupAttachment(BoxMesh);
 	GrenadeParticle->bAutoActivate = false;
 
+	BoxMesh->SetRelativeScale3D(FVector(3.0f));
+
 	/* 사운드 세팅 */
 	static ConstructorHelpers::FObjectFinder<USoundCue> SC_Grenade(TEXT("/Game/Sounds/Grenade-Explosion_Cue"));
 	if (SC_Grenade.Succeeded())
@@ -186,7 +188,7 @@ void AAGrenade::RandomSpawn(int32 Random)
 	}
 }
 
-/* 수류탄이 폭발했을 때 실행되는 함수 */
+/* 투척무기가 폭발했을 때 실행되는 함수 */
 void AAGrenade::SetGrenadeExplosion()
 {
 	GetWorldTimerManager().ClearTimer(SetExplosionTimer);
@@ -229,10 +231,6 @@ void AAGrenade::SetGrenadeExplosion()
 
 					Zombie->ZombieGetDamaged(40.0f, GetOwner());
 				}
-
-
-
-				GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Orange, Hit.GetActor()->GetName());
 			}
 		}
 	}
@@ -243,6 +241,30 @@ void AAGrenade::SetGrenadeExplosion()
 	else if (ItemName == "Flash")
 	{
 		ParticleTime = 2.0f;
+		TArray<FHitResult> OutHits;
+
+		FVector ExplosionLocation = GetActorLocation();
+		FName ProfileName = "Grenade";
+		FCollisionShape GrenadeColSphere = FCollisionShape::MakeSphere(800.0f);
+		FCollisionQueryParams GrenadeColParams;
+
+		DrawDebugSphere(GetWorld(), ExplosionLocation, GrenadeColSphere.GetSphereRadius(), 30, FColor::Green, true, 5.0f);
+
+		bool bIsHit = GetWorld()->SweepMultiByProfile(OutHits, ExplosionLocation, ExplosionLocation, FQuat::Identity, ProfileName, GrenadeColSphere);
+
+		if (bIsHit)
+		{
+			for (auto& Hit : OutHits)
+			{
+				if (Hit.GetActor()->ActorHasTag("Player"))
+				{
+					DrawDebugSolidBox(GetWorld(), Hit.GetActor()->GetActorLocation(), FVector(50.0f), FColor::Red, true, -1);
+					APro4Character* PlayerCharacter = Cast<APro4Character>(Hit.GetActor());
+
+					PlayerCharacter->FlashBangExplosion();
+				}
+			}
+		}
 	}
 
 	PlayGrenadeSound();
@@ -280,6 +302,7 @@ void AAGrenade::ThrowGrenade_Implementation(const FString& GrenadeType, UStaticM
 		CurrentSound = FlashSound;
 	}
 
+	AC->SetSound(Cast<USoundBase>(CurrentSound));
 	BoxMesh->SetStaticMesh(GrenadeMesh);
 	ItemName = GrenadeType;
 	WBP_NameWidget->SetItemName(ItemName);

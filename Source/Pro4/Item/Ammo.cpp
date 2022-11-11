@@ -21,12 +21,8 @@ AAmmo::AAmmo()
 		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Cube(TEXT("/Game/Weapon/BulletCase_A"));
 		if (SM_Cube.Succeeded())
 		{
-			BoxMesh->SetStaticMesh(SM_Cube.Object);
+			SM_Ammo = SM_Cube.Object;
 		}
-
-
-		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/AR4_Icon_500x500";
-
 		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/Rifle_Bullet_Icon_500x500";
 
 		ItemName = "MainWeaponAmmo";
@@ -38,11 +34,8 @@ AAmmo::AAmmo()
 		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Cube(TEXT("/Game/Weapon/BulletCase_B"));
 		if (SM_Cube.Succeeded())
 		{
-			BoxMesh->SetStaticMesh(SM_Cube.Object);
+			SM_Ammo = SM_Cube.Object;
 		}
-
-
-		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/AR4_Icon_500x500";
 
 		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/Pistol_Bullet_Icon_500x500";
 
@@ -68,7 +61,7 @@ void AAmmo::BeginPlay()
 
 	if (GetWorld()->IsServer())
 	{
-		SetUpOnClient(nullptr, ItemIconPath, ItemName, ItemNum);
+		SetUpOnClient(SM_Ammo, ItemIconPath, ItemName, ItemNum);
 	}
 }
 
@@ -81,6 +74,7 @@ void AAmmo::SetUpOnClient_Implementation(UStaticMesh* _AmmoMesh, const FString& 
 		return;
 	}
 
+	BoxMesh->SetStaticMesh(_AmmoMesh);
 	ItemIconPath = _IconPath;
 	ItemName = _ItemName;
 	ItemNum = _ItemNum;

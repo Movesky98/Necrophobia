@@ -676,6 +676,7 @@ void APro4Character::EquipMain()
 		{
 			SetPlayerFlagOnServer("EquipFlag", 0);
 			CurrentWeaponMode = WeaponMode::Disarming;
+			NecGameInstance->PlayerMenu->ActiveWeaponShortcut(0);
 		}
 		else
 		{
@@ -687,7 +688,11 @@ void APro4Character::EquipMain()
 			IsMontagePlay = true;
 			IsEquipping = true;
 			CurrentWeaponMode = WeaponMode::Main;
+
+			NecGameInstance->PlayerMenu->ActiveWeaponShortcut(1);
+			NecGameInstance->PlayerMenu->UpdatePlayerRounds(MainWeapon.CurrentRound, MainWeapon.TotalRound);
 		}
+
 	}
 
 	EquipPlayerWeaponOnServer(CurrentWeaponMode);
@@ -711,6 +716,7 @@ void APro4Character::EquipSub()
 		{
 			SetPlayerFlagOnServer("EquipFlag", 0);
 			CurrentWeaponMode = WeaponMode::Disarming;
+			NecGameInstance->PlayerMenu->ActiveWeaponShortcut(0);
 		}
 		else
 		{
@@ -722,6 +728,8 @@ void APro4Character::EquipSub()
 			IsMontagePlay = true;
 			IsEquipping = true;
 			CurrentWeaponMode = WeaponMode::Sub;
+			NecGameInstance->PlayerMenu->ActiveWeaponShortcut(2);
+			NecGameInstance->PlayerMenu->UpdatePlayerRounds(SubWeapon.CurrentRound, SubWeapon.TotalRound);
 		}
 	}
 
@@ -746,6 +754,7 @@ void APro4Character::EquipKnife()
 		{
 			SetPlayerFlagOnServer("EquipFlag", 0);
 			CurrentWeaponMode = WeaponMode::Disarming;
+			NecGameInstance->PlayerMenu->ActiveWeaponShortcut(0);
 		}
 		else
 		{
@@ -757,6 +766,7 @@ void APro4Character::EquipKnife()
 			IsMontagePlay = true;
 			IsEquipping = true;
 			CurrentWeaponMode = WeaponMode::Knife;
+			NecGameInstance->PlayerMenu->ActiveWeaponShortcut(3);
 		}
 	}
 
@@ -812,10 +822,10 @@ void APro4Character::Reload()
 				UE_LOG(Pro4, Log, TEXT("Reload."));
 			}
 
-			// 현재 가지고 있는 탄약 수 = 현재 가지고 있는 탄약 수 - (주무기의 탄창에 들어갈 수 있는 탄약 수 - 현재 탄창에 들어가있는 탄약 수)
-			if (MainWeapon.TotalRound <= MainWeapon.Magazine)
+			// 주무기의 탄약 수 처리
+			if (MainWeapon.TotalRound + MainWeapon.CurrentRound <= MainWeapon.Magazine)
 			{
-				MainWeapon.CurrentRound = MainWeapon.TotalRound;
+				MainWeapon.CurrentRound += MainWeapon.TotalRound;
 				MainWeapon.TotalRound = 0;
 			}
 			else
@@ -823,6 +833,7 @@ void APro4Character::Reload()
 				MainWeapon.TotalRound -= MainWeapon.Magazine - MainWeapon.CurrentRound;
 				MainWeapon.CurrentRound = MainWeapon.Magazine;
 			}
+			NecGameInstance->PlayerMenu->UpdatePlayerRounds(MainWeapon.CurrentRound, MainWeapon.TotalRound);
 			break;
 		// 보조무기 장전
 		case WeaponMode::Sub:
@@ -838,10 +849,10 @@ void APro4Character::Reload()
 			}
 
 
-			// 현재 가지고 있는 탄약 수 = 현재 가지고 있는 탄약 수 - (주무기의 탄창에 들어갈 수 있는 탄약 수 - 현재 탄창에 들어가있는 탄약 수)
-			if (SubWeapon.TotalRound <= SubWeapon.Magazine)
+			// 보조무기의 탄약 수 처리
+			if (SubWeapon.TotalRound + SubWeapon.CurrentRound <= SubWeapon.Magazine)
 			{
-				SubWeapon.CurrentRound = SubWeapon.TotalRound;
+				SubWeapon.CurrentRound += SubWeapon.TotalRound;
 				SubWeapon.TotalRound = 0;
 			}
 			else
@@ -849,6 +860,8 @@ void APro4Character::Reload()
 				SubWeapon.TotalRound -= SubWeapon.Magazine - SubWeapon.CurrentRound;
 				SubWeapon.CurrentRound = SubWeapon.Magazine;
 			}
+
+			NecGameInstance->PlayerMenu->UpdatePlayerRounds(SubWeapon.CurrentRound, SubWeapon.TotalRound);
 			break;
 		default:
 			break;
@@ -977,7 +990,7 @@ void APro4Character::Fire()
 
 		}
 
-		if (CurrentWeaponMode == WeaponMode::Main) // 주무기일 때의 총알 발사 (탄창 상태 반영 안함)
+		if (CurrentWeaponMode == WeaponMode::Main) // 주무기일 때의 총알 발사
 		{
 			if (MainWeapon.CurrentRound <= 0)
 			{
@@ -1001,6 +1014,7 @@ void APro4Character::Fire()
 			}
 
 			MainWeapon.CurrentRound--;
+			NecGameInstance->PlayerMenu->UpdatePlayerRounds(MainWeapon.CurrentRound, MainWeapon.TotalRound);
 		}
 		else if (CurrentWeaponMode == WeaponMode::Sub) // 보조무기일 때의 총알 발사
 		{
@@ -1019,6 +1033,7 @@ void APro4Character::Fire()
 			}
 
 			SubWeapon.CurrentRound--;
+			NecGameInstance->PlayerMenu->UpdatePlayerRounds(SubWeapon.CurrentRound, SubWeapon.TotalRound);
 		}
 
 		// 총알 발사 애니메이션
@@ -1077,7 +1092,7 @@ void APro4Character::Throw()
 		ThrowRotation.Pitch += 10.0f;
 
 		DrawDebugSolidBox(GetWorld(), ThrowLocation, FVector(5.0f), FColor::Blue, true, 5.0f);
-		SpawnGrenadeOnServer(ThrowLocation, ThrowRotation, ThrowRotation.Vector(), this);
+		SpawnGrenadeOnServer(PlayerGrenade.EquipGrenade, ThrowLocation, ThrowRotation, ThrowRotation.Vector(), this);
 	}
 }
 
@@ -1115,7 +1130,7 @@ bool APro4Character::SpawnProjectileOnServer_Validate(FVector Location, FRotator
 }
 
 /* 플레이어가 서버에게 수류탄을 스폰해달라고 요청하는 함수 */
-void APro4Character::SpawnGrenadeOnServer_Implementation(FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner)
+void APro4Character::SpawnGrenadeOnServer_Implementation(const FString& GrenadeType, FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Cyan, TEXT("Server spawn Grenade"));
 	UWorld* World = GetWorld();
@@ -1131,13 +1146,13 @@ void APro4Character::SpawnGrenadeOnServer_Implementation(FVector Location, FRota
 
 		if (SpawnGrenade)
 		{
-			SpawnGrenade->ThrowGrenade(PlayerGrenade.EquipGrenade, Grenade->GetStaticMesh());
+			SpawnGrenade->ThrowGrenade(GrenadeType, Grenade->GetStaticMesh());
 			SpawnGrenade->SetSimulatePhysics(LaunchDirection);
 		}
 	}
 }
 
-bool APro4Character::SpawnGrenadeOnServer_Validate(FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner)
+bool APro4Character::SpawnGrenadeOnServer_Validate(const FString& GrenadeType, FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner)
 {
 	return true;
 }
@@ -1204,6 +1219,10 @@ void APro4Character::ChangePlayerWidget()
 	}
 	UE_LOG(Pro4, Warning, TEXT("Change PlayerWidget."));
 
+	uint16 MainWeaponRounds = MainWeapon.CurrentRound + MainWeapon.TotalRound;
+	uint16 SubWeaponRounds = SubWeapon.CurrentRound + SubWeapon.TotalRound;
+
+	NecGameInstance->PlayerMenu->UpdatePlayerWeaponAmmo(MainWeaponRounds, SubWeaponRounds);
 	NecGameInstance->PlayerMenu->ChangePlayerWidget();
 
 }
@@ -1509,10 +1528,20 @@ void APro4Character::SetPlayerRound(AAmmo* _Ammo)
 	if (_Ammo->GetItemName() == "MainWeaponAmmo")
 	{
 		MainWeapon.TotalRound += _Ammo->GetItemNum();
+
+		if (CurrentWeaponMode == WeaponMode::Main)
+		{
+			NecGameInstance->PlayerMenu->UpdatePlayerRounds(MainWeapon.CurrentRound, MainWeapon.TotalRound);
+		}
 	}
 	else
 	{
 		SubWeapon.TotalRound += _Ammo->GetItemNum();
+
+		if (CurrentWeaponMode == WeaponMode::Sub)
+		{
+			NecGameInstance->PlayerMenu->UpdatePlayerRounds(SubWeapon.CurrentRound, SubWeapon.TotalRound);
+		}
 	}
 
 	Server_DestroyItem(_Ammo);
@@ -1795,7 +1824,6 @@ void APro4Character::EquipGrenade()
 			PlayerGrenade.EquipGrenade = "None";
 		}
 
-		return;
 	}
 	else if(PlayerGrenade.EquipGrenade == "Smoke")	// 현재 들고 있는 투척무기가 연막탄인 경우
 	{
@@ -1808,6 +1836,7 @@ void APro4Character::EquipGrenade()
 			CurrentWeaponMode = WeaponMode::Disarming;
 			PlayerGrenade.EquipGrenade = "None";
 		}
+
 	}
 	else if (PlayerGrenade.EquipGrenade == "Flash")	// 현재 들고 있는 투척무기가 섬광탄인 경우
 	{
@@ -1834,6 +1863,15 @@ void APro4Character::EquipGrenade()
 			PlayerGrenade.EquipGrenade = "None";
 		}
 	}
+
+	if (PlayerGrenade.EquipGrenade == "None")
+	{
+		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(0);
+	}
+	else
+	{
+		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(4);
+	}
 }
 
 void APro4Character::EquipPlayerWeaponOnServer_Implementation(const WeaponMode& _CurWeaponMode, UStaticMesh* GrenadeMesh = nullptr)
@@ -1850,13 +1888,11 @@ void APro4Character::EquipPlayerWeaponOnClient_Implementation(const WeaponMode& 
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("MainWeapon"));
 		Weapon->SetSkeletalMesh(MainWeapon.Weapon);
 		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
-		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(1);
 		break;
 	case WeaponMode::Sub:
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("SubWeapon"));
 		Weapon->SetSkeletalMesh(SubWeapon.Weapon);
 		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
-		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(2);
 		break;
 	case WeaponMode::Knife:
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("Knife"));
@@ -2048,6 +2084,12 @@ void APro4Character::SetPlayerFlagOnServer_Implementation(const FString& State, 
 	{
 		Moveflag = Flag;
 	}
+}
+
+/* 섬광탄을 맞았을 때 실행되는 함수 */
+void APro4Character::FlashBangExplosion_Implementation()
+{
+	NecGameInstance->PlayerMenu->SetFlashBangImage();
 }
 
 void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

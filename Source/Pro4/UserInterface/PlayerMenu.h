@@ -23,6 +23,15 @@ public:
 	void SetUp();
 	virtual bool Initialize();
 
+	void SetFlashBangImage();
+	void RecoverPlayerFlashbang();
+
+	/* 아이템을 획득할 경우, 인벤토리의 아이템 수를 업데이트해주는 함수 */
+	bool UpdateInventoryBox(FString ItemName, uint16 Num);
+
+	/* 인벤토리를 열때, 아이템들의 개수를 업데이트 해주는 함수 */
+	void UpdatePlayerWeaponAmmo(uint16 MainWeaponRounds, uint16 SubWeaponRounds);
+
 	/* 플레이어 무기 습득시, ShortCut에서 보여주는 함수 */
 	void ActiveWeaponShortcut(uint16 SlotNumber);
 
@@ -38,9 +47,13 @@ public:
 	/* 위젯 변경 관련 함수 */
 	void ChangePlayerWidget();
 	void PlayerZoomWidget();
-
 	void ActiveGameOverUI(uint16 PlayerKill, uint16 ZombieKill, uint16 PlayerRanking, uint16 TotalPlayer);
+	
+	/* 게임 오버 UI에서, 랭킹에 따라 이미지를 보여주는 함수 */
 	void SetRankingUI(uint16 PlayerRanking, uint16 TotalPlayer);
+
+	/* 플레이어 메뉴 (기본메뉴) 에서 남은 총알을 업데이트하는 함수 */
+	void UpdatePlayerRounds(uint16 CurrentRound, uint16 TotalRound);
 
 	/* 플레이어가 아이템을 획득했을 때, 정보를 저장하는 함수 */
 	void AddItemToGrenade(const FString& GrenadeName, uint16 Num);
@@ -51,6 +64,9 @@ public:
 	class UTexture2D* Day;
 	class UTexture2D* Night;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = State)
+	float PlayerFlashDegree;
+
 private:
 	/* 서버 -> 클라이언트들에게 시간을 뿌려주는 함수 */
 	UFUNCTION(Client, Reliable)
@@ -60,6 +76,8 @@ private:
 	UFUNCTION()
 	void ExitInGame();
 
+	FTimerHandle FlashBangTimer; 
+
 	/* 인벤토리 슬롯 클래스 */
 	TSubclassOf<class UInventorySlot> InventorySlot;
 
@@ -68,8 +86,9 @@ private:
 	UTexture2D* SlotEmpty;
 	FString SlotItemChoosePath = "/Game/UI/Sprites/Player_UI/Item_block/Item_choose";
 	FString SlotItemEmptyPath = "/Game/UI/Sprites/Player_UI/Item_block/Item_empty";
-
+	
 	/* Player Default UI에 구성되는 위젯 */
+#pragma region PlayerDefaultUI
 	UPROPERTY(meta = (BindWidget))
 	class UImage* MainWeaponSlot;
 
@@ -108,6 +127,10 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	class UProgressBar* Armor_ProgressBar;
+
+	UPROPERTY(meta = (BindWidget))
+	class UTextBlock* RoundsText;
+#pragma endregion
 
 	/* 인벤토리 UI에 구성되는 위젯 */
 #pragma region InventoryField
@@ -167,4 +190,7 @@ private:
 
 	UPROPERTY(meta = (BindWidget))
 	class UWidgetSwitcher* UISwitcher;
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* FlashBangImage;
 };
