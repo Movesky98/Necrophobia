@@ -221,6 +221,11 @@ public:
 	{
 		return CharacterRotationPitch;
 	}
+
+	float CharacterArmPitch()
+	{
+		return CharacterArmControl;
+	}
 	/* 캐릭터와 카메라 회전값을 애니메이션에 반영하기 위한 함수*/
 
 	/* ZombieSpawner Sector */
@@ -422,6 +427,7 @@ private:
 	bool bHit;
 	bool IsForward;
 	bool IsFire;
+	bool IsPunch;
 	bool IsMontagePlay;
 	bool IsPossibleEscape;
 	bool CanZoom;
@@ -445,6 +451,7 @@ private:
 
 	// 캐릭터 애니메이션 컨트롤에 사용할 회전값 저장 변수
 	float CharacterRotationPitch;
+	float CharacterArmControl;
 
 	// 연사속도 조절 변수
 	FTimerHandle FireDelay;

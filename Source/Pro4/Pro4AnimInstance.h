@@ -20,10 +20,12 @@ public:
 	UAnimMontage* GetEquipMontage();
 	UAnimMontage* GetReloadMontage();
 	UAnimMontage* GetAttackMontage();
+	UAnimMontage* GetPunchMontage();
 
 	void PlayEquipMontage();
 	void PlayReloadMontage();
 	void PlayAttackMontage();
+	void PlayPunchMontage();
 	void JumpToEquipMontageSection(int32 NewSection);
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Equip, Meta = (AllowPrivateAccess = true))
@@ -34,6 +36,9 @@ public:
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
 		UAnimMontage* AttackMontage;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
+		UAnimMontage* PunchMontage;
 
 private:
 	// 좀비 애니메이션 컨트롤을 위한 변수들
@@ -60,6 +65,9 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 		float CharacterRotationPitch;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
+		float CharacterArmControl;
 
 	FName GetEquipMontageSectionName(int32 Section);
 };
