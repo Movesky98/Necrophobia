@@ -540,7 +540,7 @@ private:
 
 	/* 아이템 획득 시, 해당 아이템을 공통적으로 제거하는 함수 */
 	UFUNCTION(Server, Reliable)
-	void Server_DestroyItem(AActor* DestroyActor);
+	void Server_DestroyActor(AActor* DestroyActor);
 
 	/* Detect Zombie Spawner Sector */
 	UPROPERTY(VisibleAnywhere, Category = DetectZSpawner)
