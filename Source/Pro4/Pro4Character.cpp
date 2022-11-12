@@ -375,6 +375,7 @@ void APro4Character::PostInitializeComponents()
 	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnEquipMontageEnded);
 	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnReloadMontageEnded);
 	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnAttackMontageEnded);
+	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnbeAttackedMontageEnded);
 }
 
 // 장착 몽타주 종료시 콜백
@@ -400,6 +401,12 @@ void APro4Character::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupt
 	IsAttacking = false;
 }
 
+// 피격 몽타주 종료시 콜백
+void APro4Character::OnbeAttackedMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	IsMontagePlay = false;
+	IsbeAttacking = false;
+}
 // Called to bind functionality to input
 void APro4Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -1704,6 +1711,14 @@ void APro4Character::GetDamaged(float Damage, AActor* AttackActor)
 {
 	if (GetWorld()->IsServer())
 	{
+		if (IsMontagePlay)
+		{
+			Pro4Anim->Montage_Stop(0.0f);
+			IsMontagePlay = false;
+		}
+		PlayMontageOnServer(Pro4Anim->GetEquipMontage(), 1);
+		IsMontagePlay = true;
+		IsbeAttacking = true;
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Player Get Damaged"));
 		PlayerHealthGetDamagedOnServer(Damage, AttackActor);
 	}

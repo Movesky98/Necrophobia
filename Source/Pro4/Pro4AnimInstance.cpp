@@ -37,10 +37,18 @@ UPro4AnimInstance::UPro4AnimInstance()
 		AttackMontage = ATTACK_MONTAGE.Object;
 	}
 
+	// 펀치 애니메이션 몽타주
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> PUNCH_MONTAGE(TEXT("/Game/Character_Animation/Mannequin/Animations/Punch_Montage.Punch_Montage"));
 	if (PUNCH_MONTAGE.Succeeded())
 	{
 		PunchMontage = PUNCH_MONTAGE.Object;
+	}
+
+	// 피격 애니메이션 몽타주
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> BEATTACKED_MONTAGE(TEXT("/Game/Character_Animation/Mannequin/Animations/beAttacked_Montage.beAttacked_Montage"));
+	if (BEATTACKED_MONTAGE.Succeeded())
+	{
+		beAttackedMontage = BEATTACKED_MONTAGE.Object;
 	}
 }
 
@@ -91,7 +99,13 @@ void UPro4AnimInstance::PlayAttackMontage()
 // 펀치 몽타주 실행
 void UPro4AnimInstance::PlayPunchMontage()
 {
-	Montage_Play(AttackMontage, 1.0f);
+	Montage_Play(PunchMontage, 1.0f);
+}
+
+// 피격 몽타주 실행
+void UPro4AnimInstance::PlaybeAttackedMontage()
+{
+	Montage_Play(beAttackedMontage, 1.0f);
 }
 
 // 몽타주 번호 이동
