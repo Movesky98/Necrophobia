@@ -29,6 +29,8 @@ public:
 	UFUNCTION()
 	void UseInventoryItem();
 	
+	void UpdateSlotCount();
+
 private:
 	UPROPERTY(meta = (BindWidget))
 	class UButton* InventorySlotButton;

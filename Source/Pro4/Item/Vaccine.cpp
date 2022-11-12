@@ -29,12 +29,11 @@ void AVaccine::BeginPlay()
 	{
 		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/AR4_Icon_500x500";
 		ItemName = "Vaccine";
+		ItemNum = 1;
 		WBP_NameWidget->SetItemName(ItemName);
 	}
 	else
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, NameWidget->GetName());
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, NameWidget->GetUserWidgetObject()->GetName());
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("CANT FIND WBP_NAMEWIDGET"));
 	}
 }

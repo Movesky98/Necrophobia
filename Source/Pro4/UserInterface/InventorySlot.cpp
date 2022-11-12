@@ -89,3 +89,10 @@ void UInventorySlot::UseInventoryItem()
 		PlayerCharacter->RecoveryEncroach();
 	}
 }
+
+void UInventorySlot::UpdateSlotCount()
+{
+	FString SlotNumber = FString::FromInt(GetItemNum());
+
+	InventorySlotNum->SetText(FText::FromString(SlotNumber));
+}

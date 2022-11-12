@@ -30,6 +30,7 @@ void ARecovery::BeginPlay()
 	{
 		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/SMG11_Icon_500x500";
 		ItemName = "EncroachMedicine";
+		ItemNum = 1;
 		WBP_NameWidget->SetItemName(ItemName);
 	}
 	else

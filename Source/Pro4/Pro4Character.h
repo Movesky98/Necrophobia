@@ -94,7 +94,11 @@ public:
 	void SetPlayerWeapon(class AAWeapon* SetWeapon);
 	void SetPlayerArmor(class AAArmor* Armor);
 	void AddPlayerGrenade(class AAGrenade* _Grenade);
+	void SetPlayerRound(class AAmmo* _Ammo);
 	void EquipGrenade();
+
+	UFUNCTION(Client, Reliable)
+	void FlashBangExplosion();
 
 	void DetectZombieSpawner(bool isNight); //
 	
@@ -107,7 +111,6 @@ public:
 	void RecoveryEncroach();
 
 	void PlayerEscape(); //
-	void SetPlayerRound(class AAmmo* _Ammo);
 	
 	APro4PlayerController* GetPlayerController();
 	void SetPlayerController(APro4PlayerController* PlayerController);
@@ -504,7 +507,7 @@ private:
 	void SpawnProjectileOnServer(FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner);
 
 	UFUNCTION(Server, Reliable, WithValidation)
-	void SpawnGrenadeOnServer(FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner);
+	void SpawnGrenadeOnServer(const FString& GrenadeType, FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner);
 	/* Spawn Section */
 
 	/* Spawn Armor Section */
