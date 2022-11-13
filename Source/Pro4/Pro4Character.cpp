@@ -376,6 +376,7 @@ void APro4Character::PostInitializeComponents()
 	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnReloadMontageEnded);
 	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnAttackMontageEnded);
 	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnbeAttackedMontageEnded);
+	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnThrowMontageEnded);
 }
 
 // 장착 몽타주 종료시 콜백
@@ -407,6 +408,18 @@ void APro4Character::OnbeAttackedMontageEnded(UAnimMontage* Montage, bool bInter
 	IsMontagePlay = false;
 	IsbeAttacking = false;
 }
+
+// 투척 몽타주 종료시 콜백
+void APro4Character::OnThrowMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	IsMontagePlay = false;
+	IsThrowing = false;
+	if (CurrentWeaponMode == WeaponMode::ATW)
+	{
+		Throw();
+	}
+}
+
 // Called to bind functionality to input
 void APro4Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -975,12 +988,38 @@ void APro4Character::Fire_Mod()
 // 마우스 클릭시 실행
 void APro4Character::StartFire()
 {
-	Attack();
+	if (CurrentWeaponMode == WeaponMode::ATW)
+	{
+		if (!IsMontagePlay && !IsThrowing)
+		{
+			PlayMontageOnServer(Pro4Anim->GetThrowMontage(), 1);
+			IsMontagePlay = true;
+			IsThrowing = true;
+			IsThrow = true;
+		}
+	}
+	else
+	{
+		Attack();
+	}
 }
 
 // 마우스에서 때면 실행
 void APro4Character::StopFire()
 {
+	/*
+	IsThrow = false;
+	PlayMontageOnServer(Pro4Anim->GetThrowMontage(), 2);
+	IsMontagePlay = true;
+	IsThrowing = true;
+	if (CurrentWeaponMode == WeaponMode::ATW)
+	{
+		IsThrow = false;
+		PlayMontageOnServer(Pro4Anim->GetThrowMontage(), 2);
+		IsMontagePlay = true;
+		IsThrowing = true;	
+	}
+	*/
 	if (FireMod)
 	{
 		FireA->Stop();
@@ -1651,7 +1690,7 @@ void APro4Character::GetDamaged(float Damage, AActor* AttackActor)
 			Pro4Anim->Montage_Stop(0.0f);
 			IsMontagePlay = false;
 		}
-		PlayMontageOnServer(Pro4Anim->GetEquipMontage(), 1);
+		PlayMontageOnServer(Pro4Anim->GetbeAttackedMontage(), 1);
 		IsMontagePlay = true;
 		IsbeAttacking = true;
 		PlayerHealthGetDamagedOnServer(Damage, AttackActor);
