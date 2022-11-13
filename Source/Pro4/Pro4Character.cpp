@@ -97,10 +97,10 @@ APro4Character::APro4Character()
 	}
 
 	/* Helicopter 클래스를 찾아옴 */
-	static ConstructorHelpers::FObjectFinder<UBlueprint> Helicopter(TEXT("/Game/VigilanteContent/Vehicles/West_Heli_AH64D/BP_TESTHeli"));
+	static ConstructorHelpers::FClassFinder<AHeli_AH64D> Helicopter(TEXT("/Game/VigilanteContent/Vehicles/West_Heli_AH64D/BP_TESTHeli"));
 	if(Helicopter.Succeeded())
 	{
-		BP_Helicopter = Helicopter.Object;
+		BP_Helicopter = Helicopter.Class;
 	}
 
 	SocketSetting();
@@ -1248,6 +1248,7 @@ void APro4Character::ChangePlayerWidget()
 
 }
 
+/* 서버에서 액터를 삭제하도록 하는 함수 */
 void APro4Character::Server_DestroyActor_Implementation(AActor* DestroyActor)
 {
 	DestroyActor->Destroy();
@@ -1256,25 +1257,6 @@ void APro4Character::Server_DestroyActor_Implementation(AActor* DestroyActor)
 /// <summary>
 ////////////////////////////////////////////////////// 잠식 상호작용 코드 ////////////////////////////////////////////////////////////
 /// </summary>
-
-// 잠식지역에 들어가고 벗어날 때 실행되는 함수
-void APro4Character::NotifyActorBeginOverlap(AActor* Act)
-{
-	// Tag가 Encroach인 필드에 입장하면 잠식상태 함수 콜백
-	if (Act->ActorHasTag(TEXT("Encroach")))
-	{
-		Encroached();
-	}
-}
-
-void APro4Character::NotifyActorEndOverlap(AActor* Act)
-{
-	// Tag가 Encroach인 필드에 벗어나면 잠식상태 해제 함수 콜백
-	if (Act->ActorHasTag(TEXT("Encroach")))
-	{
-		UnEncroached();
-	}
-}
 
 #pragma region PlayerUI_Inventory_Section
 
@@ -1569,90 +1551,13 @@ void APro4Character::SetPlayerRound(AAmmo* _Ammo)
 }
 #pragma endregion
 
-/* 플레이어 앞에있는 물건 확인하는 함수 */
-void APro4Character::CheckFrontActorUsingTrace()
-{
-	FVector CharacterLoc;
-	FRotator CharacterRot;
-	FHitResult Hit;
-
-	GetController()->GetPlayerViewPoint(CharacterLoc, CharacterRot);
-
-	FVector Start = CharacterLoc;
-	FVector End = CharacterLoc + (CharacterRot.Vector() * 500);
-
-	FCollisionQueryParams TraceParams;
-	UWorld* World = GetWorld();
-
-	bHit = World->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, TraceParams);
-
-	// 커서에 닿은 물체가 있을때
-	if (bHit)
-	{
-		// 닿은 물체의 클래스가 액터이면
-		if (Hit.GetActor())
-		{
-			DrawDebugLine(World, Start, Hit.ImpactPoint, FColor::Red, false, 2.0f);
-			DrawDebugString(GetWorld(), Hit.ImpactPoint - Start, TEXT("There are Something exist."), this, FColor::Green, 1.0f);
-
-			AActor* HitActor = Hit.GetActor();
-
-			// 아이템 태그 확인
-			if (HitActor->ActorHasTag(TEXT("Item")))
-			{
-				AABaseItem* BaseItem = Cast<AABaseItem>(HitActor);
-				switch (BaseItem->ItemType)
-				{
-				case AABaseItem::BaseItemType::Weapon:
-				{
-					AAWeapon* Hit_Weapon = Cast<AAWeapon>(BaseItem);
-					Hit_Weapon->ViewWeaponName();
-				}
-					break;
-				case AABaseItem::BaseItemType::Grenade:
-				{
-				
-				}
-					break;
-				case AABaseItem::BaseItemType::Armor:
-				{
-
-				}
-					break;
-				case AABaseItem::BaseItemType::Ammo:
-				{
-
-				}
-					break;
-				case AABaseItem::BaseItemType::Recovery:
-				{
-
-				}
-					break;
-				case AABaseItem::BaseItemType::Vaccine:
-				{
-
-				}
-					break;
-				default:
-					UE_LOG(Pro4, Error, TEXT("Player Trace Error"));
-					break;
-				}
-			}
-		}
-	}
-	else
-	{
-
-	}
-}
-
-/* Player Controller Class */
+/* Get Player Controller Class */
 APro4PlayerController* APro4Character::GetPlayerController()
 {
 	return PlayerController;
 }
 
+/* Set Player Controller class */
 void APro4Character::SetPlayerController(APro4PlayerController* _PlayerController)
 {
 	PlayerController = _PlayerController;
@@ -1660,7 +1565,7 @@ void APro4Character::SetPlayerController(APro4PlayerController* _PlayerControlle
 
 #pragma region PlayerHealth
 
-/* 플레이어의 체력이 회복되었음을 서버에 알리는 함수 */
+/* 서버가 플레이어의 체력을 회복하는 함수  */
 void APro4Character::RecoverPlayerHealthOnServer_Implementation()
 {
 	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, "Recovery Player HP On Server");
@@ -1696,7 +1601,7 @@ void APro4Character::PlayerDead_Implementation()
 	Server_DestroyActor(this);
 }
 
-// 플레이어 체력이 닳았을 때
+/* 플레이어 체력이 감소했을 때, 서버에게 데미지만큼 체력을 감소하라고 알리는 함수 */
 void APro4Character::PlayerHealthGetDamagedOnServer_Implementation(float Damage, AActor* AttackActor)
 {
 	CurrentHP -= Damage;
@@ -1724,6 +1629,7 @@ void APro4Character::PlayerHealthGetDamagedOnServer_Implementation(float Damage,
 	GetWorldTimerManager().SetTimer(HealthRecoveryTimer, this, &APro4Character::RecoverPlayerHealthOnServer, 1.0f, true, 5.0f);
 }
 
+/* 서버에게 플레이어가 입은 데미지를 알려주기 전, 전처리 함수 */
 bool APro4Character::PlayerHealthGetDamagedOnServer_Validate(float Damage, AActor* AttackActor)
 {
 
@@ -1735,7 +1641,7 @@ bool APro4Character::PlayerHealthGetDamagedOnServer_Validate(float Damage, AActo
 	return true;
 }
 
-// 플레이어 피격시
+/* 플레이어가 피격당할 경수 실행되는 함수 */
 void APro4Character::GetDamaged(float Damage, AActor* AttackActor)
 {
 	if (GetWorld()->IsServer())
@@ -1748,11 +1654,11 @@ void APro4Character::GetDamaged(float Damage, AActor* AttackActor)
 		PlayMontageOnServer(Pro4Anim->GetEquipMontage(), 1);
 		IsMontagePlay = true;
 		IsbeAttacking = true;
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Player Get Damaged"));
 		PlayerHealthGetDamagedOnServer(Damage, AttackActor);
 	}
 }
 
+/* 플레이어의 킬 정보를 기록하는 함수 */
 void APro4Character::RecordPlayerKill_Implementation(AActor* AttackActor)
 {
 	if (AttackActor->ActorHasTag("Player"))
@@ -1953,6 +1859,7 @@ void APro4Character::EquipPlayerWeaponOnClient_Implementation(const WeaponMode& 
 
 #pragma region Escape
 
+/* 플레이어가 백신을 획득하였을 때, 서버에게 알리는 함수 */
 void APro4Character::SetIsPossibleEscapeOnServer_Implementation(bool Escape)
 {
 	IsPossibleEscape = Escape;
@@ -1997,7 +1904,7 @@ void APro4Character::CallHelicopterToEscapeOnServer_Implementation()
 
 	FRotator SpawnRotation = ToPlayerVector.Rotation();
 
-	AActor* SpawnHeliActor = GetWorld()->SpawnActor(BP_Helicopter->GeneratedClass);
+	AActor* SpawnHeliActor = GetWorld()->SpawnActor(BP_Helicopter);
 	AHeli_AH64D* SpawnHelicopter = Cast<AHeli_AH64D>(SpawnHeliActor);
 
 	if (SpawnHelicopter)
@@ -2022,6 +1929,26 @@ void APro4Character::PlayerEscape()
 
 #pragma region EncroachField
 
+/* 잠식지역에 들어갈 때 실행되는 함수 */
+void APro4Character::NotifyActorBeginOverlap(AActor* Act)
+{
+	// Tag가 Encroach인 필드에 입장하면 잠식상태 함수 콜백
+	if (Act->ActorHasTag(TEXT("Encroach")))
+	{
+		Encroached();
+	}
+}
+
+/* 잠식지역에 들어가고 벗어날 때 실행되는 함수 */
+void APro4Character::NotifyActorEndOverlap(AActor* Act)
+{
+	// Tag가 Encroach인 필드에 벗어나면 잠식상태 해제 함수 콜백
+	if (Act->ActorHasTag(TEXT("Encroach")))
+	{
+		UnEncroached();
+	}
+}
+
 /* 잠식 치료제를 사용했을 때, 플레이어의 잠식도를 치료하는 함수 */
 void APro4Character::RecoveryEncroach_Implementation()
 {
@@ -2043,6 +1970,7 @@ void APro4Character::RecoveryEncroach_Implementation()
 	}
 }
 
+/* 플레이어의 잠식 타이머를 실행하는 함수, 일정 시간이 지나면 플레이어의 잠식도를 올림. */
 void APro4Character::StartEncroachTimer()
 {
 	if (IsEncroach && GetWorld()->IsServer())
@@ -2051,6 +1979,7 @@ void APro4Character::StartEncroachTimer()
 	}
 }
 
+/* 플레이어의 잠식도를 올리는 함수 */
 void APro4Character::SetPlayerEncroach_Implementation() 
 {
 	if (EncroachLevel < 5)
@@ -2066,6 +1995,7 @@ void APro4Character::SetPlayerEncroach_Implementation()
 	}
 }
 
+/* 플레이어가 잠식구역에서 벗어날 경우, 플레이어의 잠식 타이머를 멈추는 함수 */
 void APro4Character::StopEncroachTimer()
 {
 	if (!IsEncroach && GetWorld()->IsServer())
@@ -2075,11 +2005,15 @@ void APro4Character::StopEncroachTimer()
 }
 #pragma endregion
 
+#pragma region Animation
+
+/* 플레이어의 애니메이션을 실행하도록 서버에게 알리는 함수 */
 void APro4Character::PlayMontageOnServer_Implementation(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0)
 {
 	PlayMontageOnClient(AnimationMontage, SectionNumber);
 }
 
+/* 플레이어가 서버로 보낸 애니메이션을 클라이언트로 뿌려주는 함수 (모든 클라이언트에서 해당 플레이어 캐릭터의 애니메이션 실행) */
 void APro4Character::PlayMontageOnClient_Implementation(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0)
 {
 	Pro4Anim->Montage_Play(AnimationMontage, 1.0f);
@@ -2091,6 +2025,7 @@ void APro4Character::PlayMontageOnClient_Implementation(UAnimMontage* AnimationM
 	}
 }
 
+/* 플레이어의 움직임 상태를 서버에게 알리는 함수 */
 void APro4Character::SetPlayerStateOnServer_Implementation(const FString& State, bool bIsState)
 {
 	if (State == "Run")
@@ -2103,6 +2038,7 @@ void APro4Character::SetPlayerStateOnServer_Implementation(const FString& State,
 	}
 }
 
+/* 플레이어의 무기상태를 서버에 알리는 함수 */
 void APro4Character::SetPlayerFlagOnServer_Implementation(const FString& State, int32 Flag)
 {
 	if (State == "EquipFlag")
@@ -2115,12 +2051,16 @@ void APro4Character::SetPlayerFlagOnServer_Implementation(const FString& State, 
 	}
 }
 
+#pragma endregion
+
+
 /* 섬광탄을 맞았을 때 실행되는 함수 */
 void APro4Character::FlashBangExplosion_Implementation()
 {
 	NecGameInstance->PlayerMenu->SetFlashBangImage();
 }
 
+/* 플레이어 캐릭터가 서버, 클라이언트에 복제되어야 하는 변수 목록을 구현한 함수 */
 void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

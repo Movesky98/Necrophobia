@@ -73,7 +73,7 @@ void UNecrophobiaGameInstance::Init()
 
 #pragma region OnlineSubsystem
 
-// MainMenu에서 '게임 시작' 버튼을 누르면 실행
+// MainMenu에서 '게임 시작' 버튼을 누르고 세션이 없을 때, 실행
 void UNecrophobiaGameInstance::Host()
 {
 	UE_LOG(Pro4, Warning, TEXT("Host the Server."));
@@ -208,7 +208,7 @@ void UNecrophobiaGameInstance::LoadPlayerMenu()
 	PlayerMenu->SetMenuInterface(this);
 }
 
-// [인 게임] -> [메인 메뉴]로 이동할 때 사용하는 함수. 현재는 쓰이고 있지 않음. (쓸 예정)
+// [인 게임] -> [메인 메뉴]로 이동할 때 사용하는 함수.
 void UNecrophobiaGameInstance::LoadMainMenu()
 {
 	APlayerController* PlayerController = GetFirstLocalPlayerController();

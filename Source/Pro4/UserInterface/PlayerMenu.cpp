@@ -63,7 +63,6 @@ bool UPlayerMenu::Initialize()
 	
 	GameOverExitButton->OnClicked.AddDynamic(this, &UPlayerMenu::ExitInGame);
 	
-
 	return true;
 }
 
@@ -196,6 +195,7 @@ void UPlayerMenu::ActiveGameOverUI(uint16 PlayerKill, uint16 ZombieKill, uint16 
 	PlayerController->SetShowMouseCursor(true);
 }
 
+/* 게임이 종료하기 전, 플레이어의 랭킹을 띄워주는 함수 */
 void UPlayerMenu::SetRankingUI(uint16 PlayerRanking, uint16 TotalPlayer)
 {
 	FString CurrentRankingPath;
@@ -289,11 +289,13 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 	{
 	case AABaseItem::BaseItemType::Weapon:
 	{
+		// 무기 획득
 		AAWeapon* NewWeapon = Cast<AAWeapon>(BaseItem);
 		if (!ensure(NewWeapon != nullptr)) return;
 
 		MyPawn->SetPlayerWeapon(NewWeapon);
 
+		// 인벤토리 UI에 무기가 보이도록 설정
 		if (NewWeapon->GetItemName() == "AR")
 		{
 			MainWeaponSizeBox->SetWidthOverride(475);
@@ -342,6 +344,7 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		break;
 	case AABaseItem::BaseItemType::Armor:
 	{
+		// 방어구 획득
 		AAArmor* Armor = Cast<AAArmor>(BaseItem);
 		if (!ensure(Armor != nullptr)) return;
 
@@ -352,6 +355,7 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		break;
 	case AABaseItem::BaseItemType::Grenade:
 	{
+		// 투척 무기 획득
 		AAGrenade* Grenade = Cast<AAGrenade>(BaseItem);
 		if (!ensure(Grenade != nullptr)) return;
 
@@ -360,7 +364,7 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		break;
 	case AABaseItem::BaseItemType::Recovery:
 	{
-		// TO DO : Implement Item of Recovery
+		// 잠식 치료제 획득
 		ARecovery* Recovery = Cast<ARecovery>(BaseItem);
 		
 		isUpdated = UpdateInventoryBox(Recovery->GetItemName(), Recovery->GetItemNum());
@@ -377,7 +381,7 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		break;
 	case AABaseItem::BaseItemType::Ammo:
 	{
-		// TO DO : Implement Item of Ammo
+		// 탄약 획득
 		AAmmo* Ammo = Cast<AAmmo>(BaseItem);
 
 		isUpdated = UpdateInventoryBox(Ammo->GetItemName(), Ammo->GetItemNum());
@@ -391,12 +395,11 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		}
 
 		MyPawn->SetPlayerRound(Ammo);
-		MyPawn->IsEquip();
 	}
 		break;
 	case AABaseItem::BaseItemType::Vaccine:
 	{
-		// TO DO : Implement Item of Vaccine
+		// 백신 획득
 		AVaccine* Vaccine = Cast<AVaccine>(BaseItem);
 		MyPawn->SetIsPossibleEscapeOnServer(true);
 
@@ -418,11 +421,13 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 	}
 }
 
+/* 낮/밤에 따른 이미지 활성화 */
 void UPlayerMenu::SetImage(UTexture2D* InTexture)
 {
 	TimeImage->SetBrushFromTexture(InTexture);
 }
 
+/* 인벤토리 UI에 투척 무기 수를 보여주는 함수 */
 void UPlayerMenu::AddItemToGrenade(const FString& GrenadeName, uint16 Num)
 {
 	FString GrenadeNumber = FString::FromInt(Num);
@@ -441,6 +446,7 @@ void UPlayerMenu::AddItemToGrenade(const FString& GrenadeName, uint16 Num)
 	}
 }
 
+/* 플레이어가 무기를 획득할 경우, 해당 무기의 이미지를 인벤토리 UI에서 보여주는 함수 */
 void UPlayerMenu::AddItemToWeapon(FString _ImagePath, FString _IconPath, FString _WeaponName)
 {
 	// Image를 그림
@@ -509,6 +515,7 @@ void UPlayerMenu::ActiveArmorImage(bool IsHelmet)
 	}
 }
 
+/* 플레이어의 탄알 수를 업데이트 하는 함수 */
 void UPlayerMenu::UpdatePlayerRounds(uint16 CurrentRound, uint16 TotalRound)
 {
 	FString RoundText = FString::FromInt(CurrentRound) + " / " + FString::FromInt(TotalRound);
@@ -516,6 +523,7 @@ void UPlayerMenu::UpdatePlayerRounds(uint16 CurrentRound, uint16 TotalRound)
 	RoundsText->SetText(FText::FromString(RoundText));
 }
 
+/* 인벤토리 내의 박스를 업데이트하는 함수 */
 bool UPlayerMenu::UpdateInventoryBox(FString ItemName, uint16 Num)
 {
 	TArray<UWidget*> PlayerInventory = InventoryBox->GetAllChildren();
@@ -539,6 +547,7 @@ bool UPlayerMenu::UpdateInventoryBox(FString ItemName, uint16 Num)
 	return false;
 }
 
+/* 인벤토리 UI 내의 아이템 중, 무기 탄약과 관련된 아이템일 경우 수를 최신화하는 함수 */
 void UPlayerMenu::UpdatePlayerWeaponAmmo(uint16 MainWeaponRounds, uint16 SubWeaponRounds)
 {
 	TArray<UWidget*> PlayerInventory = InventoryBox->GetAllChildren();
@@ -583,6 +592,7 @@ void UPlayerMenu::SetFlashBangImage()
 	GetWorld()->GetTimerManager().SetTimer(FlashBangTimer, this, &UPlayerMenu::RecoverPlayerFlashbang, 0.01f, true, 3.0f);
 }
 
+/* 플레이어가 섬광탄에 맞고난 후, 회복하는 함수 */
 void UPlayerMenu::RecoverPlayerFlashbang()
 {
 	PlayerFlashDegree -= 0.005f;
@@ -595,6 +605,7 @@ void UPlayerMenu::RecoverPlayerFlashbang()
 	}
 }
 
+/* 아이템을 획득했을 때, 실행되는 함수. 월드 내에 있는 아이템을 삭제함. */
 void UPlayerMenu::DestroyItem_Implementation(AActor* DestroyActor)
 {
 	DestroyActor->Destroy();
