@@ -1287,7 +1287,7 @@ void APro4Character::ChangePlayerWidget()
 
 }
 
-void APro4Character::Server_DestroyItem_Implementation(AActor* DestroyActor)
+void APro4Character::Server_DestroyActor_Implementation(AActor* DestroyActor)
 {
 	DestroyActor->Destroy();
 }
@@ -1349,7 +1349,7 @@ void APro4Character::SetPlayerWeapon(AAWeapon* SetWeapon)
 		NoticePlayerWeaponOnServer(SetWeapon);
 	}
 
-	Server_DestroyItem(SetWeapon);
+	Server_DestroyActor(SetWeapon);
 }
 
 /* 클라이언트가 서버에게 드랍된 아이템의 상태를 설정하라고 알리는 함수. */
@@ -1469,7 +1469,7 @@ void APro4Character::SetPlayerArmor(AAArmor* Armor)
 		NoticePlayerArmorOnServer(Armor, Armor->GetItemName());
 	}
 
-	Server_DestroyItem(Armor);
+	Server_DestroyActor(Armor);
 }
 
 /* Client가 드랍한 방어구 아이템을 스폰해달라고 서버에게 알리는 함수 */
@@ -1579,7 +1579,7 @@ void APro4Character::AddPlayerGrenade(AAGrenade* _Grenade)
 		NecGameInstance->PlayerMenu->AddItemToGrenade(_Grenade->GetItemName(), PlayerGrenade.FlashNum);
 	}
 
-	Server_DestroyItem(_Grenade);
+	Server_DestroyActor(_Grenade);
 }
 
 /* 탄약을 획득했을 때 실행되는 함수 */
@@ -1604,7 +1604,7 @@ void APro4Character::SetPlayerRound(AAmmo* _Ammo)
 		}
 	}
 
-	Server_DestroyItem(_Ammo);
+	Server_DestroyActor(_Ammo);
 }
 #pragma endregion
 
@@ -1732,7 +1732,7 @@ void APro4Character::PlayerDead_Implementation()
 		ThisPlayerController->GetTotalRanking()
 	);
 	
-	Server_DestroyItem(this);
+	Server_DestroyActor(this);
 }
 
 // 플레이어 체력이 닳았을 때

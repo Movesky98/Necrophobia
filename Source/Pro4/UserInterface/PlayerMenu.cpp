@@ -371,6 +371,8 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 			InventoryItem->SetUp("Recovery", Recovery->GetItemName(), Recovery->GetItemNum(), Recovery->GetIconPath());
 			InventoryBox->AddChildToWrapBox(InventoryItem);
 		}
+
+		DestroyItem(Recovery);
 	}
 		break;
 	case AABaseItem::BaseItemType::Ammo:
@@ -406,6 +408,8 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 			InventoryItem->SetUp("Vaccine", Vaccine->GetItemName(), Vaccine->GetItemNum(), Vaccine->GetIconPath());
 			InventoryBox->AddChildToWrapBox(InventoryItem);
 		}
+
+		DestroyItem(Vaccine);
 	}
 		break;
 	default:
@@ -589,4 +593,9 @@ void UPlayerMenu::RecoverPlayerFlashbang()
 
 		GetWorld()->GetTimerManager().ClearTimer(FlashBangTimer);
 	}
+}
+
+void UPlayerMenu::DestroyItem_Implementation(AActor* DestroyActor)
+{
+	DestroyActor->Destroy();
 }

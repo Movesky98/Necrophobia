@@ -72,6 +72,9 @@ private:
 	UFUNCTION(Client, Reliable)
 	void Client_SetTimeText(uint16 min_, uint16 sec_);
 
+	UFUNCTION(Server, Reliable)
+	void DestroyItem(AActor* DestroyActor);
+
 	/* 인게임 -> 메인메뉴로 나가는 함수 */
 	UFUNCTION()
 	void ExitInGame();

@@ -5,6 +5,8 @@
 #include "Pro4Character.h"
 
 #include "Particles/ParticleSystemComponent.h"
+#include "Components/AudioComponent.h"
+#include "Sound/SoundCue.h"
 #include "Net/UnrealNetwork.h"
 #include "DrawDebugHelpers.h"
 
@@ -20,6 +22,7 @@ AHeli_AH64D::AHeli_AH64D()
 	Damaged = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Damaged"));
 	DamagedSmoke = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("DamagedSmoke"));
 	EscapeCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("EscapeCollision"));
+	Heli = CreateDefaultSubobject<UAudioComponent>(TEXT("Heli"));
 
 	RootComponent = SkeletalMesh;
 	MachineGunFX->SetupAttachment(SkeletalMesh);
@@ -35,16 +38,14 @@ AHeli_AH64D::AHeli_AH64D()
 	EscapeCollision->SetIsReplicated(true);
 	EscapeCollision->SetCollisionProfileName(TEXT("Escape"));
 
-	// 블루프린트로 구현되어있어서 고놈을 수정해야합니다.
-	/*static ConstructorHelpers::FObjectFinder<USoundCue> HeliSound(TEXT("/Game/StarterContent/Audio/HeliSound.HeliSound"));
-	if (HeliSound.Succeeded())
-	{
-		Helis = HeliSound.Object;
-	}
-
-	Heli = CreateDefaultSubobject<UAudioComponent>(TEXT("Heli"));
 	Heli->bAutoActivate = false;
-	Heli->SetupAttachment(SkeletalMesh);*/
+	Heli->SetupAttachment(SkeletalMesh);
+
+	static ConstructorHelpers::FObjectFinder<USoundCue> SC_HeliSound(TEXT("/Game/StarterContent/Audio/HeliSound"));
+	if (SC_HeliSound.Succeeded())
+	{
+		HeliSound = SC_HeliSound.Object;
+	}
 
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_Heli(TEXT("/Game/VigilanteContent/Vehicles/West_Heli_AH64D/SK_West_Heli_AH64D"));
 	if (SK_Heli.Succeeded())
@@ -88,7 +89,7 @@ void AHeli_AH64D::CallEscape()
 void AHeli_AH64D::BeginPlay()
 {
 	Super::BeginPlay();
-	Heli->SetSound(Cast<USoundBase>(Helis));
+	Heli->SetSound(Cast<USoundBase>(HeliSound));
 	Heli->Play();
 	CallEscape();
 	EscapeCollision->OnComponentBeginOverlap.AddDynamic(this, &AHeli_AH64D::CheckEscapeCollision);

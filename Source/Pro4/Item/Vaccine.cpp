@@ -10,11 +10,13 @@ AVaccine::AVaccine()
 {
 	ItemType = BaseItemType::Vaccine;
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Cube(TEXT("/Game/Military/Demo_content/Geometry/Meshes/1M_Cube"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Cube(TEXT("/Game/DownloadAssets/First_Aid_Health_Kit/Meshes/SM_EnergySyringe1_01"));
 	if (SM_Cube.Succeeded())
 	{
 		BoxMesh->SetStaticMesh(SM_Cube.Object);
 	}
+
+	BoxMesh->SetRelativeScale3D(FVector(4.0f));
 }
 
 /* 아이템이 월드에 생성되었을 때, 실행되는 함수 */
