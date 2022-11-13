@@ -50,6 +50,13 @@ UPro4AnimInstance::UPro4AnimInstance()
 	{
 		beAttackedMontage = BEATTACKED_MONTAGE.Object;
 	}
+
+	// 捧么 局聪皋捞记 根鸥林
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> THROW_MONTAGE(TEXT("/Game/Character_Animation/Mannequin/Animations/Throw_Montage.Throw_Montage"));
+	if (THROW_MONTAGE.Succeeded())
+	{
+		ThrowMontage = THROW_MONTAGE.Object;
+	}
 }
 
 void UPro4AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -70,6 +77,7 @@ void UPro4AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			IsCrouch = Character->GetMovementComponent()->IsCrouching();
 			IsRun = Character->IsRunning();
 			IsZoom = Character->IsZooming();
+			IsThrow = Character->ATWThrow();
 			Equipflag = Character->IsEquip();
 			Moveflag = Character->MoveMode();
 			CharacterRotationPitch = Character->CharacterPitch();
@@ -108,6 +116,12 @@ void UPro4AnimInstance::PlaybeAttackedMontage()
 	Montage_Play(beAttackedMontage, 1.0f);
 }
 
+// 捧么 根鸥林 角青
+void UPro4AnimInstance::PlayThrowMontage()
+{
+	Montage_Play(ThrowMontage, 1.0f);
+}
+
 // 根鸥林 锅龋 捞悼
 void UPro4AnimInstance::JumpToEquipMontageSection(int32 NewSection)
 {
@@ -139,4 +153,14 @@ UAnimMontage* UPro4AnimInstance::GetAttackMontage()
 UAnimMontage* UPro4AnimInstance::GetPunchMontage()
 {
 	return PunchMontage;
+}
+
+UAnimMontage* UPro4AnimInstance::GetbeAttackedMontage()
+{
+	return beAttackedMontage;
+}
+
+UAnimMontage* UPro4AnimInstance::GetThrowMontage()
+{
+	return ThrowMontage;
 }

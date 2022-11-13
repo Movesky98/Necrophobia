@@ -210,6 +210,11 @@ public:
 			return false;
 	}
 
+	bool ATWThrow()
+	{
+		return IsThrow;
+	}
+
 	int32 IsEquip()
 	{
 		return Equipflag;
@@ -432,6 +437,7 @@ private:
 	bool IsPossibleEscape;
 	bool CanZoom;
 	bool PlayerRun;
+	bool IsThrow;
 
 	int32 Updownflag;
 	int32 LeftRightflag;
@@ -470,6 +476,9 @@ private:
 
 	UFUNCTION()
 		void OnbeAttackedMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	UFUNCTION()
+		void OnThrowMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	/* 애니메이션 몽타주 종료시 콜백되는 함수 */
 
 	/* 애니메이션 몽타주 작동중인지 체크하기 위한 변수 */
@@ -487,6 +496,9 @@ private:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = beAttacked, Meta = (AllowPrivateAccess = true))
 		bool IsbeAttacking;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = beAttacked, Meta = (AllowPrivateAccess = true))
+		bool IsThrowing;
 	/* 애니메이션 몽타주 작동중인지 체크하기 위한 변수 */
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
