@@ -329,8 +329,14 @@ void APro4Character::Tick(float DeltaTime)
 		SpringArm->SetRelativeRotation(FRotator::ZeroRotator);
 	}
 	
-	
-	CharacterRotationPitch = GetControlRotation().Pitch;
+	if (!IsDrinking)
+	{
+		CharacterRotationPitch = GetControlRotation().Pitch;
+	}
+	else
+	{
+		CharacterRotationPitch = 0.0f;
+	}
 	if (IsZoom)
 	{
 		CharacterArmControl= GetControlRotation().Pitch;
