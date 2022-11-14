@@ -23,6 +23,7 @@ public:
 	UAnimMontage* GetPunchMontage();
 	UAnimMontage* GetbeAttackedMontage();
 	UAnimMontage* GetThrowMontage();
+	UAnimMontage* GetDrinkMontage();
 
 	void PlayEquipMontage();
 	void PlayReloadMontage();
@@ -50,6 +51,9 @@ public:
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = beAttacked, Meta = (AllowPrivateAccess = true))
 		UAnimMontage* ThrowMontage;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = beAttacked, Meta = (AllowPrivateAccess = true))
+		UAnimMontage* DrinkMontage;
 private:
 	// 좀비 애니메이션 컨트롤을 위한 변수들
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Pawn, Meta = (AllowPrivateAccess = true))

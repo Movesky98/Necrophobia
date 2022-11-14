@@ -177,6 +177,7 @@ public:
 	void SetIsPossibleEscapeOnServer(bool Escape);
 
 	/* 다른 클래스에서 캐릭터 상태 확인과 수정을 위한 함수들 */
+	void Drink();
 
 	bool GetIsDead()
 	{
@@ -442,6 +443,7 @@ private:
 	bool CanZoom;
 	bool PlayerRun;
 	bool IsThrow;
+	bool IsDrink;
 
 	int32 Updownflag;
 	int32 LeftRightflag;
@@ -483,6 +485,9 @@ private:
 
 	UFUNCTION()
 		void OnThrowMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	UFUNCTION()
+		void OnDrinkMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	/* 애니메이션 몽타주 종료시 콜백되는 함수 */
 
 	/* 애니메이션 몽타주 작동중인지 체크하기 위한 변수 */
@@ -503,6 +508,9 @@ private:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = beAttacked, Meta = (AllowPrivateAccess = true))
 		bool IsThrowing;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = beAttacked, Meta = (AllowPrivateAccess = true))
+		bool IsDrinking;
 	/* 애니메이션 몽타주 작동중인지 체크하기 위한 변수 */
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))

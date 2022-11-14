@@ -86,7 +86,7 @@ void UInventorySlot::UseInventoryItem()
 	}
 	else if (GetItemType() == "Recovery")
 	{
-		PlayerCharacter->RecoveryEncroach();
+		PlayerCharacter->Drink();
 	}
 }
 

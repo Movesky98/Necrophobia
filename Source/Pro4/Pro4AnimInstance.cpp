@@ -57,6 +57,13 @@ UPro4AnimInstance::UPro4AnimInstance()
 	{
 		ThrowMontage = THROW_MONTAGE.Object;
 	}
+
+	// 드링크 애니메이션 몽타주
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> DRINK_MONTAGE(TEXT("/Game/Character_Animation/Mannequin/Animations/Drink_Montage.Drink_Montage"));
+	if (DRINK_MONTAGE.Succeeded())
+	{
+		DrinkMontage = DRINK_MONTAGE.Object;
+	}
 }
 
 void UPro4AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -162,4 +169,9 @@ UAnimMontage* UPro4AnimInstance::GetbeAttackedMontage()
 UAnimMontage* UPro4AnimInstance::GetThrowMontage()
 {
 	return ThrowMontage;
+}
+
+UAnimMontage* UPro4AnimInstance::GetDrinkMontage()
+{
+	return DrinkMontage;
 }
