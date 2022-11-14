@@ -19,21 +19,27 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void CallEscape();
 
+	/* 메인 로터의 스피드를 설정하는 함수 (블루프린트에서 구현됨.) */
 	UFUNCTION(BlueprintImplementableEvent)
 	void SetMainRotorSpeed(float MainRotorSpeed);
 
+	/* 메인 로터의 플랩 각도를 설정하는 함수 (블루프린트에서 구현됨.) */
 	UFUNCTION(BlueprintImplementableEvent)
 	void SetMainRotorFlapsAngle(float MainRotorFlapsAngle);
 
+	/* 헬리콥터 꼬리쪽 로터의 스피드를 설정하는 함수 (블루프린트에서 구현됨.) */
 	UFUNCTION(BlueprintImplementableEvent)
 	void SetTailRotorSpeed(float TailRotorSpeed);
 
+	/*헬리콥터 꼬리쪽 플랩 각도를 설정하는 함수 (블루프린트에서 구현됨.) */
 	UFUNCTION(BlueprintImplementableEvent)
 	void SetTailRotorFlapsAngle(float TailRotorFlapsAngle);
 
+	/* 헬리콥터 문의 각도를 설정하는 함수 (블루프린트에서 구현됨.) */
 	UFUNCTION(BlueprintImplementableEvent)
 	void SetDoorsAngle(float DoorsAngle);
 
+	/* 탈출용 헬러콥터가 생성되었을 때,  (블루프린트에서 구현됨.) */
 	UFUNCTION(BlueprintImplementableEvent)
 	void SetHelicopterSetting(FVector TargetLocation, FVector SpawnLocation, FRotator TargetRotation);
 

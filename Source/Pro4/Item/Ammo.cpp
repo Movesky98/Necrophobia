@@ -6,6 +6,7 @@
 #include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"
 
+/* »ý¼ºÀÚ */
 AAmmo::AAmmo()
 {
 	ItemType = BaseItemType::Ammo;

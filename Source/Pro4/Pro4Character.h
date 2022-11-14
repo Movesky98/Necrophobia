@@ -372,7 +372,7 @@ private:
 	void NotifyActorEndOverlap(AActor* Act) override;
 
 	UPROPERTY(EditAnywhere)
-	UBlueprint* BP_Helicopter;
+	TSubclassOf<class AHeli_AH64D> BP_Helicopter;
 
 	// 주요 클래스
 	APro4PlayerController* PlayerController;
@@ -510,9 +510,6 @@ private:
 
 	// Character Role Test.
 	FString GetEnumRole(ENetRole CharacterRole);
-
-	// Trace Sector
-	void CheckFrontActorUsingTrace();
 
 	/* Spawn Section */
 	UFUNCTION(Server, Reliable, WithValidation)

@@ -195,6 +195,7 @@ void AAGrenade::SetGrenadeExplosion()
 	float ParticleTime = 0.0f;
 	SetStateToExplosion();
 
+	/* 투척 무기가 수류탄일 경우*/
 	if (ItemName == "Grenade")
 	{
 		ParticleTime = 1.5f;
@@ -208,13 +209,12 @@ void AAGrenade::SetGrenadeExplosion()
 
 		DrawDebugSphere(GetWorld(), ExplosionLocation, GrenadeColSphere.GetSphereRadius(), 30, FColor::Green, true, 5.0f);
 
+		/* 일정 거리내의 구를 그려내어 그 안에 있는 오브젝트들을 받아옴. */
 		bool bIsHit = GetWorld()->SweepMultiByProfile(OutHits, ExplosionLocation, ExplosionLocation, FQuat::Identity, ProfileName, GrenadeColSphere);
 
+		/* 맞은 오브젝트가 있다면 */
 		if (bIsHit)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Silver, TEXT("Grenade is Expluded!"));
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Silver, FString::FromInt(OutHits.Num()));
-
 			for (auto& Hit : OutHits)
 			{
 				if (Hit.GetActor()->ActorHasTag("Player"))
@@ -234,11 +234,11 @@ void AAGrenade::SetGrenadeExplosion()
 			}
 		}
 	}
-	else if (ItemName == "Smoke")
+	else if (ItemName == "Smoke")	// 투척 무기가 연막탄이라면
 	{
 		ParticleTime = 15.0f;
 	}
-	else if (ItemName == "Flash")
+	else if (ItemName == "Flash")	// 투척 무기가 섬광탄이라면
 	{
 		ParticleTime = 2.0f;
 		TArray<FHitResult> OutHits;
@@ -250,8 +250,10 @@ void AAGrenade::SetGrenadeExplosion()
 
 		DrawDebugSphere(GetWorld(), ExplosionLocation, GrenadeColSphere.GetSphereRadius(), 30, FColor::Green, true, 5.0f);
 
+		/* 일정 거리내의 구를 그려내어 그 안에 있는 오브젝트들을 받아옴. */
 		bool bIsHit = GetWorld()->SweepMultiByProfile(OutHits, ExplosionLocation, ExplosionLocation, FQuat::Identity, ProfileName, GrenadeColSphere);
 
+		/* 맞은 오브젝트가 있다면 */
 		if (bIsHit)
 		{
 			for (auto& Hit : OutHits)
@@ -279,6 +281,7 @@ void AAGrenade::GrenadeExplosion()
 	Destroy();
 }
 
+/* 서버가 던진 투척 무기를 월드내에 소환했을 때, 해당 투척무기 정보를 클라이언트에게 뿌려주는 함수 */
 void AAGrenade::ThrowGrenade_Implementation(const FString& GrenadeType, UStaticMesh* GrenadeMesh)
 {
 	if (WBP_NameWidget == nullptr)
@@ -320,12 +323,14 @@ void AAGrenade::SetSimulatePhysics(const FVector& ThrowDirection)
 	GetWorldTimerManager().SetTimer(SetExplosionTimer, this, &AAGrenade::SetGrenadeExplosion, 5.0f);
 }
 
+/* 투척무기 사운드를 재생하는 함수 */
 void AAGrenade::PlayGrenadeSound_Implementation()
 {
 	AC->SetSound(Cast<USoundBase>(CurrentSound));
 	AC->Play();
 }
 
+/* 수류탄이 폭발하기 위해 필요없는 기능들을 끄고 파티클을 재생하는 함수 */
 void AAGrenade::SetStateToExplosion_Implementation()
 {
 	BoxMesh->SetVisibility(false);

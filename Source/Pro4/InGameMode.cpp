@@ -119,7 +119,6 @@ void AInGameMode::PostLogin(APlayerController* NewPlayer)
         GetWorldTimerManager().SetTimer(GameStartTimer, this, &AInGameMode::CountingTheSeconds, 1.0f, true);
         isGameStart = true;
     }
-
 }
 
 /* 플레이어가 세션에서 나갔을 때 실행되는 함수 */
@@ -171,7 +170,6 @@ void AInGameMode::StartGame()
 
         ItemSpawner->SpawnVaccine();
     }
-
 }
 
 /* 충분한 인원이 모이고 시간초를 세는 함수 */

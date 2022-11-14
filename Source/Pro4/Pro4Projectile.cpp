@@ -33,6 +33,7 @@ APro4Projectile::APro4Projectile()
 
 	ProjectileParticle->bAutoActivate = false;
 
+	/* 필요한 에셋들을 불러옴 */
 	static ConstructorHelpers::FObjectFinder<UStaticMesh>SK_PROJECTILE(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/Ammunition/SM_Shell_556x45"));
 	if (SK_PROJECTILE.Succeeded())
 	{
