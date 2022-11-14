@@ -377,6 +377,7 @@ void APro4Character::PostInitializeComponents()
 	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnAttackMontageEnded);
 	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnbeAttackedMontageEnded);
 	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnThrowMontageEnded);
+	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnDrinkMontageEnded);
 }
 
 // 장착 몽타주 종료시 콜백
@@ -417,6 +418,17 @@ void APro4Character::OnThrowMontageEnded(UAnimMontage* Montage, bool bInterrupte
 	if (CurrentWeaponMode == WeaponMode::ATW)
 	{
 		Throw();
+	}
+}
+
+// 드링크 몽타주 종료시 콜백
+void APro4Character::OnDrinkMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	IsMontagePlay = false;
+	IsDrinking = false;
+	if (IsDrink)
+	{
+		RecoveryEncroach();
 	}
 }
 
@@ -861,7 +873,6 @@ void APro4Character::Reload()
 			PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 2);
 			IsMontagePlay = true;
 			IsReloading = true;
-
 
 			// 보조무기의 탄약 수 처리
 			if (SubWeapon.TotalRound + SubWeapon.CurrentRound <= SubWeapon.Magazine)
@@ -1974,6 +1985,14 @@ void APro4Character::NotifyActorEndOverlap(AActor* Act)
 	}
 }
 
+void APro4Character::Drink()
+{
+	PlayMontageOnServer(Pro4Anim->GetDrinkMontage(), 1);
+	IsMontagePlay = true;
+	IsDrinking = true;
+	IsDrink = true;
+}
+
 /* 잠식 치료제를 사용했을 때, 플레이어의 잠식도를 치료하는 함수 */
 void APro4Character::RecoveryEncroach_Implementation()
 {
@@ -1993,6 +2012,7 @@ void APro4Character::RecoveryEncroach_Implementation()
 		GetWorldTimerManager().ClearTimer(HealthRecoveryTimer);
 		GetWorldTimerManager().SetTimer(HealthRecoveryTimer, this, &APro4Character::RecoverPlayerHealthOnServer, 1.0f, true, 5.0f);
 	}
+	IsDrink = false;
 }
 
 /* 플레이어의 잠식 타이머를 실행하는 함수, 일정 시간이 지나면 플레이어의 잠식도를 올림. */
@@ -2100,4 +2120,5 @@ void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(APro4Character, Equipflag);
 	DOREPLIFETIME(APro4Character, Moveflag);
 	DOREPLIFETIME(APro4Character, IsDead);
+	DOREPLIFETIME(APro4Character, IsDrink);
 }
