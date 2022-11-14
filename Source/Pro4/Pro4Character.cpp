@@ -839,16 +839,9 @@ void APro4Character::Reload()
 		{
 		// 주무기 장전
 		case WeaponMode::Main:
-			if (CurrentCharacterState == CharacterState::Standing)
-			{
-				PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 1);
-				IsMontagePlay = true;
-				IsReloading = true;
-			}
-			else if (CurrentCharacterState == CharacterState::Crouching)
-			{
-				UE_LOG(Pro4, Log, TEXT("Reload."));
-			}
+			PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 1);
+			IsMontagePlay = true;
+			IsReloading = true;
 
 			// 주무기의 탄약 수 처리
 			if (MainWeapon.TotalRound + MainWeapon.CurrentRound <= MainWeapon.Magazine)
@@ -865,16 +858,9 @@ void APro4Character::Reload()
 			break;
 		// 보조무기 장전
 		case WeaponMode::Sub:
-			if (CurrentCharacterState == CharacterState::Standing)
-			{
-				PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 2);
-				IsMontagePlay = true;
-				IsReloading = true;
-			}
-			else
-			{
-				UE_LOG(Pro4, Log, TEXT("Reload."));
-			}
+			PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 2);
+			IsMontagePlay = true;
+			IsReloading = true;
 
 
 			// 보조무기의 탄약 수 처리
