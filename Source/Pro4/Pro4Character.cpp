@@ -644,7 +644,6 @@ void APro4Character::Jump()
 
 		CanZoom = false;
 	}
-
 }
 
 // 앉기
@@ -839,16 +838,9 @@ void APro4Character::Reload()
 		{
 		// 주무기 장전
 		case WeaponMode::Main:
-			if (CurrentCharacterState == CharacterState::Standing)
-			{
-				PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 1);
-				IsMontagePlay = true;
-				IsReloading = true;
-			}
-			else if (CurrentCharacterState == CharacterState::Crouching)
-			{
-				UE_LOG(Pro4, Log, TEXT("Reload."));
-			}
+			PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 1);
+			IsMontagePlay = true;
+			IsReloading = true;
 
 			// 주무기의 탄약 수 처리
 			if (MainWeapon.TotalRound + MainWeapon.CurrentRound <= MainWeapon.Magazine)
@@ -865,17 +857,9 @@ void APro4Character::Reload()
 			break;
 		// 보조무기 장전
 		case WeaponMode::Sub:
-			if (CurrentCharacterState == CharacterState::Standing)
-			{
-				PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 2);
-				IsMontagePlay = true;
-				IsReloading = true;
-			}
-			else
-			{
-				UE_LOG(Pro4, Log, TEXT("Reload."));
-			}
-
+			PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 2);
+			IsMontagePlay = true;
+			IsReloading = true;
 
 			// 보조무기의 탄약 수 처리
 			if (SubWeapon.TotalRound + SubWeapon.CurrentRound <= SubWeapon.Magazine)
@@ -1007,19 +991,6 @@ void APro4Character::StartFire()
 // 마우스에서 때면 실행
 void APro4Character::StopFire()
 {
-	/*
-	IsThrow = false;
-	PlayMontageOnServer(Pro4Anim->GetThrowMontage(), 2);
-	IsMontagePlay = true;
-	IsThrowing = true;
-	if (CurrentWeaponMode == WeaponMode::ATW)
-	{
-		IsThrow = false;
-		PlayMontageOnServer(Pro4Anim->GetThrowMontage(), 2);
-		IsMontagePlay = true;
-		IsThrowing = true;	
-	}
-	*/
 	if (FireMod)
 	{
 		FireA->Stop();
@@ -1284,7 +1255,6 @@ void APro4Character::ChangePlayerWidget()
 
 	NecGameInstance->PlayerMenu->UpdatePlayerWeaponAmmo(MainWeaponRounds, SubWeaponRounds);
 	NecGameInstance->PlayerMenu->ChangePlayerWidget();
-
 }
 
 void APro4Character::Server_DestroyActor_Implementation(AActor* DestroyActor)
@@ -1792,6 +1762,7 @@ void APro4Character::GetDamaged(float Damage, AActor* AttackActor)
 	}
 }
 
+// 플레이어 킬을 기록하기 위한 함수
 void APro4Character::RecordPlayerKill_Implementation(AActor* AttackActor)
 {
 	if (AttackActor->ActorHasTag("Player"))
@@ -1826,6 +1797,7 @@ void APro4Character::RecordPlayerKill_Implementation(AActor* AttackActor)
 
 #pragma region ZombieSpawner
 
+// 좀비 스폰지역 입장시 스포너를 활성
 void APro4Character::ZombieSpawnerBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (OtherActor->ActorHasTag("ZombieSpawner"))
@@ -1848,6 +1820,7 @@ void APro4Character::ZombieSpawnerBeginOverlap(UPrimitiveComponent* OverlappedCo
 	DrawDebugBox(GetWorld(), GetActorLocation(), DetectExtent, FColor::Green, false, 5.0f, 0, 10.0f);
 }
 
+// 좀비 스폰지역 입장시 스포너를 비활성
 void APro4Character::ZombieSpawnerEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	if (OtherActor->ActorHasTag("ZombieSpawner"))
@@ -1862,7 +1835,7 @@ void APro4Character::ZombieSpawnerEndOverlap(UPrimitiveComponent* OverlappedComp
 	DrawDebugBox(GetWorld(), GetActorLocation(), DetectExtent, FColor::Red, false, 5.0f, 0, 10.0f);
 }
 
-
+// 좀비스포너 활성화
 void APro4Character::DetectZombieSpawner(bool isNight)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Detect Zombie Spawner"));
@@ -1872,6 +1845,7 @@ void APro4Character::DetectZombieSpawner(bool isNight)
 #pragma endregion
 
 #pragma region EquipPlayerWeapon
+// 투척무기 장착
 void APro4Character::EquipGrenade()
 {
 	CurrentWeaponMode = WeaponMode::ATW;
@@ -1942,12 +1916,14 @@ void APro4Character::EquipGrenade()
 	}
 }
 
+// 무기 장착 - 서버
 void APro4Character::EquipPlayerWeaponOnServer_Implementation(const WeaponMode& _CurWeaponMode, UStaticMesh* GrenadeMesh = nullptr)
 {
 	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("EquipPlayerWeaponOnServer"));
 	EquipPlayerWeaponOnClient(_CurWeaponMode, GrenadeMesh);
 }
 
+// 무기 장착 - 클라이언트
 void APro4Character::EquipPlayerWeaponOnClient_Implementation(const WeaponMode& _CurWeaponMode, UStaticMesh* GrenadeMesh = nullptr)
 {
 	switch (_CurWeaponMode)
@@ -2055,7 +2031,6 @@ void APro4Character::PlayerEscape()
 	APro4PlayerController* NecrophobiaPlayerController = Cast<APro4PlayerController>(GetController());
 
 	NecrophobiaPlayerController->AvaialbleHelicopterSpawnOnServer();
-
 }
 #pragma endregion
 
@@ -2082,6 +2057,7 @@ void APro4Character::RecoveryEncroach_Implementation()
 	}
 }
 
+/* 잠식도 증가 타이머를 시작하는 함수 */
 void APro4Character::StartEncroachTimer()
 {
 	if (IsEncroach && GetWorld()->IsServer())

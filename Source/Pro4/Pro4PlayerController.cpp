@@ -75,6 +75,7 @@ void APro4PlayerController::UpdatePlayerTimeState()
 	}
 }
 
+/* 헬리콥터를 스폰하는 함수 */
 bool APro4PlayerController::SetHelicopterSpawn()
 {
 	if (InGameState->GetIsHelicopterSpawn())
@@ -88,11 +89,13 @@ bool APro4PlayerController::SetHelicopterSpawn()
 	}
 }
 
+/* 헬리콥터 스폰을 서버에 요청하는 함수 */
 void APro4PlayerController::AvaialbleHelicopterSpawnOnServer_Implementation()
 {
 	InGameState->SetIsHelicopterSpawn(false);
 }
 
+/* 플레이어 게임 순위 설정 */
 uint16 APro4PlayerController::SetPlayerRankning()
 {
 	uint16 ThisPlayerRanking = InGameState->GetSurvivePlayer();
@@ -102,11 +105,13 @@ uint16 APro4PlayerController::SetPlayerRankning()
 	return ThisPlayerRanking;
 }
 
+/* 플레이어 게임 순위 */
 uint16 APro4PlayerController::GetTotalRanking()
 {
 	return InGameState->GetTotalPlayer();
 }
 
+/* 플레이어 수를 갱신하는 함수 */
 void APro4PlayerController::DiscountSurvivePlayer_Implementation()
 {
 	InGameState->SetRanking();

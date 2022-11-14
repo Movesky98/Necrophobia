@@ -125,7 +125,6 @@ void UPro4AnimInstance::PlayThrowMontage()
 // 몽타주 번호 이동
 void UPro4AnimInstance::JumpToEquipMontageSection(int32 NewSection)
 {
-	UE_LOG(Pro4, Log, TEXT("section1."));
 	Montage_JumpToSection(GetEquipMontageSectionName(NewSection), EquipMontage);
 }
 
