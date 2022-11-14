@@ -31,7 +31,7 @@ void ARecovery::BeginPlay()
 	WBP_NameWidget = Cast<UItemNameWidget>(NameWidget->GetUserWidgetObject());
 	if (WBP_NameWidget != nullptr)
 	{
-		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/SMG11_Icon_500x500";
+		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/Medicine_Icon_500x500";
 		ItemName = "EncroachMedicine";
 		ItemNum = 1;
 		WBP_NameWidget->SetItemName(ItemName);

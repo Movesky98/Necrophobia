@@ -32,7 +32,7 @@ AInGameMode::AInGameMode()
     {
         PlayerControllerClass = APro4PlayerController::StaticClass();
     }
-
+    
     DefaultPawnClass = APro4Character::StaticClass();
     UE_LOG(Pro4, Warning, TEXT("Set PawnClass : APro4Character"));
     GameStateClass = AInGameState::StaticClass();

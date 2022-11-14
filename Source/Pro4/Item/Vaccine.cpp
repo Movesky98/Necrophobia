@@ -29,7 +29,7 @@ void AVaccine::BeginPlay()
 	WBP_NameWidget = Cast<UItemNameWidget>(NameWidget->GetUserWidgetObject());
 	if (WBP_NameWidget != nullptr)
 	{
-		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/AR4_Icon_500x500";
+		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/Vaccine_Icon_500x500";
 		ItemName = "Vaccine";
 		ItemNum = 1;
 		WBP_NameWidget->SetItemName(ItemName);
