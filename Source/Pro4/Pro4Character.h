@@ -439,6 +439,7 @@ private:
 	bool CanZoom;
 	bool PlayerRun;
 	bool IsThrow;
+	UPROPERTY(Replicated)
 	bool IsDrink;
 
 	int32 Updownflag;
