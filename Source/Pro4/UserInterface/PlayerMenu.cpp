@@ -376,7 +376,7 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 			InventoryBox->AddChildToWrapBox(InventoryItem);
 		}
 
-		DestroyItem(Recovery);
+		MyPawn->Server_DestroyActor(Recovery);
 	}
 		break;
 	case AABaseItem::BaseItemType::Ammo:
@@ -412,7 +412,7 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 			InventoryBox->AddChildToWrapBox(InventoryItem);
 		}
 
-		DestroyItem(Vaccine);
+		MyPawn->Server_DestroyActor(Vaccine);
 	}
 		break;
 	default:

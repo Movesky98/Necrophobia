@@ -299,6 +299,10 @@ public:
 	UFUNCTION(Server, Reliable)
 	void CallHelicopterToEscapeOnServer();
 
+	/* 아이템 획득 시, 해당 아이템을 공통적으로 제거하는 함수 */
+	UFUNCTION(Server, Reliable)
+	void Server_DestroyActor(AActor* DestroyActor);
+
 #pragma region PlayerState
 public:
 	/* 캐릭터 체력, 방어력 */
@@ -546,10 +550,6 @@ private:
 	UFUNCTION(NetMulticast, Reliable)
 	void NoticePlayerWeaponOnClient(AAWeapon* _Weapon);
 	/* Spawn Weapon Section */
-
-	/* 아이템 획득 시, 해당 아이템을 공통적으로 제거하는 함수 */
-	UFUNCTION(Server, Reliable)
-	void Server_DestroyActor(AActor* DestroyActor);
 
 	/* Detect Zombie Spawner Sector */
 	UPROPERTY(VisibleAnywhere, Category = DetectZSpawner)
