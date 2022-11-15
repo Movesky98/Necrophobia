@@ -87,4 +87,7 @@ private:
 		float CharacterArmControl;
 
 	FName GetEquipMontageSectionName(int32 Section);
+
+	UFUNCTION()
+	void AnimNotify_ThrowNotify();
 };

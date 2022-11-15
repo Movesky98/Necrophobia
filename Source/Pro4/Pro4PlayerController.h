@@ -22,14 +22,17 @@ public:
 
 	bool SetHelicopterSpawn();
 
-	uint16 SetPlayerRankning(); 
+	uint16 SetPlayerRankning(bool isEscape); 
 	uint16 GetTotalRanking();
 	
 	UFUNCTION(Server, Reliable)
-	void DiscountSurvivePlayer();
+	void SubtractSurvivePlayerOnServer();
 
 	UFUNCTION(Server, Reliable)
-	void AvaialbleHelicopterSpawnOnServer();
+	void AddEscapePlayerOnServer();
+
+	UFUNCTION(Server, Reliable)
+	void RequestSpawnHelicopterOnServer();
 
 protected:
 

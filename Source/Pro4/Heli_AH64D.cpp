@@ -141,7 +141,11 @@ void AHeli_AH64D::CheckEscapeCollision(UPrimitiveComponent* OverlappedComp, AAct
 	if (OtherActor->ActorHasTag("Player"))
 	{
 		APro4Character* PlayerChracter = Cast<APro4Character>(OtherActor);
-		PlayerChracter->PlayerEscape();
+
+		if (PlayerChracter->GetIsPossibleEscape())
+		{
+			PlayerChracter->PlayerEscape();
+		}
 	}
 }
 

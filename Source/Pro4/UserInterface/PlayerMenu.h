@@ -34,6 +34,7 @@ public:
 
 	/* 플레이어 무기 습득시, ShortCut에서 보여주는 함수 */
 	void ActiveWeaponShortcut(uint16 SlotNumber);
+	void ActiveGrenadeShortcutImage(const FString& IconPath);
 
 	/* 방어구 획득 시, 인벤토리 이미지에서 보여주는 함수 */
 	void ActiveArmorImage(bool IsHelmet);

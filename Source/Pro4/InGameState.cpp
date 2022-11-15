@@ -209,20 +209,23 @@ void AInGameState::SpawnPlayerToStartLocation(TArray<FVector> SpawnArray)
 }
 
 /* 현재 남은 인원수 (== 죽은 플레이어의 순위로 표현 가능)를 세팅하는 함수 */
-void AInGameState::SetRanking()
+void AInGameState::SubtractSurvivePlayer()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("Survive Player : %d"), SurvivePlayer));
 	if (SurvivePlayer <= 1)
-	{
 		return;
-	}
-	else
-	{
-		SurvivePlayer--;
-	}
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, FString::Printf(TEXT("Changed Survive Player : %d"), SurvivePlayer));
+
+	SurvivePlayer--;
 }
 
+/* 탈출한 플레이어가 있을 경우, 순위 표시를 위해 탈출 플레이어 수를 늘리는 함수 */
+void AInGameState::AddEscapePlayer()
+{
+	if (EscapePlayer >= TotalPlayer || SurvivePlayer <= 1)
+		return;
+
+	EscapePlayer++;
+	SurvivePlayer--;
+}
 
 /* 서버 <-> 클라이언트 간에 필요한 정보를 복사하는 것을 설정하는 함수 */
 void AInGameState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
@@ -231,6 +234,7 @@ void AInGameState::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLi
 
 	DOREPLIFETIME(AInGameState, SurvivePlayer);
 	DOREPLIFETIME(AInGameState, TotalPlayer);
+	DOREPLIFETIME(AInGameState, EscapePlayer);
 	DOREPLIFETIME(AInGameState, isBossSpawn);
 	DOREPLIFETIME(AInGameState, isTimeToSpawnBoss);
 	DOREPLIFETIME(AInGameState, isNight);

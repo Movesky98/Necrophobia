@@ -39,7 +39,18 @@ public:
 	bool GetIsStateChanged();
 	void SetIsStateChanged(bool StateChanged_);
 
-	void SetRanking();
+	void SubtractSurvivePlayer();
+	void AddEscapePlayer();
+
+	uint16 GetEscapePlayer()
+	{
+		return EscapePlayer;
+	}
+
+	void SetEscapePlayer(uint16 CurrentEscapePlayer)
+	{
+		EscapePlayer = CurrentEscapePlayer;
+	}
 
 	uint16 GetSurvivePlayer()
 	{
@@ -130,7 +141,10 @@ private:
 	
 	UPROPERTY(Replicated)
 	uint16 TotalPlayer;
-	
+
+	UPROPERTY(Replicated)
+	uint16 EscapePlayer;
+
 	UPROPERTY(Replicated)
 	bool isHelicopterSpawn = false;
 

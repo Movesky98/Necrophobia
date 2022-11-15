@@ -113,7 +113,7 @@ void AInGameMode::PostLogin(APlayerController* NewPlayer)
     ++NumberOfPlayers;
     UE_LOG(Pro4, Warning, TEXT("Reached Player"));
 
-    if (NumberOfPlayers >= 3 && !isGameStart)
+    if (NumberOfPlayers >= 2 && !isGameStart)
     {
         UE_LOG(Pro4, Warning, TEXT("Start Timer..."));
         GetWorldTimerManager().SetTimer(GameStartTimer, this, &AInGameMode::CountingTheSeconds, 1.0f, true);
@@ -127,11 +127,11 @@ void AInGameMode::Logout(AController* Exiting)
     Super::Logout(Exiting);
     --NumberOfPlayers;
 
+    // 게임이 시작되고 플레이어가 한명만 남았다면 게임 끝.
     if (isGameStart && NumberOfPlayers == 1)
     {
         GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Game Over"));
     }
-
 }
 
 /* 게임을 시작하는 함수 */
@@ -155,6 +155,7 @@ void AInGameMode::StartGame()
 
     InGameState->SpawnPlayerToStartLocation(SpawnArray);
     InGameState->SetIsTimeToSpawnItem(true);
+    InGameState->SetEscapePlayer(0);
     InGameState->SetSurvivePlayer(NumberOfPlayers);
     InGameState->SetTotalPlayer(NumberOfPlayers);
 
