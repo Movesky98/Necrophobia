@@ -20,7 +20,8 @@ public class Pro4 : ModuleRules
 			"OnlineSubSystemSteam",
 			"AIModule",
 			"NavigationSystem",
-			"GameplayTasks"
+			"GameplayTasks",
+			"Paper2D"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { 

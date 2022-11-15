@@ -199,6 +199,7 @@ void AInGameState::SpawnPlayerToStartLocation(TArray<FVector> SpawnArray)
 		{
 			PlayerCharacter->SetHidden(true);
 			PlayerCharacter->GetPlayerController()->SetServerToSpectator();
+			PlayerCharacter->GetPlayerController()->RemoveServerUI();;
 		}
 
 		PlayerCharacter->SetActorLocation(SpawnArray[i]);
@@ -215,6 +216,11 @@ void AInGameState::SubtractSurvivePlayer()
 		return;
 
 	SurvivePlayer--;
+
+	if (SurvivePlayer == 1)
+	{
+		GameOver();
+	}
 }
 
 /* 탈출한 플레이어가 있을 경우, 순위 표시를 위해 탈출 플레이어 수를 늘리는 함수 */
@@ -225,6 +231,32 @@ void AInGameState::AddEscapePlayer()
 
 	EscapePlayer++;
 	SurvivePlayer--;
+
+	if (SurvivePlayer == 1)
+	{
+		GameOver();
+	}
+}
+
+void AInGameState::GameOver()
+{
+	int i = 0;
+	for (auto& PlayerState : PlayerArray)
+	{
+		AInGamePlayerState* Player = Cast<AInGamePlayerState>(PlayerState);
+		
+		if (i == 0)
+			continue;
+
+		if (!Player->GetIsDead())
+		{
+			APro4Character* PlayerCharacter = Cast<APro4Character>(Player->GetPawn());
+
+			PlayerCharacter->GameOver();
+		}
+
+		i++;
+	}
 }
 
 /* 서버 <-> 클라이언트 간에 필요한 정보를 복사하는 것을 설정하는 함수 */

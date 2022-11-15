@@ -10,10 +10,11 @@
 #include "Item/AGrenade.h"
 #include "Item/Ammo.h"
 #include "InGamePlayerState.h"
-
 #include "ZombieSpawner.h"
 #include "Heli_AH64D.h"
 #include "Door.h"
+
+#include "Engine/TextureRenderTarget2D.h"
 #include "Components/AudioComponent.h"
 #include "Sound/SoundCue.h"
 #include "DrawDebugHelpers.h"
@@ -41,6 +42,7 @@ APro4Character::APro4Character()
 	MuzzleFlash = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("MuzzleFlash"));
 	MapSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("MAPSPRINGARM"));
 	MapCapture = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("MAPCAPTURE"));
+	PaperSprite = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("Minimap"));
 	/* 캐릭터 클래스를 구성하는 컴포넌트(카메라, 방어구, 무기..) */
 
 	/* 총알 발사효과를 무기컴포넌트의 하위로*/
@@ -69,6 +71,7 @@ APro4Character::APro4Character()
 	MapSpringArm->SetupAttachment(GetCapsuleComponent());
 	MapCapture->SetupAttachment(MapSpringArm);
 	MapSpringArm->SetRelativeRotation(FRotator(-90.0f, 0.0f, 0.0f));
+	PaperSprite->SetupAttachment(MapSpringArm);
 	/* 컴포넌트 계층 설정 */
 
 	/* 캐릭터 메쉬 위치, 회전 값 설정*/
@@ -131,6 +134,8 @@ void APro4Character::BeginPlay()
 	GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, GetActorLocation().ToString());
 
 	PlayerController = Cast<APro4PlayerController>(GetWorld()->GetFirstPlayerController());
+
+	SetTextureTargetOnServer();
 }
 
 /// <summary>
@@ -158,6 +163,24 @@ void APro4Character::CameraSetting()
 
 	MapCapture->ProjectionType = ECameraProjectionMode::Perspective;
 	MapCapture->OrthoWidth = 1000.0f;
+	MapCapture->SetRelativeLocation(FVector(-1000.0f, 0.0f, 0.0f));
+
+	static ConstructorHelpers::FObjectFinder<UTextureRenderTarget2D> RT_Minimap(TEXT("/Game/UI/MinimapRenderTarget2D"));
+	if (RT_Minimap.Succeeded())
+	{
+		RenderTarget = RT_Minimap.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UPaperSprite> PS_CharacterIcon(TEXT("/Game/UI/Sprites/Player_UI/Minimap/character_icon_Sprite"));
+	if (PS_CharacterIcon.Succeeded())
+	{
+		RenderIcon = PS_CharacterIcon.Object;
+	}
+
+	PaperSprite->SetRelativeLocation(FVector(20.0f, 0.0f, 0.0f));
+	PaperSprite->SetRelativeRotation(FRotator(0.0f, 90.0f, 180.0f));
+	PaperSprite->SetRelativeScale3D(FVector(0.2f, 0.2f, 0.2f));
+	PaperSprite->SetOwnerNoSee(true);
 }
 
 // 캐릭터 위상 세팅
@@ -286,6 +309,22 @@ void APro4Character::SocketSetting()
 	{
 		UE_LOG(Pro4, Error, TEXT("GrenadeSocket has not exist."));
 	}
+}
+
+void APro4Character::SetTextureTargetOnServer_Implementation()
+{
+	SetTextureTargetOnClient();
+}
+
+void APro4Character::SetTextureTargetOnClient_Implementation()
+{
+	if (GetWorld()->IsServer())
+	{
+		return;
+	}
+
+	PaperSprite->SetSprite(RenderIcon);
+	MapCapture->TextureTarget = RenderTarget;
 }
 
 /// <summary>
@@ -1677,6 +1716,20 @@ void APro4Character::PlayerDead_Implementation()
 	);
 	
 	Server_DestroyActor(this);
+}
+
+/* 최후의 1인이 되어 게임이 종료되었을 때 실행되는 함수*/
+void APro4Character::GameOver_Implementation()
+{
+	AInGamePlayerState* ThisPlayerState = Cast<AInGamePlayerState>(GetPlayerState());
+	APro4PlayerController* ThisPlayerController = Cast<APro4PlayerController>(GetController());
+
+	NecGameInstance->PlayerMenu->ActiveGameOverUI(
+		ThisPlayerState->GetPlayerKill(),
+		ThisPlayerState->GetZombieKill(),
+		ThisPlayerController->SetPlayerRankning(false),
+		ThisPlayerController->GetTotalRanking()
+	);
 }
 
 /* 플레이어 체력이 감소했을 때, 서버에게 데미지만큼 체력을 감소하라고 알리는 함수 */
