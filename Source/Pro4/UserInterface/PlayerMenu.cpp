@@ -477,6 +477,7 @@ void UPlayerMenu::ActiveWeaponShortcut(uint16 SlotNumber)
 	SubWeaponSlotBox->SetBrushFromTexture(SlotEmpty);
 	KnifeSlotBox->SetBrushFromTexture(SlotEmpty);
 	GrenadeSlotBox->SetBrushFromTexture(SlotEmpty);
+
 	switch (SlotNumber)
 	{
 	case 1:
@@ -494,6 +495,31 @@ void UPlayerMenu::ActiveWeaponShortcut(uint16 SlotNumber)
 	default:
 		break;
 	}
+}
+
+void UPlayerMenu::ActiveGrenadeShortcutImage(const FString& GrenadeType)
+{
+	FString IconPath;
+	
+	if (GrenadeType == "Grenade")
+	{
+		IconPath = "/Game/UI/Sprites/Player_UI/Grenade_icon/Grenade";
+	}
+	else if (GrenadeType == "Smoke")
+	{
+		IconPath = "/Game/UI/Sprites/Player_UI/Grenade_icon/Smoke";
+	}
+	else if (GrenadeType == "Flash")
+	{
+		IconPath = "/Game/UI/Sprites/Player_UI/Grenade_icon/Flash";
+	}
+	else
+	{
+		IconPath = SlotItemEmptyPath;
+	}
+
+	UTexture2D* GrenadeImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *IconPath), NULL, LOAD_None, NULL);
+	GrenadeSlot->SetBrushFromTexture(GrenadeImage);
 }
 
 /* 방어구를 획득할 경우, 인벤토리에서 보이도록 하는 함수 */

@@ -304,6 +304,10 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_DestroyActor(AActor* DestroyActor);
 
+	/* 수류탄을 던지는 타이밍에 실행되는 함수 */
+	UFUNCTION()
+	void ThrowGrenade();
+
 #pragma region PlayerState
 public:
 	/* 캐릭터 체력, 방어력 */
@@ -524,13 +528,15 @@ private:
 	// Character Role Test.
 	FString GetEnumRole(ENetRole CharacterRole);
 
-	/* Spawn Section */
+	/* Spawn Projectile & Grenade Section */
 	UFUNCTION(Server, Reliable, WithValidation)
 	void SpawnProjectileOnServer(FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner);
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void SpawnGrenadeOnServer(const FString& GrenadeType, FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner);
-	/* Spawn Section */
+
+	void SubtractGrenade();
+	/* Spawn Projectile & Grenade Section */
 
 	/* Spawn Armor Section */
 	UFUNCTION(Server, Reliable, WithValidation)
@@ -600,4 +606,10 @@ private:
 
 	UFUNCTION(Client, Reliable)
 	void PlayerDead();
+
+	UFUNCTION(Server, Reliable)
+	void SuccessPlayerEscapeOnServer();
+
+	UFUNCTION(Client, Reliable)
+	void SuccessPlayerEscapeOnClient();
 };

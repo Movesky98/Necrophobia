@@ -90,17 +90,38 @@ bool APro4PlayerController::SetHelicopterSpawn()
 }
 
 /* 헬리콥터 스폰을 서버에 요청하는 함수 */
-void APro4PlayerController::AvaialbleHelicopterSpawnOnServer_Implementation()
+void APro4PlayerController::RequestSpawnHelicopterOnServer_Implementation()
 {
 	InGameState->SetIsHelicopterSpawn(false);
 }
 
-/* 플레이어 게임 순위 설정 */
-uint16 APro4PlayerController::SetPlayerRankning()
+/* 
+* 플레이어 게임 순위 설정
+* 탈출에 성공할 경우와 그냥 사망했을 경우
+* 서로 다른 방식으로 순위를 정함.
+*/
+uint16 APro4PlayerController::SetPlayerRankning(bool isEscape)
 {
-	uint16 ThisPlayerRanking = InGameState->GetSurvivePlayer();
-	
-	DiscountSurvivePlayer();
+	uint16 ThisPlayerRanking;
+
+	if (isEscape)
+	{
+		// 탈출했을 경우
+		ThisPlayerRanking = InGameState->GetEscapePlayer() + 1;
+
+		/* 플레이어가 탈출했을 경우, 서버로 탈출한 플레이어의 수를 +1 만큼 늘려줌
+		* 근데 서버에서 +1 늘려주고 그 정보를 클라이언트로 뿌려주는 시간이 오래 걸리기 때문에 
+		* 서버에 먼저 +1 요청을 하고 바로 값을 뽑아내면 동기화되지 않은 값을 받을 수 있기에 다음과 같이 작성함.
+		*/
+
+		AddEscapePlayerOnServer();
+	}
+	else
+	{
+		// 플레이어가 사망했을 경우
+		ThisPlayerRanking = InGameState->GetSurvivePlayer() + InGameState->GetEscapePlayer();
+		SubtractSurvivePlayerOnServer();
+	}
 
 	return ThisPlayerRanking;
 }
@@ -111,8 +132,14 @@ uint16 APro4PlayerController::GetTotalRanking()
 	return InGameState->GetTotalPlayer();
 }
 
-/* 플레이어 수를 갱신하는 함수 */
-void APro4PlayerController::DiscountSurvivePlayer_Implementation()
+/* 남아있는 플레이어 수를 갱신하는 함수 */
+void APro4PlayerController::SubtractSurvivePlayerOnServer_Implementation()
 {
-	InGameState->SetRanking();
+	InGameState->SubtractSurvivePlayer();
+}
+
+/* 탈출한 플레이어 수를 갱신하는 함수 */
+void APro4PlayerController::AddEscapePlayerOnServer_Implementation()
+{
+	InGameState->AddEscapePlayer();
 }

@@ -141,6 +141,18 @@ FName UPro4AnimInstance::GetEquipMontageSectionName(int32 Section)
 	return FName(*FString::Printf(TEXT("%d")), Section);
 }
 
+void UPro4AnimInstance::AnimNotify_ThrowNotify()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Emerald, TEXT("Throw Notify"));
+	
+	auto Pawn = TryGetPawnOwner();
+	if (IsValid(Pawn))
+	{
+		APro4Character* Player = Cast<APro4Character>(Pawn);
+		Player->ThrowGrenade();
+	}
+}
+
 UAnimMontage* UPro4AnimInstance::GetEquipMontage()
 {
 	return EquipMontage;

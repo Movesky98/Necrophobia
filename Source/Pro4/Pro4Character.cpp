@@ -423,7 +423,7 @@ void APro4Character::OnThrowMontageEnded(UAnimMontage* Montage, bool bInterrupte
 	IsThrowing = false;
 	if (CurrentWeaponMode == WeaponMode::ATW)
 	{
-		Throw();
+		// Throw();
 	}
 }
 
@@ -1153,6 +1153,8 @@ void APro4Character::Throw()
 
 		DrawDebugSolidBox(GetWorld(), ThrowLocation, FVector(5.0f), FColor::Blue, true, 5.0f);
 		SpawnGrenadeOnServer(PlayerGrenade.EquipGrenade, ThrowLocation, ThrowRotation, ThrowRotation.Vector(), this);
+
+		SubtractGrenade();
 	}
 }
 
@@ -1218,6 +1220,40 @@ void APro4Character::SpawnGrenadeOnServer_Implementation(const FString& GrenadeT
 bool APro4Character::SpawnGrenadeOnServer_Validate(const FString& GrenadeType, FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner)
 {
 	return true;
+}
+
+/* 플레이어가 수류탄을 던진 후 개수를 업데이트하는 함수 */
+void APro4Character::SubtractGrenade()
+{
+	uint16 GrenadeNum = 0;
+
+	if (PlayerGrenade.EquipGrenade == "Grenade")
+	{
+		PlayerGrenade.GrenadeNum--;
+		GrenadeNum = PlayerGrenade.GrenadeNum;
+	}
+	else if (PlayerGrenade.EquipGrenade == "Smoke")
+	{
+		PlayerGrenade.SmokeNum--;
+		GrenadeNum = PlayerGrenade.SmokeNum;
+	}
+	else if (PlayerGrenade.EquipGrenade == "Flash")
+	{
+		PlayerGrenade.FlashNum--;
+		GrenadeNum = PlayerGrenade.FlashNum;
+	}
+	
+	NecGameInstance->PlayerMenu->AddItemToGrenade(PlayerGrenade.EquipGrenade, GrenadeNum);
+
+	// 지금 던진 투척무기가 0개라면!
+	if (!GrenadeNum)
+	{
+		CurrentWeaponMode = WeaponMode::Disarming;
+		PlayerGrenade.EquipGrenade = "None";
+		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(0);
+		NecGameInstance->PlayerMenu->ActiveGrenadeShortcutImage(PlayerGrenade.EquipGrenade);
+		EquipPlayerWeaponOnServer(CurrentWeaponMode, nullptr);
+	}
 }
 
 #pragma endregion
@@ -1636,7 +1672,7 @@ void APro4Character::PlayerDead_Implementation()
 	NecGameInstance->PlayerMenu->ActiveGameOverUI(
 		ThisPlayerState->GetPlayerKill(),
 		ThisPlayerState->GetZombieKill(),
-		ThisPlayerController->SetPlayerRankning(),
+		ThisPlayerController->SetPlayerRankning(false),
 		ThisPlayerController->GetTotalRanking()
 	);
 	
@@ -1849,6 +1885,8 @@ void APro4Character::EquipGrenade()
 	{
 		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(4);
 	}
+
+	NecGameInstance->PlayerMenu->ActiveGrenadeShortcutImage(PlayerGrenade.EquipGrenade);
 }
 
 void APro4Character::EquipPlayerWeaponOnServer_Implementation(const WeaponMode& _CurWeaponMode, UStaticMesh* GrenadeMesh = nullptr)
@@ -1960,13 +1998,41 @@ void APro4Character::CallHelicopterToEscapeOnServer_Implementation()
 /* 플레이어가 탈출에 성공했을 때 실행되는 함수 */
 void APro4Character::PlayerEscape()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Purple, TEXT("Player Escape"));
-
 	APro4PlayerController* NecrophobiaPlayerController = Cast<APro4PlayerController>(GetController());
 
-	NecrophobiaPlayerController->AvaialbleHelicopterSpawnOnServer();
+	// 서버에 헬리콥터 스폰이 가능하다고 알림
+	NecrophobiaPlayerController->RequestSpawnHelicopterOnServer();
 
+	// 서버에 플레이어가 탈출하도록 요청
+	SuccessPlayerEscapeOnServer();
 }
+
+/* 서버에 플레이어가 탈출했음을 알리는 함수 */
+void APro4Character::SuccessPlayerEscapeOnServer_Implementation()
+{
+	AInGamePlayerState* ThisPlayerState = Cast<AInGamePlayerState>(GetPlayerState());
+
+	ThisPlayerState->SetIsDead(true);
+
+	SuccessPlayerEscapeOnClient();
+}
+
+/* 서버가 플레이어의 탈출상태를 확인하고 해당 클라이언트를 월드에서 삭제하도록 하는 함수 */
+void APro4Character::SuccessPlayerEscapeOnClient_Implementation()
+{
+	AInGamePlayerState* ThisPlayerState = Cast<AInGamePlayerState>(GetPlayerState());
+	APro4PlayerController* ThisPlayerController = Cast<APro4PlayerController>(GetController());
+
+	NecGameInstance->PlayerMenu->ActiveGameOverUI(
+		ThisPlayerState->GetPlayerKill(),
+		ThisPlayerState->GetZombieKill(),
+		ThisPlayerController->SetPlayerRankning(true),
+		ThisPlayerController->GetTotalRanking()
+	);
+
+	Server_DestroyActor(this);
+}
+
 #pragma endregion
 
 #pragma region EncroachField
@@ -2109,6 +2175,16 @@ void APro4Character::SetPlayerFlagOnServer_Implementation(const FString& State, 
 void APro4Character::FlashBangExplosion_Implementation()
 {
 	NecGameInstance->PlayerMenu->SetFlashBangImage();
+}
+
+void APro4Character::ThrowGrenade()
+{
+	IsMontagePlay = false;
+	IsThrowing = false;
+	if (CurrentWeaponMode == WeaponMode::ATW)
+	{
+		Throw();
+	}
 }
 
 /* 플레이어 캐릭터가 서버, 클라이언트에 복제되어야 하는 변수 목록을 구현한 함수 */
