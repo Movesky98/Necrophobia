@@ -20,9 +20,13 @@ public:
 
 	// 공격 애니메이션 실행을 위한 함수와 변수
 	void PlayAttackMontage();
+	void PlayAppearMontage();
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
 		UAnimMontage* AttackMontage;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
+		UAnimMontage* AppearMontage;
 
 private:
 	// 이동을 위한 변수

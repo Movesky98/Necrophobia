@@ -32,6 +32,8 @@ APro4Boss::APro4Boss()
 
 	GetMesh()->SetRelativeRotation(FRotator(0.0f, 270.0f, 0.0f));
 	MovementSetting();
+
+	IsAppear = false;
 }
 
 // Called when the game starts or when spawned
@@ -49,6 +51,7 @@ void APro4Boss::PostInitializeComponents()
 	if (BossAnim != nullptr)
 	{
 		BossAnim->OnMontageEnded.AddDynamic(this, &APro4Boss::OnAttackMontageEnded);
+		BossAnim->OnMontageEnded.AddDynamic(this, &APro4Boss::OnAppearMontageEnded);
 	}
 	else
 	{
@@ -104,10 +107,23 @@ void APro4Boss::Attack()
 	IsMontagePlay = true;
 }
 
+void APro4Boss::Appear()
+{
+	BossAnim->PlayAppearMontage();
+	IsMontagePlay = true;
+}
+
 // 공격 몽타주 종료시 실행
 void APro4Boss::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	IsAttacking = false;
 	IsMontagePlay = false;
 	OnAttackEnd.Broadcast();
+}
+
+// 등장 몽타주 종료시 실행
+void APro4Boss::OnAppearMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	IsAppear = true;
+	IsMontagePlay = false;
 }

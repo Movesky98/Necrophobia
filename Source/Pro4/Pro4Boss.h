@@ -31,7 +31,12 @@ public:
 	void MovementSetting();
 	virtual void PostInitializeComponents() override;
 	void Attack();
+	void Appear();
 
+	bool CheckAppear()
+	{
+		return IsAppear;
+	}
 	// 블랙보드에 공격이 끝낫음을 콜백해주기 위한 변수
 	FOnAttackEndDelegate OnAttackEnd;
 
@@ -39,13 +44,17 @@ private:
 	// 애니메이션 컨트롤을 위한 변수
 	bool IsAttacking;
 	bool IsMontagePlay;
+	bool IsAppear;
 	int32 AttackNum;
 
 	// 애니메이션 적용을 위한 클래스 변수
 	UPROPERTY()
 		class UBossAnimInstance* BossAnim;
 
-	// 공격 몽타주 종료시 콜되는 함수
+	// 몽타주 종료시 콜되는 함수
 	UFUNCTION()
 		void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	UFUNCTION()
+		void OnAppearMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 };

@@ -12,6 +12,13 @@ UBossAnimInstance::UBossAnimInstance()
 	{
 		AttackMontage = ATTACK_MONTAGE.Object;
 	}
+
+	// 보스 등장 애니메이션 몽타주
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> APPEAR_MONTAGE(TEXT("/Game/Character_Animation/Zombie/Creta/Creta_Appear_Montage.Creta_Appear_Montage"));
+	if (APPEAR_MONTAGE.Succeeded())
+	{
+		AppearMontage = APPEAR_MONTAGE.Object;
+	}
 	CurrentPawnSpeed = 0.0f;
 }
 
@@ -33,5 +40,14 @@ void UBossAnimInstance::PlayAttackMontage()
 	if (!Montage_IsPlaying(AttackMontage))
 	{
 		Montage_Play(AttackMontage, 1.0f);
+	}
+}
+
+// 등장 애니메이션 실행
+void UBossAnimInstance::PlayAppearMontage()
+{
+	if (!Montage_IsPlaying(AppearMontage))
+	{
+		Montage_Play(AppearMontage, 1.0f);
 	}
 }
