@@ -47,7 +47,9 @@ APro4Zombie::APro4Zombie()
 		GetMesh()->SetAnimInstanceClass(SK_ZombieAnim.Class);
 	}
 
+	//GetCapsuleComponent()->SetRelativeRotation(FRotator(-90.0f, 0.0f, 0.0f));
 	GetMesh()->SetRelativeRotation(FRotator(0.0f, 270.0f, 0.0f));
+	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
 	MovementSetting();
 	IsAttacking = false;
 	IsDowning = true;
