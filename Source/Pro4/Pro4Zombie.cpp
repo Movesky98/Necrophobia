@@ -28,8 +28,11 @@ APro4Zombie::APro4Zombie()
 	ZombieCollision->SetCollisionProfileName(TEXT("Detect_ZSpawner"));
 	ZombieCollision->SetCapsuleHalfHeight(150.0f);
 	ZombieCollision->SetCapsuleRadius(150.0f);
+	
+	GetCapsuleComponent()->SetGenerateOverlapEvents(false);
 
 	GetMesh()->SetCollisionProfileName(TEXT("Zombie"));
+	GetMesh()->SetGenerateOverlapEvents(true);
 
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh>SK_Zombie(TEXT("/Game/Character_Animation/Zombie/NormalMaleZombie/attack.attack"));
 	if (SK_Zombie.Succeeded())
@@ -212,6 +215,17 @@ void APro4Zombie::ZombieGetDamagedOnServer_Implementation(float _Damage, AActor*
 			AttackPlayerState->UpdatePlayerKillInfo(TargetType, AttackActor);
 		}
 
+		APro4ZombieAI* AIController = Cast<APro4ZombieAI>(GetController());
+
+		// 좀비 타겟이 존재한다면
+		if (AIController->GetZombieTarget())
+		{
+			APro4Character* TargetPlayer = Cast<APro4Character>(AIController->GetZombieTarget());
+			if (TargetPlayer->GetSpawnZombieCurCount() > 0)
+			{
+				TargetPlayer->SetSpawnZombieCurCount(TargetPlayer->GetSpawnZombieCurCount() - 1);
+			}
+		}
 
 		Dead();
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Zombie is dead."));
@@ -249,8 +263,19 @@ void APro4Zombie::DrawAttackField()
 
 void APro4Zombie::SetZombieTarget(APawn* TargetPlayer)
 {
-	APro4ZombieAI* ZombieAI = Cast<APro4ZombieAI>(GetController());
-	ZombieAI->SetZombieTarget(TargetPlayer);
+	if (TargetPlayer)
+	{
+		if (GetController())
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("SetZombieTarget"));
+			APro4ZombieAI* ZombieAI = Cast<APro4ZombieAI>(GetController());
+			ZombieAI->SetZombieTarget(TargetPlayer);
+		}
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Zombie Target is NULL!!!"));
+	}
 }
 
 void APro4Zombie::PlayMontageOnServer_Implementation(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0)

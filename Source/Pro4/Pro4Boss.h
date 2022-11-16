@@ -28,9 +28,25 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	/* Zombie Attack */
-	UFUNCTION()
+	/* Boss Attack */
+	UFUNCTION(BlueprintCallable)
+	void StartSwordAttackField();
+
+	UFUNCTION(BlueprintCallable)
 	void DrawAttackField();
+
+	UFUNCTION(BlueprintCallable)
+	void StopSwordAttackField();
+
+	UFUNCTION(BlueprintCallable)
+	void ActivateLeftHandCol();
+
+	UFUNCTION(BlueprintCallable)
+	void DeactivateLeftHandCol();
+
+
+	/* Boss Get Damaged */
+	void ZombieGetDamaged(float _Damage, AActor* AttackActor);
 
 	void MovementSetting();
 	virtual void PostInitializeComponents() override;
@@ -40,6 +56,11 @@ public:
 	bool CheckAppear()
 	{
 		return IsAppear;
+	}
+
+	bool GetIsDead()
+	{
+		return IsDead;
 	}
 
 	// 블랙보드에 공격이 끝낫음을 콜백해주기 위한 변수
@@ -56,22 +77,33 @@ private:
 	// 애니메이션 컨트롤을 위한 변수
 	UPROPERTY(Replicated)
 	bool IsDead;
+	UPROPERTY(Replicated)
 	bool IsAttacking;
+	UPROPERTY(Replicated)
 	bool IsMontagePlay;
+	UPROPERTY(Replicated)
 	bool IsAppear;
+
 	int32 AttackNum;
 
 	// 애니메이션 적용을 위한 클래스 변수
 	UPROPERTY()
 	class UBossAnimInstance* BossAnim;
 
-	/* Zombie Get Damaged */
-	void ZombieGetDamaged(float _Damage, AActor* AttackActor);
+	// 보스 좀비가 Sword를 이용한 공격을 할 때, 사용되는 타이머
+	FTimerHandle SwordAttackTimer;
+	FTimerHandle LeftHandAttackTimer;
 
+	/* Zombie Get Damaged */
 	UFUNCTION(Server, Reliable)
 	void ZombieGetDamagedOnServer(float _Damage, AActor* AttackActor);
 
+	UFUNCTION()
+	void LeftHandAttack();
+
 	void Dead();
+
+
 
 	/* 몽타주를 전체 클라이언트에서 실행하는 함수 */
 	UFUNCTION(Server, Reliable)
@@ -79,6 +111,10 @@ private:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void PlayMontageOnClient(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0);
+
+	/* Zombie State Syncronization */
+	UFUNCTION(Server, Reliable)
+	void SetBossStateOnServer(const FString& State, bool bIsState);
 
 	// 몽타주 종료시 콜되는 함수
 	UFUNCTION()

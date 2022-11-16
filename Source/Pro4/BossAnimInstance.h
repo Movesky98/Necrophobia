@@ -18,9 +18,10 @@ public:
 	UBossAnimInstance();
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
-	// 공격 애니메이션 실행을 위한 함수와 변수
-	void PlayAttackMontage();
-	void PlayAppearMontage();
+	/* Get Montage Field */
+	UAnimMontage* GetAttackMontage();
+	UAnimMontage* GetAppearMontage();
+	UAnimMontage* GetDeadMontage();
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
 		UAnimMontage* AttackMontage;
@@ -28,8 +29,15 @@ public:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
 		UAnimMontage* AppearMontage;
 
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Dead, Meta = (AllowPrivateAccess = true))
+		UAnimMontage* DeadMontage;
+
+
 private:
 	// 이동을 위한 변수
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 		float CurrentPawnSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
+	bool isDead;
 };

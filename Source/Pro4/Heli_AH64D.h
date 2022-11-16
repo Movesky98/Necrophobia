@@ -91,5 +91,5 @@ private:
 	FVector TargetPlayerLocation;
 
 	UPROPERTY(Replicated, VisibleAnywhere, Category = "Escape")
-	bool IsReachPlayer = false;
+	bool IsReachToPlayerLocation = false;
 };

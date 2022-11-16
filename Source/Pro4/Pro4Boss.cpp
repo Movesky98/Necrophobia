@@ -7,8 +7,10 @@
 #include "Pro4Character.h"
 #include "InGamePlayerState.h"
 
+#include "Components/BoxComponent.h"
 #include "DrawDebugHelpers.h"
 #include "Net/UnrealNetwork.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 // Sets default values
 APro4Boss::APro4Boss()
@@ -23,12 +25,19 @@ APro4Boss::APro4Boss()
 		GetMesh()->SetSkeletalMesh(SK_Boss.Object);
 	}
 
+
 	// 보스 캐릭터를 조종할 AI 컨트롤러
 	AIControllerClass = APro4BossAI::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 
+	GetCapsuleComponent()->SetGenerateOverlapEvents(false);
+
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 	GetMesh()->SetCollisionProfileName(TEXT("Zombie"));
+	GetMesh()->SetRelativeRotation(FRotator(0.0f, 270.0f, 0.0f));
+	GetMesh()->SetRelativeScale3D(FVector(6.0f));
+	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
+	GetMesh()->SetGenerateOverlapEvents(true);
 
 	// 보스 애니메이션 연결
 	static ConstructorHelpers::FClassFinder<UAnimInstance>SK_BossAnim(TEXT("/Game/Character_Animation/Zombie/Creta/CretaAnimBlueprint.CretaAnimBlueprint_C"));
@@ -37,13 +46,13 @@ APro4Boss::APro4Boss()
 		GetMesh()->SetAnimInstanceClass(SK_BossAnim.Class);
 	}
 
-	GetMesh()->SetRelativeRotation(FRotator(0.0f, 270.0f, 0.0f));
 	MovementSetting();
 
 	IsAppear = false;
 
-	CurrentHP = 0;
+	CurrentHP = 400.0f;
 	Damage = 40.0f;
+	Tags.Add("BossZombie");
 }
 
 // Called when the game starts or when spawned
@@ -96,58 +105,60 @@ void APro4Boss::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 void APro4Boss::Attack()
 {
 	if (IsAttacking) return;
+	if (!GetWorld()->IsServer()) return;
 
 	// 2가지 공격모션중 랜덤하게 실행
 	AttackNum = FMath::RandRange(1, 2);
-	BossAnim->PlayAttackMontage();
+	PlayMontageOnServer(BossAnim->GetAttackMontage(), AttackNum);
 
-	switch (AttackNum)
-	{
-	case 1:
-		BossAnim->Montage_JumpToSection(FName("1"), BossAnim->AttackMontage);
-		break;
-	case 2:
-		BossAnim->Montage_JumpToSection(FName("2"), BossAnim->AttackMontage);
-		break;
-	default:
-		break;
-	}
-
-	IsAttacking = true;
-	IsMontagePlay = true;
+	SetBossStateOnServer("Attack", true);
+	SetBossStateOnServer("MontagePlay", true);
 }
 
 void APro4Boss::Appear()
 {
-	BossAnim->PlayAppearMontage();
-	IsMontagePlay = true;
+	PlayMontageOnServer(BossAnim->GetAppearMontage());
+	SetBossStateOnServer("MontagePlay", true);
 }
 
 // 공격 몽타주 종료시 실행
 void APro4Boss::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	IsAttacking = false;
-	IsMontagePlay = false;
+	SetBossStateOnServer("Attack", false);
+	SetBossStateOnServer("MontagePlay", false);
 	OnAttackEnd.Broadcast();
 }
 
 // 등장 몽타주 종료시 실행
 void APro4Boss::OnAppearMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	IsAppear = true;
-	IsMontagePlay = false;
+	SetBossStateOnServer("Appear", true);
+	SetBossStateOnServer("MontagePlay", false);
 }
 
+/* 보스 좀비의 공격 필드를 그려내는 함수 */
 void APro4Boss::DrawAttackField()
 {
 	FHitResult AttackHit;
 	FName Profile = "Zombie";
-	FCollisionShape BoxCollision = FCollisionShape::MakeBox(FVector(50.0f, 50.0f, 150.0f));
-	FVector CollisionLocation = GetActorLocation() + GetActorForwardVector() * 150.0f;
+	TArray<AActor*> IgnoreActor;
+	FCollisionShape BoxCollision = FCollisionShape::MakeBox(FVector(50.0f, 50.0f, 50.0f));
+	FVector Start = GetMesh()->GetSocketLocation("Sword_Start");
+	FVector End = GetMesh()->GetSocketLocation("Sword_End");
+	FRotator Rotation = (End - Start).Rotation();
 
-	FCollisionQueryParams GrenadeColParams;
-	bool IsHit = GetWorld()->SweepSingleByProfile(AttackHit, CollisionLocation, CollisionLocation, FQuat::Identity, Profile, BoxCollision);
-	DrawDebugBox(GetWorld(), CollisionLocation, BoxCollision.GetExtent(), FColor::Red, true, 5.0f, 0, 5.0f);
+	bool IsHit = UKismetSystemLibrary::BoxTraceSingleByProfile(
+		GetWorld(),
+		Start,
+		End,
+		FVector(10.0f),
+		Rotation,
+		Profile,
+		true,
+		IgnoreActor,
+		EDrawDebugTrace::Persistent,
+		AttackHit,
+		true);
 
 	if (IsHit)
 	{
@@ -155,10 +166,23 @@ void APro4Boss::DrawAttackField()
 		{
 			APro4Character* PlayerCharacter = Cast<APro4Character>(AttackHit.GetActor());
 			PlayerCharacter->GetDamaged(Damage, this);
+			GetWorldTimerManager().ClearTimer(SwordAttackTimer);
 		}
 	}
 }
 
+void APro4Boss::StartSwordAttackField()
+{
+	GetWorldTimerManager().SetTimer(SwordAttackTimer, this, &APro4Boss::DrawAttackField, 0.01f, true);
+}
+
+/* 보스의 공격 필드를 그려내는 것을 그만두는 함수 */
+void APro4Boss::StopSwordAttackField()
+{
+	GetWorldTimerManager().ClearTimer(SwordAttackTimer);
+}
+
+/* 보스좀비가 데미지를 입었을 때 실행되는 함수 */
 void APro4Boss::ZombieGetDamaged(float _Damage, AActor* AttackActor)
 {
 	if (GetWorld()->IsServer())
@@ -166,6 +190,48 @@ void APro4Boss::ZombieGetDamaged(float _Damage, AActor* AttackActor)
 		ZombieGetDamagedOnServer(_Damage, AttackActor);
 	}
 }
+
+void APro4Boss::LeftHandAttack()
+{
+	FHitResult AttackHit;
+	FName Profile = "Zombie";
+	TArray<AActor*> IgnoreActor;
+	FCollisionShape BoxCollision = FCollisionShape::MakeBox(FVector(50.0f, 50.0f, 50.0f));
+	FVector Location = GetMesh()->GetSocketLocation("LeftHand");
+
+	bool IsHit = UKismetSystemLibrary::SphereTraceSingleByProfile(
+		GetWorld(),
+		Location,
+		Location,
+		50.0f,
+		Profile,
+		true,
+		IgnoreActor,
+		EDrawDebugTrace::Persistent,
+		AttackHit,
+		true);
+
+	if (IsHit)
+	{
+		if (AttackHit.GetActor()->ActorHasTag("Player"))
+		{
+			APro4Character* PlayerCharacter = Cast<APro4Character>(AttackHit.GetActor());
+			PlayerCharacter->GetDamaged(Damage, this);
+			GetWorldTimerManager().ClearTimer(LeftHandAttackTimer);
+		}
+	}
+}
+
+void APro4Boss::ActivateLeftHandCol()
+{
+	GetWorldTimerManager().SetTimer(LeftHandAttackTimer, this, &APro4Boss::LeftHandAttack, 0.01f, true);
+}
+
+void APro4Boss::DeactivateLeftHandCol()
+{
+	GetWorldTimerManager().ClearTimer(LeftHandAttackTimer);
+}
+
 
 void APro4Boss::ZombieGetDamagedOnServer_Implementation(float _Damage, AActor* AttackActor)
 {
@@ -177,7 +243,7 @@ void APro4Boss::ZombieGetDamagedOnServer_Implementation(float _Damage, AActor* A
 		if (IsMontagePlay)
 			BossAnim->Montage_Stop(0.0f);
 
-		// PlayMontageOnServer(BossAnim->GetDeadMontage());
+		PlayMontageOnServer(BossAnim->GetDeadMontage());
 		IsDead = true;
 		IsMontagePlay = true;
 
@@ -224,10 +290,33 @@ void APro4Boss::PlayMontageOnClient_Implementation(UAnimMontage* AnimationMontag
 	}
 }
 
+void APro4Boss::SetBossStateOnServer_Implementation(const FString& State, bool bIsState)
+{
+	if (State == "Attack")
+	{
+		IsAttacking = bIsState;
+	}
+	else if (State == "MontagePlay")
+	{
+		IsMontagePlay = bIsState;
+	}
+	else if (State == "Dead")
+	{
+		IsDead = bIsState;
+	}
+	else if (State == "Appear")
+	{
+		IsAppear = bIsState;
+	}
+}
+
 void APro4Boss::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(APro4Boss, IsDead);
 	DOREPLIFETIME(APro4Boss, CurrentHP);
+	DOREPLIFETIME(APro4Boss, IsDead);
+	DOREPLIFETIME(APro4Boss, IsAttacking);
+	DOREPLIFETIME(APro4Boss, IsMontagePlay);
+	DOREPLIFETIME(APro4Boss, IsAppear);
 }

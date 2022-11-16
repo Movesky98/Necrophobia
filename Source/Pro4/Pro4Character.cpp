@@ -63,7 +63,7 @@ APro4Character::APro4Character()
 	DetectZSpawnerCol->SetIsReplicated(true);
 	DetectZSpawnerCol->SetBoxExtent(DetectExtent);
 	DetectZSpawnerCol->SetCollisionProfileName(TEXT("Detect_ZSpawner"));
-	DetectZSpawnerCol->SetGenerateOverlapEvents(false);
+	DetectZSpawnerCol->SetGenerateOverlapEvents(true);
 
 	SpringArm->SetupAttachment(GetCapsuleComponent());
 	Camera->SetupAttachment(SpringArm);
@@ -385,7 +385,7 @@ void APro4Character::Tick(float DeltaTime)
 		CharacterArmControl = 0.0f;
 	}
 	// Character Role Test.
-	// DrawDebugString(GetWorld(), FVector(0, 0, 150), GetEnumRole(GetLocalRole()), this, FColor::Green, DeltaTime);
+	DrawDebugString(GetWorld(), FVector(0, 0, 150), FString::FromInt(SpawnZombieCurCount), this, FColor::Green, DeltaTime);
 }
 
 // Character Role Test.
@@ -2256,4 +2256,5 @@ void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(APro4Character, Moveflag);
 	DOREPLIFETIME(APro4Character, IsDead);
 	DOREPLIFETIME(APro4Character, IsDrink);
+	DOREPLIFETIME(APro4Character, SpawnZombieCurCount);
 }

@@ -19,6 +19,13 @@ UBossAnimInstance::UBossAnimInstance()
 	{
 		AppearMontage = APPEAR_MONTAGE.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> AM_DeadMontage(TEXT("/Game/Character_Animation/Zombie/Creta/Creta_Die_Montage.Creta_Die_Montage"));
+	if (AM_DeadMontage.Succeeded())
+	{
+		DeadMontage = AM_DeadMontage.Object;
+	}
+
 	CurrentPawnSpeed = 0.0f;
 }
 
@@ -30,24 +37,25 @@ void UBossAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	if (::IsValid(Pawn))
 	{
 		CurrentPawnSpeed = Pawn->GetVelocity().Size();
-		auto Character = Cast<APro4Boss>(Pawn);
+		auto BossZombie = Cast<APro4Boss>(Pawn);
+		if (BossZombie)
+		{
+			isDead = BossZombie->GetIsDead();
+		}
 	}
 }
 
-// 공격 애니메이션 실행
-void UBossAnimInstance::PlayAttackMontage()
+UAnimMontage* UBossAnimInstance::GetAttackMontage()
 {
-	if (!Montage_IsPlaying(AttackMontage))
-	{
-		Montage_Play(AttackMontage, 1.0f);
-	}
+	return AttackMontage;
 }
 
-// 등장 애니메이션 실행
-void UBossAnimInstance::PlayAppearMontage()
+UAnimMontage* UBossAnimInstance::GetAppearMontage()
 {
-	if (!Montage_IsPlaying(AppearMontage))
-	{
-		Montage_Play(AppearMontage, 1.0f);
-	}
+	return AppearMontage;
+}
+
+UAnimMontage* UBossAnimInstance::GetDeadMontage()
+{
+	return DeadMontage;
 }

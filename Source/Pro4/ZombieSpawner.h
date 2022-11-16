@@ -21,7 +21,9 @@ public:
 	// Sets default values for this actor's properties
 	AZombieSpawner();
 
+	UFUNCTION(Server, Reliable)
 	void PlayerOverlapToZSpawner(APawn* PlayerInstigator);
+	UFUNCTION(Server, Reliable)
 	void PlayerAwayFromSpawner(APawn* PlayerInstigator);
 
 #pragma region Get_Set
