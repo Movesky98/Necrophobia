@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "Pro4Projectile.h"
 #include "Components/SceneCaptureComponent2D.h"
+#include "PaperSprite.h"
+#include "PaperSpriteComponent.h"
 #include "Engine/TextureRenderTarget2D.h"
 #include "Pro4PlayerController.h"
 #include "Pro4Character.generated.h"
@@ -127,6 +129,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = MapCam)
 	USceneCaptureComponent2D* MapCapture;
+
+	UPROPERTY(VisibleAnywhere, Category = MapCam)
+	UPaperSpriteComponent* PaperSprite;
 	/* 카메라 변수 */
 
 	/* 총알 변수 */
@@ -338,6 +343,9 @@ public:
 	/* 플레이어의 킬 정보를 저장하는 함수 */
 	UFUNCTION(Server, Reliable)
 	void RecordPlayerKill(AActor* AttackActor);
+
+	UFUNCTION(Client, Reliable)
+	void GameOver();
 
 	/* 공격 효과음 */
 	class UAudioComponent* FireA;
@@ -607,9 +615,21 @@ private:
 	UFUNCTION(Client, Reliable)
 	void PlayerDead();
 
+	/* 플레이어가 탈출 조건에 적절했을 때  */
 	UFUNCTION(Server, Reliable)
 	void SuccessPlayerEscapeOnServer();
 
 	UFUNCTION(Client, Reliable)
 	void SuccessPlayerEscapeOnClient();
+
+	/* 플레이어 미니맵 세팅 */
+	UFUNCTION(Server, Reliable)
+	void SetTextureTargetOnServer();
+
+	UFUNCTION(Client, Reliable)
+	void SetTextureTargetOnClient();
+
+	UPaperSprite* RenderIcon;
+
+	UTextureRenderTarget2D* RenderTarget;
 };

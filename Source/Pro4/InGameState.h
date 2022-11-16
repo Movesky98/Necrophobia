@@ -149,4 +149,6 @@ private:
 	bool isHelicopterSpawn = false;
 
 	bool bIsTimeToSpawnItem = false;
+
+	void GameOver();
 };

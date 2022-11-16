@@ -143,3 +143,8 @@ void APro4PlayerController::AddEscapePlayerOnServer_Implementation()
 {
 	InGameState->AddEscapePlayer();
 }
+
+void APro4PlayerController::RemoveServerUI()
+{
+	PlayerMenu->RemoveFromViewport();
+}
