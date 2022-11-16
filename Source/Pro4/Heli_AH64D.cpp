@@ -99,7 +99,7 @@ void AHeli_AH64D::BeginPlay()
 void AHeli_AH64D::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
+
 	if (!IsReachToPlayerLocation)
 	{
 		AddActorWorldOffset(GetActorRotation().Vector() * 30.0f);
@@ -109,6 +109,13 @@ void AHeli_AH64D::Tick(float DeltaTime)
 			IsReachToPlayerLocation = true;
 			ActiveEscapeCollision();
 		}
+	}
+
+	if (IsBoardTheHelicopter)
+	{
+		AddActorWorldOffset(GetActorRotation().Vector() * 30.0f);
+
+		SetLifeSpan(10.0f);
 	}
 }
 
@@ -145,6 +152,7 @@ void AHeli_AH64D::CheckEscapeCollision(UPrimitiveComponent* OverlappedComp, AAct
 		if (PlayerChracter->GetIsPossibleEscape())
 		{
 			PlayerChracter->PlayerEscape();
+			IsBoardTheHelicopter = true;
 		}
 	}
 }

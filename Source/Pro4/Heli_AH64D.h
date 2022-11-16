@@ -92,4 +92,7 @@ private:
 
 	UPROPERTY(Replicated, VisibleAnywhere, Category = "Escape")
 	bool IsReachToPlayerLocation = false;
+
+	UPROPERTY(Replicated, VisibleAnywhere, Category = "Escape")
+	bool IsBoardTheHelicopter = false;
 };
