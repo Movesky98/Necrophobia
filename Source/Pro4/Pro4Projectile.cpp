@@ -106,8 +106,7 @@ void APro4Projectile::ProjectileBeginOverlap(UPrimitiveComponent* OverlappedComp
 	else if (OtherActor->ActorHasTag("BossZombie"))
 	{
 		ProjectileParticle->SetTemplate(Particle_Blood);
-		GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, OtherActor->GetName());
-		GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Green, TEXT("Boss Get Damaged."));
+
 		APro4Boss* BossZombie = Cast<APro4Boss>(OtherActor);
 		BossZombie->ZombieGetDamaged(30.0f, GetOwner());
 	}

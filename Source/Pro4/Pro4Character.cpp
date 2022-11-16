@@ -3,6 +3,7 @@
 
 #include "Pro4Character.h"
 #include "Pro4AnimInstance.h"
+#include "Pro4Zombie.h"
 #include "NecrophobiaGameInstance.h"
 #include "UserInterface/PlayerMenu.h"
 #include "Item/AWeapon.h"
@@ -63,7 +64,7 @@ APro4Character::APro4Character()
 	DetectZSpawnerCol->SetIsReplicated(true);
 	DetectZSpawnerCol->SetBoxExtent(DetectExtent);
 	DetectZSpawnerCol->SetCollisionProfileName(TEXT("Detect_ZSpawner"));
-	DetectZSpawnerCol->SetGenerateOverlapEvents(true);
+	DetectZSpawnerCol->SetGenerateOverlapEvents(false);
 
 	SpringArm->SetupAttachment(GetCapsuleComponent());
 	Camera->SetupAttachment(SpringArm);
@@ -76,7 +77,7 @@ APro4Character::APro4Character()
 
 	/* 캐릭터 메쉬 위치, 회전 값 설정*/
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f));
-	GetCapsuleComponent()->SetCollisionProfileName(TEXT("PCharacter"));
+	GetMesh()->SetCollisionProfileName(TEXT("PCharacter"));
 
 	/* 초기설정 함수 */
 	CameraSetting();
@@ -384,8 +385,6 @@ void APro4Character::Tick(float DeltaTime)
 	{
 		CharacterArmControl = 0.0f;
 	}
-	// Character Role Test.
-	DrawDebugString(GetWorld(), FVector(0, 0, 150), FString::FromInt(SpawnZombieCurCount), this, FColor::Green, DeltaTime);
 }
 
 // Character Role Test.
@@ -602,7 +601,8 @@ void APro4Character::UpDown(float NewAxisValue)
 	{
 		if (NewAxisValue > 0.5f || NewAxisValue < -0.5f)
 		{
-			IsForward = true;
+			SetPlayerStateOnServer("IsForward", true);
+
 			if (NewAxisValue < 0)
 			{
 				SetPlayerFlagOnServer("MoveFlag", 1);
@@ -616,7 +616,7 @@ void APro4Character::UpDown(float NewAxisValue)
 		}
 		else
 		{
-			IsForward = false;
+			SetPlayerStateOnServer("IsForward", false);
 			Updownflag = 0;
 		}
 
@@ -632,21 +632,22 @@ void APro4Character::LeftRight(float NewAxisValue)
 	{
 		if (NewAxisValue > 0.5f || NewAxisValue < -0.5f)
 		{
-			IsForward = false;
+			SetPlayerStateOnServer("IsForward", false);
+
 			if (NewAxisValue < 0)
 			{
 				SetPlayerFlagOnServer("MoveFlag", 1);
-				LeftRightflag = 1;
+				SetPlayerFlagOnServer("LeftRightFlag", 1);
 			}
 			else
 			{
 				SetPlayerFlagOnServer("MoveFlag", 0);
-				LeftRightflag = -1;
+				SetPlayerFlagOnServer("LeftRightFlag", -1);
 			}
 		}
 		else
 		{
-			LeftRightflag = 0;
+			SetPlayerFlagOnServer("LeftRightFlag", 0);
 		}
 		MoveRate = NewAxisValue * LeftRightSpeed();
 		AddMovementInput(FRotationMatrix(FRotator(0.0f, GetControlRotation().Yaw, 0.0f)).GetUnitAxis(EAxis::Y), MoveRate);
@@ -1203,8 +1204,47 @@ void APro4Character::Punch() // 주먹질
 	if (!IsMontagePlay)
 	{
 		PlayMontageOnServer(Pro4Anim->GetPunchMontage(), 1);
+
 		IsMontagePlay = true;
 		IsAttacking = true;
+	}
+}
+
+/* 펀치 영역을 그리는 함수 */
+void APro4Character::DrawPunch()
+{
+	FHitResult HitResult;
+	FVector Location = GetMesh()->GetSocketLocation("RightHandPunch");
+	Location += GetActorForwardVector() * 50.0f;
+
+	TArray<AActor*> IgnoreActor;
+
+	bool isHit = UKismetSystemLibrary::SphereTraceSingleByProfile(
+		GetWorld(),
+		Location,
+		Location,
+		20.0f,
+		"Player",
+		true,
+		IgnoreActor,
+		EDrawDebugTrace::Persistent,
+		HitResult,
+		true
+	);
+
+	if (isHit)
+	{
+		if (HitResult.GetActor()->ActorHasTag("Player"))
+		{
+			APro4Character* OtherPlayer = Cast<APro4Character>(HitResult.GetActor());
+			OtherPlayer->GetDamaged(15.0f, this);
+		}
+		else if(HitResult.GetActor()->ActorHasTag("Zombie"))
+		{
+			APro4Zombie* Zombie = Cast<APro4Zombie>(HitResult.GetActor());
+			
+			Zombie->ZombieGetDamaged(15.0f, this);
+		}
 	}
 }
 
@@ -1309,7 +1349,7 @@ void APro4Character::InteractPressed()
 	GetController()->GetPlayerViewPoint(CharacterLoc, CharacterRot);
 
 	FVector Start = CharacterLoc;
-	FVector End = CharacterLoc + (CharacterRot.Vector() * 1000);
+	FVector End = CharacterLoc + (CharacterRot.Vector() * 1500);
 
 	FCollisionQueryParams TraceParams;
 	UWorld* World = GetWorld();
@@ -2206,6 +2246,10 @@ void APro4Character::SetPlayerStateOnServer_Implementation(const FString& State,
 	{
 		IsZoom = bIsState;
 	}
+	else if (State == "IsForward")
+	{
+		IsForward = bIsState;
+	}
 }
 
 /* 플레이어의 무기상태를 서버에 알리는 함수 */
@@ -2218,6 +2262,14 @@ void APro4Character::SetPlayerFlagOnServer_Implementation(const FString& State, 
 	else if (State == "MoveFlag")
 	{
 		Moveflag = Flag;
+	}
+	else if (State == "UpDownFlag")
+	{
+		Updownflag = Flag;
+	}
+	else if (State == "LeftRightFlag")
+	{
+		LeftRightflag = Flag;
 	}
 }
 

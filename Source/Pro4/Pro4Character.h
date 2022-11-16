@@ -105,6 +105,9 @@ public:
 	/* 좀비 스포너를 탐지하는 콜리전을 활성화하기 위한 함수 */
 	void DetectZombieSpawner(bool isNight); 
 	
+	UFUNCTION(BlueprintCallable)
+	void DrawPunch();
+
 	// 잠식 시스템 함수
 	void StartEncroachTimer();
 	UFUNCTION(Server, Reliable)
