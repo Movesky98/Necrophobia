@@ -422,6 +422,8 @@ void APro4Character::PostInitializeComponents()
 	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnbeAttackedMontageEnded);
 	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnThrowMontageEnded);
 	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnDrinkMontageEnded);
+	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnPunchMontageEnded);
+	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnStabMontageEnded);
 }
 
 // 장착 몽타주 종료시 콜백
@@ -474,6 +476,22 @@ void APro4Character::OnDrinkMontageEnded(UAnimMontage* Montage, bool bInterrupte
 	{
 		RecoveryEncroach();
 	}
+}
+
+// 펀치 몽타주 종료시 콜백
+void APro4Character::OnPunchMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	IsMontagePlay = false;
+	IsPunch = false;
+	IsAttacking = false;
+}
+
+// 찌르기 몽타주 종료시 콜백
+void APro4Character::OnStabMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	IsMontagePlay = false;
+	IsStab = false;
+	IsAttacking = false;
 }
 
 // Called to bind functionality to input
@@ -964,6 +982,7 @@ void APro4Character::Attack()
 			break;
 		// 칼은 Swing
 		case WeaponMode::Knife:
+			Stab();
 			break;
 		// 투척무기는 Throw
 		case WeaponMode::ATW:
@@ -971,7 +990,6 @@ void APro4Character::Attack()
 			break;
 		// 비무장은 Punch
 		case WeaponMode::Disarming:
-			IsPunch = true;
 			Punch();
 			break;
 		}
@@ -1071,7 +1089,6 @@ void APro4Character::StopFire()
 		FireA->Stop();
 	}
 	IsFire = false;
-	IsPunch = false;
 }
 
 // 총 발사
@@ -1211,10 +1228,22 @@ void APro4Character::Punch() // 주먹질
 	/* 주먹질 애니메이션 꾹 눌렀을 때 주먹질 계속하도록 */
 	if (!IsMontagePlay)
 	{
+		IsPunch = true;
 		PlayMontageOnServer(Pro4Anim->GetPunchMontage(), 1);
-
 		IsMontagePlay = true;
 		IsAttacking = true;
+	}
+}
+
+void APro4Character::Stab() // 주먹질
+{
+	/* 주먹질 애니메이션 꾹 눌렀을 때 주먹질 계속하도록 */
+	if (!IsMontagePlay)
+	{
+		IsStab = true;
+		PlayMontageOnServer(Pro4Anim->GetStabMontage(), 1);
+		IsMontagePlay = true;
+		IsAttacking = true;	
 	}
 }
 

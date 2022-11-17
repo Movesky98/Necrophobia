@@ -20,7 +20,7 @@ AAItemSpawner::AAItemSpawner()
 	bReplicates = true;
 	ItemSpawnerComponent = CreateDefaultSubobject<USphereComponent>(TEXT("ItemSpawner"));
 
-	ItemSpawnerComponent->InitSphereRadius(50.0f);
+	ItemSpawnerComponent->InitSphereRadius(1.0f);
 	ItemSpawnerComponent->SetCollisionProfileName(TEXT("BaseItem"));
 	
 	RootComponent = ItemSpawnerComponent;
@@ -41,7 +41,16 @@ void AAItemSpawner::BeginPlay()
 void AAItemSpawner::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
+	
+	if (GetWorld()->IsServer())
+	{
+		if (2.0f < Seconds)
+		{
+			Seconds = 0.0f;
+			Server_SpawnItem();
+		}
+		Seconds += DeltaTime;
+	}
 }
 
 /* 서버가 아이템을 스폰하도록 하는 함수 */
@@ -53,8 +62,8 @@ void AAItemSpawner::Server_SpawnItem()
 		return;
 	}
 
-	RandomSpawnNum = FMath::RandRange(1, 5);
-	
+	//RandomSpawnNum = FMath::RandRange(1, 5);
+	RandomSpawnNum = 1;
 	UWorld* World = GetWorld();
 
 	if (World)
