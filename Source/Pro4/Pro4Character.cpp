@@ -2088,19 +2088,16 @@ void APro4Character::EquipPlayerWeaponOnClient_Implementation(const WeaponMode& 
 		Weapon->SetSkeletalMesh(Knife.Weapon);
 		Scope->SetStaticMesh(nullptr);
 		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
-		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(3);
 		break;
 	case WeaponMode::ATW:
 		Grenade->SetStaticMesh(GrenadeMesh);
 		Scope->SetStaticMesh(nullptr);
-		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(4);
 		break;
 	case WeaponMode::Disarming:
 		Weapon->SetSkeletalMesh(nullptr);
 		Grenade->SetStaticMesh(nullptr);
 		Scope->SetStaticMesh(nullptr);
 		PlayerGrenade.EquipGrenade = "None";
-		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(0);
 		break;
 	default:
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("_CurWeaponMode Variable has garbage value."));
