@@ -484,7 +484,7 @@ void APro4Character::OnDrinkMontageEnded(UAnimMontage* Montage, bool bInterrupte
 void APro4Character::OnPunchMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	IsMontagePlay = false;
-	IsPunch = false;
+	SetPlayerStateOnServer("Punch", false);
 	IsAttacking = false;
 }
 
@@ -492,7 +492,7 @@ void APro4Character::OnPunchMontageEnded(UAnimMontage* Montage, bool bInterrupte
 void APro4Character::OnStabMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	IsMontagePlay = false;
-	IsStab = false;
+	SetPlayerStateOnServer("Stab", false);
 	IsAttacking = false;
 }
 
@@ -1237,21 +1237,63 @@ void APro4Character::Punch() // 주먹질
 	if (!IsMontagePlay)
 	{
 		IsPunch = true;
-		PlayMontageOnServer(Pro4Anim->GetPunchMontage(), 1);
+		// SetPlayerStateOnServer("Punch", true);
+		PlayMontageOnServer(Pro4Anim->GetPunchMontage());
 		IsMontagePlay = true;
 		IsAttacking = true;
 	}
 }
 
-void APro4Character::Stab() // 주먹질
+void APro4Character::Stab() // 칼
 {
 	/* 주먹질 애니메이션 꾹 눌렀을 때 주먹질 계속하도록 */
 	if (!IsMontagePlay)
 	{
 		IsStab = true;
-		PlayMontageOnServer(Pro4Anim->GetStabMontage(), 1);
+		// SetPlayerStateOnServer("Stab", true);
+		PlayMontageOnServer(Pro4Anim->GetStabMontage());
 		IsMontagePlay = true;
 		IsAttacking = true;	
+	}
+}
+
+void APro4Character::DrawStab()
+{
+	FHitResult AttackHit;
+	FName Profile = "Player";
+	TArray<AActor*> IgnoreActor;
+	IgnoreActor.Add(this);
+	FVector Start = Weapon->GetSocketLocation("KnifeStart");
+	FVector End = Weapon->GetSocketLocation("KnifeEnd");
+	FRotator Rotation = (End - Start).Rotation();
+
+	bool IsHit = UKismetSystemLibrary::BoxTraceSingleByProfile(
+		GetWorld(),
+		Start,
+		End,
+		FVector(10.0f),
+		Rotation,
+		Profile,
+		true,
+		IgnoreActor,
+		EDrawDebugTrace::Persistent,
+		AttackHit,
+		true);
+
+	if (IsHit)
+	{
+		if (AttackHit.GetActor()->ActorHasTag("Player"))
+		{
+			APro4Character* PlayerCharacter = Cast<APro4Character>(AttackHit.GetActor());
+
+			PlayerCharacter->GetDamaged(35.0f, this);
+		}
+		else if (AttackHit.GetActor()->ActorHasTag("Zombie"))
+		{
+			APro4Zombie* Zombie = Cast<APro4Zombie>(AttackHit.GetActor());
+
+			Zombie->ZombieGetDamaged(35.0f, this);
+		}
 	}
 }
 
@@ -1259,10 +1301,11 @@ void APro4Character::Stab() // 주먹질
 void APro4Character::DrawPunch()
 {
 	FHitResult HitResult;
-	FVector Location = GetMesh()->GetSocketLocation("RightHandPunch");
+	FVector Location = GetMesh()->GetSocketLocation("LeftHandPunch");
 	Location += GetActorForwardVector() * 50.0f;
 
 	TArray<AActor*> IgnoreActor;
+	IgnoreActor.Add(this);
 
 	bool isHit = UKismetSystemLibrary::SphereTraceSingleByProfile(
 		GetWorld(),
@@ -2288,6 +2331,14 @@ void APro4Character::SetPlayerStateOnServer_Implementation(const FString& State,
 	else if (State == "IsForward")
 	{
 		IsForward = bIsState;
+	}
+	else if (State == "Punch")
+	{
+		IsPunch = bIsState;
+	}
+	else if (State == "Stab")
+	{
+		IsStab = bIsState;
 	}
 }
 

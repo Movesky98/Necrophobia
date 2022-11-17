@@ -101,4 +101,9 @@ private:
 
 	UFUNCTION()
 	void AnimNotify_ThrowNotify();
+
+	UFUNCTION()
+	void AnimNotify_StabNotify();
+
+
 };
