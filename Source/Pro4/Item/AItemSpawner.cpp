@@ -62,8 +62,7 @@ void AAItemSpawner::Server_SpawnItem()
 		return;
 	}
 
-	//RandomSpawnNum = FMath::RandRange(1, 5);
-	RandomSpawnNum = 1;
+	RandomSpawnNum = FMath::RandRange(1, 5);
 	UWorld* World = GetWorld();
 
 	if (World)

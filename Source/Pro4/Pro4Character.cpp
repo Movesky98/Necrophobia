@@ -827,7 +827,7 @@ void APro4Character::EquipSub()
 			if (IsZoom)
 				Zoom();
 
-			SetPlayerFlagOnServer("EquipFlag", 1);
+			SetPlayerFlagOnServer("EquipFlag", 2);
 			PlayMontageOnServer(Pro4Anim->GetEquipMontage(), 2);
 			IsMontagePlay = true;
 			IsEquipping = true;
@@ -865,7 +865,7 @@ void APro4Character::EquipKnife()
 			if (IsZoom)
 				Zoom();
 
-			SetPlayerFlagOnServer("EquipFlag", 2);
+			SetPlayerFlagOnServer("EquipFlag", 3);
 			PlayMontageOnServer(Pro4Anim->GetEquipMontage(), 2);
 			IsMontagePlay = true;
 			IsEquipping = true;
@@ -934,7 +934,7 @@ void APro4Character::Reload()
 			break;
 		// 보조무기 장전
 		case WeaponMode::Sub:
-			PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 2);
+			PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 3);
 			IsMontagePlay = true;
 			IsReloading = true;
 
@@ -1157,7 +1157,7 @@ void APro4Character::Fire()
 		}
 
 		// 총알 발사 애니메이션
-		if (!IsMontagePlay)
+		if (!IsMontagePlay && !(CurrentWeaponMode == WeaponMode::Sub))
 		{
 			// 줌 한 상태일 경우 카메라 위치에 따라 스폰하도록 구현
 			if (IsZoom)
