@@ -1236,8 +1236,7 @@ void APro4Character::Punch() // 주먹질
 	/* 주먹질 애니메이션 꾹 눌렀을 때 주먹질 계속하도록 */
 	if (!IsMontagePlay)
 	{
-		IsPunch = true;
-		// SetPlayerStateOnServer("Punch", true);
+		SetPlayerStateOnServer("Punch", true);
 		PlayMontageOnServer(Pro4Anim->GetPunchMontage());
 		IsMontagePlay = true;
 		IsAttacking = true;
@@ -1249,8 +1248,7 @@ void APro4Character::Stab() // 칼
 	/* 주먹질 애니메이션 꾹 눌렀을 때 주먹질 계속하도록 */
 	if (!IsMontagePlay)
 	{
-		IsStab = true;
-		// SetPlayerStateOnServer("Stab", true);
+		SetPlayerStateOnServer("Stab", true);
 		PlayMontageOnServer(Pro4Anim->GetStabMontage());
 		IsMontagePlay = true;
 		IsAttacking = true;	
@@ -2396,6 +2394,8 @@ void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(APro4Character, IsZoom);
 	DOREPLIFETIME(APro4Character, Equipflag);
 	DOREPLIFETIME(APro4Character, Moveflag);
+	DOREPLIFETIME(APro4Character, IsPunch);
+	DOREPLIFETIME(APro4Character, IsStab);
 	DOREPLIFETIME(APro4Character, IsDead);
 	DOREPLIFETIME(APro4Character, IsDrink);
 	DOREPLIFETIME(APro4Character, SpawnZombieCurCount);

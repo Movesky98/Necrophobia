@@ -467,7 +467,9 @@ private:
 	bool bHit;
 	bool IsForward;
 	bool IsFire;
+	UPROPERTY(Replicated)
 	bool IsPunch;
+	UPROPERTY(Replicated)
 	bool IsStab;
 	bool IsMontagePlay;
 	bool IsPossibleEscape;
@@ -631,7 +633,7 @@ private:
 
 	UFUNCTION(Server, Reliable)
 	void SetPlayerStateOnServer(const FString& State, bool bIsState);
-	
+
 	UFUNCTION(Server, Reliable)
 	void SetPlayerFlagOnServer(const FString& State, int32 Flag);
 
