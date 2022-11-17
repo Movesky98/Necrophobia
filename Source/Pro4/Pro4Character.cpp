@@ -72,12 +72,14 @@ APro4Character::APro4Character()
 	MapSpringArm->SetupAttachment(GetCapsuleComponent());
 	MapCapture->SetupAttachment(MapSpringArm);
 	MapSpringArm->SetRelativeRotation(FRotator(-90.0f, 0.0f, 0.0f));
+	MapSpringArm->SetRelativeRotation(FRotator(-90.0f, 0.0f, 0.0f));
 	PaperSprite->SetupAttachment(MapSpringArm);
 	/* 컴포넌트 계층 설정 */
 
 	/* 캐릭터 메쉬 위치, 회전 값 설정*/
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f));
 	GetMesh()->SetCollisionProfileName(TEXT("PCharacter"));
+	GetCapsuleComponent()->SetCollisionProfileName(TEXT("PCharacter"));
 
 	/* 초기설정 함수 */
 	CameraSetting();
@@ -1149,6 +1151,12 @@ void APro4Character::Fire()
 				IsMontagePlay = true;
 				IsAttacking = true;
 				UE_LOG(Pro4, Log, TEXT("2"));
+
+				if (CurrentWeaponMode == WeaponMode::Main && MainWeapon.Name == "SR")
+				{
+					GetController()->GetPlayerViewPoint(MuzzleLocation, MuzzleRotation);
+					MuzzleLocation += MuzzleRotation.Vector() * 150.0f;
+				}
 			}
 			else
 			{
@@ -2071,7 +2079,7 @@ void APro4Character::CallHelicopterToEscapeOnServer_Implementation()
 
 	// 헬리콥터가 생성될 좌표
 	FVector SpawnLocation = FVector::ZeroVector;
-	SpawnLocation.Z = 1000.0f;
+	SpawnLocation.Z = 3000.0f;
 
 	FVector ToPlayerVector = GetActorLocation() - SpawnLocation;
 	ToPlayerVector.Z = 0.0f;

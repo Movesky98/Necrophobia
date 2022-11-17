@@ -174,6 +174,13 @@ void AInGameMode::StartGame()
             ItemSpawner->SpawnVaccine();
         }
     }
+
+    for (AActor* ItemSpawnerActor : ItemSpawnerArray)
+    {
+        AAItemSpawner* ItemSpawner = Cast<AAItemSpawner>(ItemSpawnerActor);
+
+        ItemSpawner->Server_SpawnItem();
+    }
 }
 
 /* 충분한 인원이 모이고 시간초를 세는 함수 */

@@ -20,8 +20,8 @@ AAItemSpawner::AAItemSpawner()
 	bReplicates = true;
 	ItemSpawnerComponent = CreateDefaultSubobject<USphereComponent>(TEXT("ItemSpawner"));
 
-	ItemSpawnerComponent->InitSphereRadius(50.0f);
-	ItemSpawnerComponent->SetCollisionProfileName(TEXT("BaseItem"));
+	ItemSpawnerComponent->InitSphereRadius(1.0f);
+	ItemSpawnerComponent->SetCollisionProfileName(TEXT("NoCollision"));
 	
 	RootComponent = ItemSpawnerComponent;
 	
@@ -41,6 +41,17 @@ void AAItemSpawner::BeginPlay()
 void AAItemSpawner::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (GetWorld()->IsServer())
+	{
+		if (10.0f < Seconds)
+		{
+			Seconds = 0.0f;
+			Server_SpawnItem();
+		}
+
+		Seconds += DeltaTime;
+	}
 
 }
 

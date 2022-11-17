@@ -579,7 +579,7 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = DetectZSpawner)
 	UBoxComponent* DetectZSpawnerCol;
 	bool IsDayChanged = false;
-	FVector DetectExtent = FVector(1000.0f, 1000.0f, 1000.0f);
+	FVector DetectExtent = FVector(1500.0f, 1500.0f, 2000.0f);
 
 	// 현재 스폰된 좀비수와 최대 좀비 수
 	UPROPERTY(Replicated)
