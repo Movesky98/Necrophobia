@@ -197,7 +197,7 @@ void AInGameMode::CountingTheSeconds()
 /* 서버가 보스를 생성하는 함수 */
 void AInGameMode::SpawnBossZombie()
 {
-    FVector SpawnLocation = FVector(-47632.0f, 19246.0f, 40.0f);
+    FVector SpawnLocation = FVector(-54517.0f, 16819.0f, 92.5f);
     FRotator SpawnRotation = FRotator(0.0f);
     FActorSpawnParameters SpawnParams;
     SpawnParams.Owner = this;
