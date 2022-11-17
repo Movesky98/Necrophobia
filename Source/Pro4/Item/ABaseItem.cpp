@@ -18,7 +18,7 @@ AABaseItem::AABaseItem()
 
 	bReplicates = true;
 	bNetLoadOnClient = true;
-	NetCullDistanceSquared = 2500000000.0f;
+	NetCullDistanceSquared = 9000000202358128640.0f;
 
 	RootComponent = BoxMesh;
 	SK_Mesh->SetupAttachment(BoxMesh);

@@ -139,7 +139,7 @@ void AInGameState::AddInGameSeconds() {
 				else 
 				{
 					APro4Character* PlayerCharacter = Cast<APro4Character>(Player->GetPawn());
-					PlayerCharacter->DetectZombieSpawner(true);
+					PlayerCharacter->DetectZombieSpawner(false);
 				}
 			}
 

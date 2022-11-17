@@ -12,6 +12,7 @@
 APro4Projectile::APro4Projectile()
 {
 	bReplicates = true;
+	NetCullDistanceSquared = 9000000202358128640.0f;
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MESH"));
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));

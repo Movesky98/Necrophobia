@@ -22,6 +22,8 @@ APro4Zombie::APro4Zombie()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	NetCullDistanceSquared = 9000000202358128640.0f;
+
 	ZombieCollision = CreateDefaultSubobject<UCapsuleComponent>(TEXT("ZombieCollision"));
 
 	ZombieCollision->SetupAttachment(RootComponent);

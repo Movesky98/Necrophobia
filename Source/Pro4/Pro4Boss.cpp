@@ -18,6 +18,8 @@ APro4Boss::APro4Boss()
 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	NetCullDistanceSquared = 9000000202358128640.0f;
+
 	// 보스 메시
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh>SK_Boss(TEXT("/Game/Character_Animation/Zombie/Creta/Creta_Tpose.Creta_Tpose"));
 	if (SK_Boss.Succeeded())
