@@ -64,6 +64,13 @@ UPro4AnimInstance::UPro4AnimInstance()
 	{
 		DrinkMontage = DRINK_MONTAGE.Object;
 	}
+
+	// 찌르기 애니메이션 몽타주
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> STAB_MONTAGE(TEXT("/Game/Character_Animation/Mannequin/Animations/Stab_Montage.Stab_Montage"));
+	if (STAB_MONTAGE.Succeeded())
+	{
+		StabMontage = STAB_MONTAGE.Object;
+	}
 }
 
 void UPro4AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -84,7 +91,8 @@ void UPro4AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			IsCrouch = Character->GetMovementComponent()->IsCrouching();
 			IsRun = Character->IsRunning();
 			IsZoom = Character->IsZooming();
-			IsThrow = Character->ATWThrow();
+			IsPunch = Character->IsPunching();
+			IsStab = Character->IsStabbing();
 			Equipflag = Character->IsEquip();
 			Moveflag = Character->MoveMode();
 			CharacterRotationPitch = Character->CharacterPitch();
@@ -127,6 +135,12 @@ void UPro4AnimInstance::PlaybeAttackedMontage()
 void UPro4AnimInstance::PlayThrowMontage()
 {
 	Montage_Play(ThrowMontage, 1.0f);
+}
+
+// 찌르기 몽타주 실행
+void UPro4AnimInstance::PlayStabMontage()
+{
+	Montage_Play(StabMontage, 1.0f);
 }
 
 // 몽타주 번호 이동
@@ -196,4 +210,9 @@ UAnimMontage* UPro4AnimInstance::GetThrowMontage()
 UAnimMontage* UPro4AnimInstance::GetDrinkMontage()
 {
 	return DrinkMontage;
+}
+
+UAnimMontage* UPro4AnimInstance::GetStabMontage()
+{
+	return StabMontage;
 }

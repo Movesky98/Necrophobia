@@ -225,6 +225,16 @@ public:
 		return IsThrow;
 	}
 
+	bool IsPunching()
+	{
+		return IsPunch;
+	}
+
+	bool IsStabbing()
+	{
+		return IsStab;
+	}
+
 	int32 IsEquip()
 	{
 		return Equipflag;
@@ -426,6 +436,7 @@ private:
 	void Fire_Mod();
 	void Throw();
 	void Punch();
+	void Stab();
 
 	// 장착 함수
 	void EquipMain();
@@ -454,6 +465,7 @@ private:
 	bool IsForward;
 	bool IsFire;
 	bool IsPunch;
+	bool IsStab;
 	bool IsMontagePlay;
 	bool IsPossibleEscape;
 	bool CanZoom;
@@ -505,6 +517,12 @@ private:
 
 	UFUNCTION()
 		void OnDrinkMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	UFUNCTION()
+		void OnPunchMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	UFUNCTION()
+		void OnStabMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	/* 애니메이션 몽타주 종료시 콜백되는 함수 */
 
 	/* 애니메이션 몽타주 작동중인지 체크하기 위한 변수 */
