@@ -568,9 +568,6 @@ private:
 	UFUNCTION(Server, Reliable, WithValidation)
 	void SpawnWeaponItemOnServer(FVector Location, USkeletalMesh* WeaponMesh, UStaticMesh* ScopeMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath);
 
-	UFUNCTION(NetMulticast, Reliable)
-	void SpawnWeaponItemOnClient(class AAWeapon* SpawnWeapon, USkeletalMesh* WeaponMesh, UStaticMesh* ScopeMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath);
-
 	UFUNCTION(Server, Reliable)
 	void NoticePlayerWeaponOnServer(AAWeapon* _Weapon);
 

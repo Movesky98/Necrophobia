@@ -994,6 +994,7 @@ void APro4Character::Zoom()
 				SpringArm->TargetArmLength = 450.0f;
 				SpringArm->SocketOffset = FVector(0.0f, 100.0f, 50.0f);
 				Camera->FieldOfView = 90.0f;
+				NecGameInstance->PlayerMenu->ToggleCrosshair();
 			}
 			else
 			{
@@ -1009,10 +1010,12 @@ void APro4Character::Zoom()
 				// 달리기 상태였을시 해제
 				if (IsRun)
 					SetPlayerStateOnServer("Run", false);
+
+				NecGameInstance->PlayerMenu->ToggleCrosshair();
 			}
 
 			// 장착무기가 SR일시 스코프 UI로 변경
-			if (MainWeapon.Name == "SR")
+			if (MainWeapon.Name == "SR" && CurrentWeaponMode == WeaponMode::Main)
 			{
 				UNecrophobiaGameInstance* Instance = Cast<UNecrophobiaGameInstance>(GetGameInstance());
 				Instance->PlayerMenu->PlayerZoomWidget();
@@ -1139,6 +1142,7 @@ void APro4Character::Fire()
 		// 총알 발사 애니메이션
 		if (!IsMontagePlay)
 		{
+			// 줌 한 상태일 경우 카메라 위치에 따라 스폰하도록 구현
 			if (IsZoom)
 			{
 				PlayMontageOnServer(Pro4Anim->GetAttackMontage(), 2);
@@ -1152,6 +1156,10 @@ void APro4Character::Fire()
 				IsMontagePlay = true;
 				IsAttacking = true;
 				UE_LOG(Pro4, Log, TEXT("1"));
+
+				GetController()->GetPlayerViewPoint(MuzzleLocation, MuzzleRotation);
+
+				MuzzleLocation += MuzzleRotation.Vector() * 150.0f;
 			}
 		}
 
@@ -1463,22 +1471,12 @@ void APro4Character::SpawnWeaponItemOnServer_Implementation(FVector Location, US
 
 	AAWeapon* DropItem = World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), Location, Rotation, SpawnParams);
 
-	SpawnWeaponItemOnClient(DropItem, WeaponMesh, ScopeMesh, WeaponName, IconPath, ImagePath);
+	DropItem->SetUpOnServer(WeaponMesh, ScopeMesh, WeaponName, IconPath, ImagePath, 1);
 }
 
 bool APro4Character::SpawnWeaponItemOnServer_Validate(FVector Location, USkeletalMesh* WeaponMesh, UStaticMesh* ScopeMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath)
 {
 	return true;
-}
-
-/* NetMulticast로 호출됨. 서버가 클라이언트들에게 드랍된 무기 아이템의 설정을 뿌리는 함수. */
-void APro4Character::SpawnWeaponItemOnClient_Implementation(AAWeapon* SpawnWeapon, USkeletalMesh* WeaponMesh, UStaticMesh* ScopeMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath)
-{
-	SpawnWeapon->SetSKWeaponItem(WeaponMesh, ScopeMesh);
-	SpawnWeapon->SetItemName(WeaponName);
-	SpawnWeapon->SetIconPath(IconPath);
-	SpawnWeapon->SetBoxImagePath(ImagePath);
-	SpawnWeapon->SetItemNum(1);
 }
 
 /* 클라이언트가 서버에게 플레이어의 무기를 세팅하라고 알리는 함수 */
@@ -1490,7 +1488,8 @@ void APro4Character::NoticePlayerWeaponOnServer_Implementation(AAWeapon* _Weapon
 /* NetMulticast로 호출됨. 서버가 클라이언트들에게 해당 플레이어의 무기 설정을 뿌리는 함수. */
 void APro4Character::NoticePlayerWeaponOnClient_Implementation(AAWeapon* _Weapon)
 {
-	Weapon->SetSkeletalMesh(_Weapon->GetSKWeaponItem());
+	// Weapon->SetSkeletalMesh(_Weapon->GetSKWeaponItem());
+
 	// 무기 타입에 따라 해당하는 변수에 아이템 정보 저장 
 	if (_Weapon->GetItemName() == "AR" || _Weapon->GetItemName() == "SR")
 	{
@@ -1505,13 +1504,6 @@ void APro4Character::NoticePlayerWeaponOnClient_Implementation(AAWeapon* _Weapon
 		{
 			MainWeapon.bHaveWeapon = true;
 		}
-
-		// 스코프 소켓에 스코프 장착
-		if (Weapon->DoesSocketExist("b_gun_scopeSocket"))
-		{
-			Scope->SetStaticMesh(_Weapon->GetSKScopeItem());
-			Scope->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetIncludingScale, "b_gun_scopeSocket");
-		}
 	}
 	else if (_Weapon->GetItemName() == "Pistol")
 	{
@@ -1525,6 +1517,8 @@ void APro4Character::NoticePlayerWeaponOnClient_Implementation(AAWeapon* _Weapon
 		{
 			SubWeapon.bHaveWeapon = true;
 		}
+
+		Scope->SetStaticMesh(nullptr);
 	}
 	else
 	{
@@ -1538,7 +1532,11 @@ void APro4Character::NoticePlayerWeaponOnClient_Implementation(AAWeapon* _Weapon
 		{
 			Knife.bHaveWeapon = true;
 		}
+
+		Scope->SetStaticMesh(nullptr);
 	}
+
+	EquipPlayerWeaponOnServer(CurrentWeaponMode);
 }
 
 /* 플레이어의 방어구를 착용하는 함수 */
@@ -1993,29 +1991,33 @@ void APro4Character::EquipPlayerWeaponOnClient_Implementation(const WeaponMode& 
 	switch (_CurWeaponMode)
 	{
 	case WeaponMode::Main:
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("MainWeapon"));
 		Weapon->SetSkeletalMesh(MainWeapon.Weapon);
+
+		if (Weapon->DoesSocketExist("b_gun_scopeSocket"))
+		{
+			Scope->SetStaticMesh(MainWeapon.Scope);
+			Scope->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetIncludingScale, "b_gun_scopeSocket");
+		}
+
 		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
 		break;
 	case WeaponMode::Sub:
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("SubWeapon"));
 		Weapon->SetSkeletalMesh(SubWeapon.Weapon);
+		Scope->SetStaticMesh(nullptr);
 		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
 		break;
 	case WeaponMode::Knife:
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("Knife"));
 		Weapon->SetSkeletalMesh(Knife.Weapon);
+		Scope->SetStaticMesh(nullptr);
 		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
 		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(3);
 		break;
 	case WeaponMode::ATW:
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("ATW"));
 		Grenade->SetStaticMesh(GrenadeMesh);
-		
+		Scope->SetStaticMesh(nullptr);
 		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(4);
 		break;
 	case WeaponMode::Disarming:
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("Disarming"));
 		Weapon->SetSkeletalMesh(nullptr);
 		Grenade->SetStaticMesh(nullptr);
 		Scope->SetStaticMesh(nullptr);
