@@ -167,6 +167,16 @@ void UPro4AnimInstance::AnimNotify_ThrowNotify()
 	}
 }
 
+void UPro4AnimInstance::AnimNotify_Punch()
+{
+	auto Pawn = TryGetPawnOwner();
+	if (IsValid(Pawn))
+	{
+		APro4Character* Player = Cast<APro4Character>(Pawn);
+		Player->DrawPunch();
+	}
+}
+
 UAnimMontage* UPro4AnimInstance::GetEquipMontage()
 {
 	return EquipMontage;

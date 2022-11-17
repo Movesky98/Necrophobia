@@ -94,6 +94,9 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 		float CharacterArmControl;
 
+	UFUNCTION()
+	void AnimNotify_Punch();
+
 	FName GetEquipMontageSectionName(int32 Section);
 
 	UFUNCTION()

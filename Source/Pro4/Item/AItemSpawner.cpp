@@ -42,16 +42,6 @@ void AAItemSpawner::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (GetWorld()->IsServer())
-	{
-		if (10.0f < Seconds)
-		{
-			Seconds = 0.0f;
-			Server_SpawnItem();
-		}
-
-		Seconds += DeltaTime;
-	}
 }
 
 /* 서버가 아이템을 스폰하도록 하는 함수 */
@@ -74,9 +64,6 @@ void AAItemSpawner::Server_SpawnItem()
 		SpawnParams.Instigator = GetInstigator();
 		FRotator Rot = FRotator::ZeroRotator;
 		FVector SpawnLocation = GetActorLocation();
-
-		SpawnLocation.X += FMath::RandRange(500, 1000);
-		SpawnLocation.Y += FMath::RandRange(500, 1000);
 
 		switch (RandomSpawnNum) {
 		case 1:

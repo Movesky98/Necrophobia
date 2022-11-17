@@ -163,13 +163,16 @@ void AInGameMode::StartGame()
 
     int32 NumberOfSpawner = ItemSpawnerArray.Num();
 
-    // 아이템 스포너에 백신 생성
-    for (int i = 0; i < 3; i++)
+    if (NumberOfSpawner > 0)
     {
-        int32 Rand = FMath::RandRange(0, NumberOfSpawner);
-        AAItemSpawner* ItemSpawner = Cast<AAItemSpawner>(ItemSpawnerArray[Rand]);
+        // 아이템 스포너에 백신 생성
+        for (int i = 0; i < 3; i++)
+        {
+            int32 Rand = FMath::RandRange(0, NumberOfSpawner);
+            AAItemSpawner* ItemSpawner = Cast<AAItemSpawner>(ItemSpawnerArray[Rand]);
 
-        ItemSpawner->SpawnVaccine();
+            ItemSpawner->SpawnVaccine();
+        }
     }
 }
 

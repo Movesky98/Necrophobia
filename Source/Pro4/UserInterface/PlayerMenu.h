@@ -49,6 +49,7 @@ public:
 	void ChangePlayerWidget();
 	void PlayerZoomWidget();
 	void ActiveGameOverUI(uint16 PlayerKill, uint16 ZombieKill, uint16 PlayerRanking, uint16 TotalPlayer);
+	void ToggleCrosshair();
 	
 	/* 게임 오버 UI에서, 랭킹에 따라 이미지를 보여주는 함수 */
 	void SetRankingUI(uint16 PlayerRanking, uint16 TotalPlayer);
@@ -93,6 +94,9 @@ private:
 	
 	/* Player Default UI에 구성되는 위젯 */
 #pragma region PlayerDefaultUI
+	UPROPERTY(meta = (BindWidget))
+	class UImage* Crosshair;
+
 	UPROPERTY(meta = (BindWidget))
 	class UImage* MainWeaponSlot;
 

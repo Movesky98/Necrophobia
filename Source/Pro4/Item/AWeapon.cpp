@@ -32,12 +32,12 @@ void AAWeapon::BeginPlay()
 	
 	if (GetWorld()->IsServer())
 	{
-		NetMulticast_SetUp(SK_WeaponItem, SK_WeaponSight, TemporaryName, ItemIconPath, WeaponBoxImagePath, 1);
+		SetUpOnServer(SK_WeaponItem, SK_WeaponSight, TemporaryName, ItemIconPath, WeaponBoxImagePath, 1);
 	}
 }
 
 /* 클라이언트들에게 아이템 정보를 뿌려줌 */
-void AAWeapon::NetMulticast_SetUp_Implementation(USkeletalMesh* SK_Weapon, UStaticMesh* SM_Scope, const FString& _ItemName, const FString& _IconPath, const FString& _ImagePath, uint16 _ItemNum)
+void AAWeapon::SetUpOnServer_Implementation(USkeletalMesh* SK_Weapon, UStaticMesh* SM_Scope, const FString& _ItemName, const FString& _IconPath, const FString& _ImagePath, uint16 _ItemNum)
 {
 	// 스코프 메쉬와 무기 메쉬 설정
 	if (WBP_NameWidget == nullptr)
@@ -142,7 +142,7 @@ void AAWeapon::RandomSpawn(int32 Random)
 	{
 		UE_LOG(Pro4, Log, TEXT("Pistol is spawned."));
 
-		static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/SMG11/SK_SMG11_Y"));
+		static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_Weapon(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/SMG11/SK_SMG11_Nostock_Y"));
 		if (SK_Weapon.Succeeded())
 		{
 			SK_WeaponItem = SK_Weapon.Object;

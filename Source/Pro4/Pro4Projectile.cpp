@@ -4,6 +4,7 @@
 #include "Pro4Projectile.h"
 #include "Pro4Character.h"
 #include "Pro4Zombie.h"
+#include "Pro4Boss.h"
 
 #include "DrawDebugHelpers.h"
 
@@ -83,14 +84,10 @@ void APro4Projectile::FireInDirection(const FVector& ShootDirection)
 /* 총알이 무언가에 맞았을 때 실행되는 함수 */
 void APro4Projectile::ProjectileBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, OtherActor->GetName());
 	ProjectileMovementComponent->bSimulationEnabled = false;
 	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	FRotator NewRotation = SweepResult.ImpactNormal.Rotation();
-
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue , Mesh->GetRelativeRotation().ToString());
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, NewRotation.ToString());
 
 	if (OtherActor->ActorHasTag("Player"))
 	{
@@ -105,6 +102,13 @@ void APro4Projectile::ProjectileBeginOverlap(UPrimitiveComponent* OverlappedComp
 
 		APro4Zombie* Zombie = Cast<APro4Zombie>(OtherActor);
 		Zombie->ZombieGetDamaged(30.0f, GetOwner());
+	}
+	else if (OtherActor->ActorHasTag("BossZombie"))
+	{
+		ProjectileParticle->SetTemplate(Particle_Blood);
+
+		APro4Boss* BossZombie = Cast<APro4Boss>(OtherActor);
+		BossZombie->ZombieGetDamaged(30.0f, GetOwner());
 	}
 	else
 	{

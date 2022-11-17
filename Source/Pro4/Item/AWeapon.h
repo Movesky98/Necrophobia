@@ -30,7 +30,7 @@ public:
 	void ViewWeaponName();
 
 	UFUNCTION(NetMulticast, Reliable)
-	void NetMulticast_SetUp(USkeletalMesh* SK_Weapon, UStaticMesh* SM_Scope, const FString& _ItemName, const FString& _IconPath, const FString& _ImagePath, uint16 _ItemNum);
+	void SetUpOnServer(USkeletalMesh* SK_Weapon, UStaticMesh* SM_Scope, const FString& _ItemName, const FString& _IconPath, const FString& _ImagePath, uint16 _ItemNum);
 
 #pragma region Get_Set
 

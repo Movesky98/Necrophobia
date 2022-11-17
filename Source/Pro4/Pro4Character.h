@@ -102,8 +102,12 @@ public:
 	UFUNCTION(Client, Reliable)
 	void FlashBangExplosion();
 
-	void DetectZombieSpawner(bool isNight); //
+	/* 좀비 스포너를 탐지하는 콜리전을 활성화하기 위한 함수 */
+	void DetectZombieSpawner(bool isNight); 
 	
+	UFUNCTION(BlueprintCallable)
+	void DrawPunch();
+
 	// 잠식 시스템 함수
 	void StartEncroachTimer();
 	UFUNCTION(Server, Reliable)
@@ -582,9 +586,6 @@ private:
 	UFUNCTION(Server, Reliable, WithValidation)
 	void SpawnWeaponItemOnServer(FVector Location, USkeletalMesh* WeaponMesh, UStaticMesh* ScopeMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath);
 
-	UFUNCTION(NetMulticast, Reliable)
-	void SpawnWeaponItemOnClient(class AAWeapon* SpawnWeapon, USkeletalMesh* WeaponMesh, UStaticMesh* ScopeMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath);
-
 	UFUNCTION(Server, Reliable)
 	void NoticePlayerWeaponOnServer(AAWeapon* _Weapon);
 
@@ -599,6 +600,7 @@ private:
 	FVector DetectExtent = FVector(1000.0f, 1000.0f, 1000.0f);
 
 	// 현재 스폰된 좀비수와 최대 좀비 수
+	UPROPERTY(Replicated)
 	uint16 SpawnZombieCurCount = 0;
 	uint16 SpawnZombieMaxCount = 20;
 
