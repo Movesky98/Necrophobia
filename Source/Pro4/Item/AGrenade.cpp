@@ -207,7 +207,7 @@ void AAGrenade::SetGrenadeExplosion()
 		FCollisionShape GrenadeColSphere = FCollisionShape::MakeSphere(500.0f);
 		FCollisionQueryParams GrenadeColParams;
 
-		DrawDebugSphere(GetWorld(), ExplosionLocation, GrenadeColSphere.GetSphereRadius(), 30, FColor::Green, true, 5.0f);
+		// DrawDebugSphere(GetWorld(), ExplosionLocation, GrenadeColSphere.GetSphereRadius(), 30, FColor::Green, true, 5.0f);
 
 		/* 일정 거리내의 구를 그려내어 그 안에 있는 오브젝트들을 받아옴. */
 		bool bIsHit = GetWorld()->SweepMultiByProfile(OutHits, ExplosionLocation, ExplosionLocation, FQuat::Identity, ProfileName, GrenadeColSphere);
@@ -219,14 +219,14 @@ void AAGrenade::SetGrenadeExplosion()
 			{
 				if (Hit.GetActor()->ActorHasTag("Player"))
 				{
-					DrawDebugSolidBox(GetWorld(), Hit.GetActor()->GetActorLocation(), FVector(50.0f), FColor::Red, true, -1);
+					// DrawDebugSolidBox(GetWorld(), Hit.GetActor()->GetActorLocation(), FVector(50.0f), FColor::Red, true, -1);
 					APro4Character* PlayerCharacter = Cast<APro4Character>(Hit.GetActor());
 
 					PlayerCharacter->GetDamaged(40.0f, GetOwner());
 				}
 				else if (Hit.GetActor()->ActorHasTag("Zombie"))
 				{
-					DrawDebugSolidBox(GetWorld(), Hit.GetActor()->GetActorLocation(), FVector(50.0f), FColor::Red, true, -1);
+					// DrawDebugSolidBox(GetWorld(), Hit.GetActor()->GetActorLocation(), FVector(50.0f), FColor::Red, true, -1);
 					APro4Zombie* Zombie = Cast<APro4Zombie>(Hit.GetActor());
 
 					Zombie->ZombieGetDamaged(40.0f, GetOwner());
@@ -248,7 +248,7 @@ void AAGrenade::SetGrenadeExplosion()
 		FCollisionShape GrenadeColSphere = FCollisionShape::MakeSphere(800.0f);
 		FCollisionQueryParams GrenadeColParams;
 
-		DrawDebugSphere(GetWorld(), ExplosionLocation, GrenadeColSphere.GetSphereRadius(), 30, FColor::Green, true, 5.0f);
+		// DrawDebugSphere(GetWorld(), ExplosionLocation, GrenadeColSphere.GetSphereRadius(), 30, FColor::Green, true, 5.0f);
 
 		/* 일정 거리내의 구를 그려내어 그 안에 있는 오브젝트들을 받아옴. */
 		bool bIsHit = GetWorld()->SweepMultiByProfile(OutHits, ExplosionLocation, ExplosionLocation, FQuat::Identity, ProfileName, GrenadeColSphere);
@@ -260,7 +260,7 @@ void AAGrenade::SetGrenadeExplosion()
 			{
 				if (Hit.GetActor()->ActorHasTag("Player"))
 				{
-					DrawDebugSolidBox(GetWorld(), Hit.GetActor()->GetActorLocation(), FVector(50.0f), FColor::Red, true, -1);
+					// DrawDebugSolidBox(GetWorld(), Hit.GetActor()->GetActorLocation(), FVector(50.0f), FColor::Red, true, -1);
 					APro4Character* PlayerCharacter = Cast<APro4Character>(Hit.GetActor());
 
 					PlayerCharacter->FlashBangExplosion();

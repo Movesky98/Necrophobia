@@ -77,7 +77,7 @@ void AZombieSpawner::SpawnZombieOnServer_Implementation(APawn* PlayerInstigator)
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.Owner = this;	// Server
 			SpawnParams.Instigator = PlayerInstigator;	// Target Player
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue, PlayerInstigator->GetName());
+			// GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue, PlayerInstigator->GetName());
 
 			APro4Zombie* SpawnZombie = World->SpawnActor<APro4Zombie>(Zombie, SpawnLocation, SpawnRotation, SpawnParams);
 
@@ -89,12 +89,12 @@ void AZombieSpawner::SpawnZombieOnServer_Implementation(APawn* PlayerInstigator)
 			}
 		}
 
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Server Spawned Zombie."));
+		// GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Server Spawned Zombie."));
 		bIsSpawn = true;
 	}
 	else
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue, TEXT("Zombie already has spawned"));
+		// GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue, TEXT("Zombie already has spawned"));
 	}
 }
 

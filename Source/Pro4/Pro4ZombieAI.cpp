@@ -66,6 +66,6 @@ void APro4ZombieAI::OnRepeatTimer()
 
 void APro4ZombieAI::SetZombieTarget(APawn* Player)
 {		
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, Player->GetName());
+	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, Player->GetName());
 	Target = Player;
 }

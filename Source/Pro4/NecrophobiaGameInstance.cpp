@@ -238,7 +238,7 @@ void UNecrophobiaGameInstance::OnCreateSessionComplete(FName SessionName, bool S
 	UEngine* Engine = GetEngine();
 	if (!ensure(Engine != nullptr)) return;
 
-	Engine->AddOnScreenDebugMessage(0, 3, FColor::Green, TEXT("Host Successed."));
+	// Engine->AddOnScreenDebugMessage(0, 3, FColor::Green, TEXT("Host Successed."));
 
 	UWorld* World = GetWorld();
 	if (!ensure(World != nullptr)) return;
@@ -318,7 +318,7 @@ void UNecrophobiaGameInstance::OnJoinSessionComplete(FName SessionName, EOnJoinS
 	UEngine* Engine = GetEngine();
 	if (!ensure(Engine != nullptr)) return;
 
-	Engine->AddOnScreenDebugMessage(0, 2, FColor::Green, FString::Printf(TEXT("Joining %s"), *Address));
+	// Engine->AddOnScreenDebugMessage(0, 2, FColor::Green, FString::Printf(TEXT("Joining %s"), *Address));
 
 	APlayerController* PlayerController = GetFirstLocalPlayerController();
 	if (!ensure(PlayerController != nullptr)) return;

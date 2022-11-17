@@ -228,7 +228,7 @@ void APro4Zombie::ZombieGetDamagedOnServer_Implementation(float _Damage, AActor*
 		}
 
 		Dead();
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Zombie is dead."));
+		// GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Zombie is dead."));
 	}
 }
 
@@ -249,7 +249,7 @@ void APro4Zombie::DrawAttackField()
 
 	FCollisionQueryParams GrenadeColParams;
 	bool IsHit = GetWorld()->SweepSingleByProfile(AttackHit, CollisionLocation, CollisionLocation, FQuat::Identity, Profile, BoxCollision);
-	DrawDebugBox(GetWorld(), CollisionLocation, BoxCollision.GetExtent(), FColor::Red, true, 5.0f, 0, 5.0f);
+	// DrawDebugBox(GetWorld(), CollisionLocation, BoxCollision.GetExtent(), FColor::Red, true, 5.0f, 0, 5.0f);
 
 	if (IsHit)
 	{
@@ -267,14 +267,14 @@ void APro4Zombie::SetZombieTarget(APawn* TargetPlayer)
 	{
 		if (GetController())
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("SetZombieTarget"));
+			// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("SetZombieTarget"));
 			APro4ZombieAI* ZombieAI = Cast<APro4ZombieAI>(GetController());
 			ZombieAI->SetZombieTarget(TargetPlayer);
 		}
 	}
 	else
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Zombie Target is NULL!!!"));
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Zombie Target is NULL"));
 	}
 }
 

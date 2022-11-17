@@ -45,7 +45,7 @@ void AEncroachField::BeginPlay()
 	UWorld* World = GetWorld();
 	FVector Center = GetActorLocation();
 	float SearchRadius = 50.0f;
-	DrawDebugSphere(World, Center, SearchRadius, 16, FColor::Green, false, 0.2f);
+	// DrawDebugSphere(World, Center, SearchRadius, 16, FColor::Green, false, 0.2f);
 }
 
 void AEncroachField::NotifyActorBeginOverlap(AActor* Act)

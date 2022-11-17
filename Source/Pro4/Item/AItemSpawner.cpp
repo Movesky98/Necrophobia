@@ -42,17 +42,6 @@ void AAItemSpawner::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (GetWorld()->IsServer())
-	{
-		if (10.0f < Seconds)
-		{
-			Seconds = 0.0f;
-			Server_SpawnItem();
-		}
-
-		Seconds += DeltaTime;
-	}
-
 }
 
 /* 서버가 아이템을 스폰하도록 하는 함수 */

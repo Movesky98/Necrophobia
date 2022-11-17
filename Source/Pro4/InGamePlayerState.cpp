@@ -17,13 +17,13 @@ void AInGamePlayerState::UpdatePlayerKillInfo(const FString& Target, AActor* Pla
 {
 	if (Target == "Player")
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, TEXT("InGamePlayerState (Player) : UpdatePlayerKillInfo"));
+		// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, TEXT("InGamePlayerState (Player) : UpdatePlayerKillInfo"));
 
 		PlayerKill++;
 	}
 	else if (Target == "Zombie")
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, TEXT("InGamePlayerState (Zombie) : UpdatePlayerKillInfo"));
+		// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Orange, TEXT("InGamePlayerState (Zombie) : UpdatePlayerKillInfo"));
 
 		ZombieKill++;
 	}

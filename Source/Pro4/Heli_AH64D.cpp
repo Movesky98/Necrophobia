@@ -145,7 +145,7 @@ void AHeli_AH64D::ActiveEscapeCollision()
 /* 탈출을 위한 콜리전에 플레이어가 들어왔을 경우 실행되는 함수 */ 
 void AHeli_AH64D::CheckEscapeCollision(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Cyan, TEXT("CheckEscapeCollision"));
+	// GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Cyan, TEXT("CheckEscapeCollision"));
 	if (OtherActor->ActorHasTag("Player"))
 	{
 		APro4Character* PlayerChracter = Cast<APro4Character>(OtherActor);

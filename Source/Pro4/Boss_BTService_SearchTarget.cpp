@@ -53,7 +53,7 @@ void UBoss_BTService_SearchTarget::TickNode(UBehaviorTreeComponent& OwnerComp, u
 			{
 				OwnerComp.GetBlackboardComponent()->SetValueAsObject(FName(TEXT("Target")), PlayerCharacter);
 
-				DrawDebugSphere(World, Center, SearchRadius, 16, FColor::Green, false, 0.2f);
+				// DrawDebugSphere(World, Center, SearchRadius, 16, FColor::Green, false, 0.2f);
 				return;
 			}
 		}
@@ -61,5 +61,5 @@ void UBoss_BTService_SearchTarget::TickNode(UBehaviorTreeComponent& OwnerComp, u
 	
 	// 없으면 타겟을 리셋
 	OwnerComp.GetBlackboardComponent()->SetValueAsObject(FName(TEXT("Target")), nullptr);
-	DrawDebugSphere(World, Center, SearchRadius, 16, FColor::Red, false, 0.2f);
+	// DrawDebugSphere(World, Center, SearchRadius, 16, FColor::Red, false, 0.2f);
 }

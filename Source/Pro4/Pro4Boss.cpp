@@ -156,7 +156,7 @@ void APro4Boss::DrawAttackField()
 		Profile,
 		true,
 		IgnoreActor,
-		EDrawDebugTrace::Persistent,
+		EDrawDebugTrace::None,
 		AttackHit,
 		true);
 
@@ -207,7 +207,7 @@ void APro4Boss::LeftHandAttack()
 		Profile,
 		true,
 		IgnoreActor,
-		EDrawDebugTrace::Persistent,
+		EDrawDebugTrace::None,
 		AttackHit,
 		true);
 
@@ -260,7 +260,7 @@ void APro4Boss::ZombieGetDamagedOnServer_Implementation(float _Damage, AActor* A
 
 
 		Dead();
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Zombie is dead."));
+		// GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Zombie is dead."));
 	}
 }
 

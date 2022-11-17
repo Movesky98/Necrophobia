@@ -157,7 +157,7 @@ FName UPro4AnimInstance::GetEquipMontageSectionName(int32 Section)
 
 void UPro4AnimInstance::AnimNotify_ThrowNotify()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Emerald, TEXT("Throw Notify"));
+	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Emerald, TEXT("Throw Notify"));
 	
 	auto Pawn = TryGetPawnOwner();
 	if (IsValid(Pawn))

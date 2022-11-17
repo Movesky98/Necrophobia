@@ -159,7 +159,7 @@ void AInGameMode::StartGame()
     InGameState->SetSurvivePlayer(NumberOfPlayers);
     InGameState->SetTotalPlayer(NumberOfPlayers);
 
-    GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Emerald, FString::Printf(TEXT("Total Player Num : %d"), NumberOfPlayers));
+    // GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Emerald, FString::Printf(TEXT("Total Player Num : %d"), NumberOfPlayers));
 
     int32 NumberOfSpawner = ItemSpawnerArray.Num();
 

@@ -134,7 +134,7 @@ void APro4Character::BeginPlay()
 	DetectZSpawnerCol->OnComponentBeginOverlap.AddDynamic(this, &APro4Character::ZombieSpawnerBeginOverlap);
 	DetectZSpawnerCol->OnComponentEndOverlap.AddDynamic(this, &APro4Character::ZombieSpawnerEndOverlap);
 	NecGameInstance = Cast<UNecrophobiaGameInstance>(GetGameInstance());
-	GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, GetActorLocation().ToString());
+	// GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, GetActorLocation().ToString());
 
 	PlayerController = Cast<APro4PlayerController>(GetWorld()->GetFirstPlayerController());
 
@@ -1224,7 +1224,7 @@ void APro4Character::Throw()
 		FRotator ThrowRotation = CameraRotation;
 		ThrowRotation.Pitch += 10.0f;
 
-		DrawDebugSolidBox(GetWorld(), ThrowLocation, FVector(5.0f), FColor::Blue, true, 5.0f);
+		// DrawDebugSolidBox(GetWorld(), ThrowLocation, FVector(5.0f), FColor::Blue, true, 5.0f);
 		SpawnGrenadeOnServer(PlayerGrenade.EquipGrenade, ThrowLocation, ThrowRotation, ThrowRotation.Vector(), this);
 
 		SubtractGrenade();
@@ -1274,7 +1274,7 @@ void APro4Character::DrawStab()
 		Profile,
 		true,
 		IgnoreActor,
-		EDrawDebugTrace::Persistent,
+		EDrawDebugTrace::None,
 		AttackHit,
 		true);
 
@@ -1313,7 +1313,7 @@ void APro4Character::DrawPunch()
 		"Player",
 		true,
 		IgnoreActor,
-		EDrawDebugTrace::Persistent,
+		EDrawDebugTrace::None,
 		HitResult,
 		true
 	);
@@ -1362,7 +1362,7 @@ bool APro4Character::SpawnProjectileOnServer_Validate(FVector Location, FRotator
 /* 플레이어가 서버에게 수류탄을 스폰해달라고 요청하는 함수 */
 void APro4Character::SpawnGrenadeOnServer_Implementation(const FString& GrenadeType, FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Cyan, TEXT("Server spawn Grenade"));
+	// GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Cyan, TEXT("Server spawn Grenade"));
 	UWorld* World = GetWorld();
 
 	if (World)
@@ -1446,8 +1446,8 @@ void APro4Character::InteractPressed()
 	if (bHit)
 	{
 		if (Hit.GetActor()) {
-			DrawDebugSolidBox(World, Hit.ImpactPoint, FVector(5.0f), FColor::Blue, false, 2.0f);
-			DrawDebugLine(World, Start, Hit.ImpactPoint, FColor::Red, false, 2.0f);
+			// DrawDebugSolidBox(World, Hit.ImpactPoint, FVector(5.0f), FColor::Blue, false, 2.0f);
+			// DrawDebugLine(World, Start, Hit.ImpactPoint, FColor::Red, false, 2.0f);
 
 			UE_LOG(Pro4, Log, TEXT("HitActor : %s"), *Hit.GetActor()->GetName());
 
@@ -1801,7 +1801,7 @@ void APro4Character::SetPlayerController(APro4PlayerController* _PlayerControlle
 /* 서버가 플레이어의 체력을 회복하는 함수  */
 void APro4Character::RecoverPlayerHealthOnServer_Implementation()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, "Recovery Player HP On Server");
+	// GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, "Recovery Player HP On Server");
 	CurrentHP += 10.0f;
 
 	if (CurrentHP >= MaxHP)
@@ -1918,7 +1918,7 @@ void APro4Character::RecordPlayerKill_Implementation(AActor* AttackActor)
 		// 이 함수는 서버에서 실행되기 때문의 모든 플레이어의 스테이트를 보존하고 있음!
 		if (!AttackPlayerState)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, TEXT("There are no Playerstate in Other Player Pawn."));
+			// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, TEXT("There are no Playerstate in Other Player Pawn."));
 		}
 		else
 		{
@@ -1933,7 +1933,7 @@ void APro4Character::RecordPlayerKill_Implementation(AActor* AttackActor)
 		;
 	}
 
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Record Player Kill"));
+	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Record Player Kill"));
 }
 
 #pragma endregion
@@ -1944,7 +1944,7 @@ void APro4Character::ZombieSpawnerBeginOverlap(UPrimitiveComponent* OverlappedCo
 {
 	if (OtherActor->ActorHasTag("ZombieSpawner"))
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, TEXT("ZombieSpawner is Detected."));
+		// GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, TEXT("ZombieSpawner is Detected."));
 
 		AZombieSpawner* ZombieSpawner = Cast<AZombieSpawner>(OtherActor);
 		if (SpawnZombieCurCount < SpawnZombieMaxCount)
@@ -1953,33 +1953,33 @@ void APro4Character::ZombieSpawnerBeginOverlap(UPrimitiveComponent* OverlappedCo
 		}
 		else
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, TEXT("20 zombies have already been spawned."));
+			// GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, TEXT("20 zombies have already been spawned."));
 		}
 	}
 
 
 	/* Draw Player's ZombieSpawner Detection Extent */
-	DrawDebugBox(GetWorld(), GetActorLocation(), DetectExtent, FColor::Green, false, 5.0f, 0, 10.0f);
+	// DrawDebugBox(GetWorld(), GetActorLocation(), DetectExtent, FColor::Green, false, 5.0f, 0, 10.0f);
 }
 
 void APro4Character::ZombieSpawnerEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	if (OtherActor->ActorHasTag("ZombieSpawner"))
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, TEXT("ZombieSpawner is Detected."));
+		// GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, TEXT("ZombieSpawner is Detected."));
 
 		AZombieSpawner* ZombieSpawner = Cast<AZombieSpawner>(OtherActor);
 		ZombieSpawner->PlayerAwayFromSpawner(GetInstigator());
 	}
 
 	/* Draw Player's ZombieSpawner Detection Extent */
-	DrawDebugBox(GetWorld(), GetActorLocation(), DetectExtent, FColor::Red, false, 5.0f, 0, 10.0f);
+	// DrawDebugBox(GetWorld(), GetActorLocation(), DetectExtent, FColor::Red, false, 5.0f, 0, 10.0f);
 }
 
 
 void APro4Character::DetectZombieSpawner(bool isNight)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Detect Zombie Spawner"));
+	// GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Detect Zombie Spawner"));
 	DetectZSpawnerCol->SetGenerateOverlapEvents(isNight);
 }
 
@@ -2060,7 +2060,7 @@ void APro4Character::EquipGrenade()
 
 void APro4Character::EquipPlayerWeaponOnServer_Implementation(const WeaponMode& _CurWeaponMode, UStaticMesh* GrenadeMesh = nullptr)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("EquipPlayerWeaponOnServer"));
+	// GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("EquipPlayerWeaponOnServer"));
 	EquipPlayerWeaponOnClient(_CurWeaponMode, GrenadeMesh);
 }
 
@@ -2142,7 +2142,7 @@ void APro4Character::CallHelicopterToEscapeOnServer_Implementation()
 		return;
 	}
 
-	DrawDebugSolidBox(GetWorld(), GetActorLocation(), FVector(20.0f), FColor::Blue, true);
+	// DrawDebugSolidBox(GetWorld(), GetActorLocation(), FVector(20.0f), FColor::Blue, true);
 
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = this;
