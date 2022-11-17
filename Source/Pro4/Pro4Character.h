@@ -607,7 +607,7 @@ private:
 	// 현재 스폰된 좀비수와 최대 좀비 수
 	UPROPERTY(Replicated)
 	uint16 SpawnZombieCurCount = 0;
-	uint16 SpawnZombieMaxCount = 20;
+	uint16 SpawnZombieMaxCount = 10;
 
 	/* 좀비 스포너 */
 	UFUNCTION()

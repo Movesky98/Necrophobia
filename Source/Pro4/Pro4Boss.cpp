@@ -52,7 +52,7 @@ APro4Boss::APro4Boss()
 
 	IsAppear = false;
 
-	CurrentHP = 400.0f;
+	CurrentHP = 800.0f;
 	Damage = 40.0f;
 	Tags.Add("BossZombie");
 }
