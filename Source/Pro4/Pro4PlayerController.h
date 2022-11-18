@@ -22,8 +22,19 @@ public:
 
 	bool SetHelicopterSpawn();
 
+	uint16 SetPlayerRankning(bool isEscape); 
+	uint16 GetTotalRanking();
+	
 	UFUNCTION(Server, Reliable)
-	void AvaialbleHelicopterSpawnOnServer();
+	void SubtractSurvivePlayerOnServer();
+
+	UFUNCTION(Server, Reliable)
+	void AddEscapePlayerOnServer();
+
+	UFUNCTION(Server, Reliable)
+	void RequestSpawnHelicopterOnServer();
+
+	void RemoveServerUI();
 
 protected:
 
@@ -41,9 +52,6 @@ private:
 	float Time = 0.0f;
 
 	bool bIsServer = false;
-
-	// 빙의할 캐릭터 클래스와 사용할 변수, 상태를 저장하고 가져올 클래스 변수들
-	class APro4Character* PlayerCharacter;
 
 	class AInGameState* InGameState;
 	class UPlayerMenu* PlayerMenu;

@@ -20,8 +20,8 @@ AAItemSpawner::AAItemSpawner()
 	bReplicates = true;
 	ItemSpawnerComponent = CreateDefaultSubobject<USphereComponent>(TEXT("ItemSpawner"));
 
-	ItemSpawnerComponent->InitSphereRadius(50.0f);
-	ItemSpawnerComponent->SetCollisionProfileName(TEXT("BaseItem"));
+	ItemSpawnerComponent->InitSphereRadius(1.0f);
+	ItemSpawnerComponent->SetCollisionProfileName(TEXT("NoCollision"));
 	
 	RootComponent = ItemSpawnerComponent;
 	
@@ -42,18 +42,9 @@ void AAItemSpawner::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	/*if (GetWorld()->IsServer())
-	{
-		if (10.0f < Seconds)
-		{
-			Seconds = 0.0f;
-			Server_SpawnItem();
-		}
-
-		Seconds += DeltaTime;
-	}*/
 }
 
+/* 서버가 아이템을 스폰하도록 하는 함수 */
 void AAItemSpawner::Server_SpawnItem()
 {
 	if (!GetWorld()->IsServer())
@@ -74,23 +65,25 @@ void AAItemSpawner::Server_SpawnItem()
 		FRotator Rot = FRotator::ZeroRotator;
 		FVector SpawnLocation = GetActorLocation();
 
-		SpawnLocation.X += FMath::RandRange(500, 1000);
-		SpawnLocation.Y += FMath::RandRange(500, 1000);
-
 		switch (RandomSpawnNum) {
 		case 1:
+			// 무기
 			World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), SpawnLocation, Rot, SpawnParams);
 		break;
 		case 2:
+			// 방어구
 			World->SpawnActor<AAArmor>(AAArmor::StaticClass(), SpawnLocation, Rot, SpawnParams);
 		break;
 		case 3:
+			// 투척 무기
 			World->SpawnActor<AAGrenade>(AAGrenade::StaticClass(), SpawnLocation, Rot, SpawnParams);
 		break;
 		case 4:
+			// 회복 아이템
 			World->SpawnActor<ARecovery>(ARecovery::StaticClass(), SpawnLocation, Rot, SpawnParams);
 			break;
 		case 5:
+			// 탄약
 			World->SpawnActor<AAmmo>(AAmmo::StaticClass(), SpawnLocation, Rot, SpawnParams);
 			break;
 		default:
@@ -101,6 +94,7 @@ void AAItemSpawner::Server_SpawnItem()
 	}
 }
 
+/* 게임이 시작되었을 때, 서버에서 백신을 소환하도록 하는 함수 */
 void AAItemSpawner::SpawnVaccine()
 {
 	UWorld* World = GetWorld();
@@ -117,6 +111,7 @@ void AAItemSpawner::SpawnVaccine()
 	}
 }
 
+/* 아이템에서 서버와 클라이언트에 복제되는 변수들을 설정하는 함수 */
 void AAItemSpawner::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);

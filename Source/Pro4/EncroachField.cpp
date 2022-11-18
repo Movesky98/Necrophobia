@@ -12,6 +12,7 @@ AEncroachField::AEncroachField()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	NetCullDistanceSquared = 9000000202358128640.0f;
 	EncroachMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("EncroachMesh"));
 	EncroachPivotComponent = CreateDefaultSubobject<USphereComponent>(TEXT("EncroachPoint"));
 
@@ -45,7 +46,7 @@ void AEncroachField::BeginPlay()
 	UWorld* World = GetWorld();
 	FVector Center = GetActorLocation();
 	float SearchRadius = 50.0f;
-	DrawDebugSphere(World, Center, SearchRadius, 16, FColor::Green, false, 0.2f);
+	// DrawDebugSphere(World, Center, SearchRadius, 16, FColor::Green, false, 0.2f);
 }
 
 void AEncroachField::NotifyActorBeginOverlap(AActor* Act)

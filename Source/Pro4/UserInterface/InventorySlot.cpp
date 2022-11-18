@@ -86,6 +86,28 @@ void UInventorySlot::UseInventoryItem()
 	}
 	else if (GetItemType() == "Recovery")
 	{
-		PlayerCharacter->RecoveryEncroach();
+		PlayerCharacter->Drink();
 	}
+	else
+	{
+		return;
+	}
+
+	ItemNum--;
+
+	if (ItemNum == 0)
+	{
+		RemoveFromViewport();
+		return;
+	}
+
+	UpdateSlotCount();
+}
+
+/* 아이템 슬롯의 수를 최신화하는 함수 */
+void UInventorySlot::UpdateSlotCount()
+{
+	FString SlotNumber = FString::FromInt(GetItemNum());
+
+	InventorySlotNum->SetText(FText::FromString(SlotNumber));
 }

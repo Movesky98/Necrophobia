@@ -73,6 +73,8 @@ protected:
 private:
 	AmmoType CurrentAmmo;
 
+	UStaticMesh* SM_Ammo;
+
 	UPROPERTY(Replicated)
 		FString ItemName;
 

@@ -20,10 +20,20 @@ public:
 	UAnimMontage* GetEquipMontage();
 	UAnimMontage* GetReloadMontage();
 	UAnimMontage* GetAttackMontage();
+	UAnimMontage* GetPunchMontage();
+	UAnimMontage* GetbeAttackedMontage();
+	UAnimMontage* GetThrowMontage();
+	UAnimMontage* GetDrinkMontage();
+	UAnimMontage* GetStabMontage();
 
 	void PlayEquipMontage();
 	void PlayReloadMontage();
 	void PlayAttackMontage();
+	void PlayPunchMontage();
+	void PlaybeAttackedMontage();
+	void PlayThrowMontage();
+	void PlayStabMontage();
+
 	void JumpToEquipMontageSection(int32 NewSection);
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Equip, Meta = (AllowPrivateAccess = true))
@@ -35,6 +45,20 @@ public:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
 		UAnimMontage* AttackMontage;
 
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
+		UAnimMontage* PunchMontage;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = beAttacked, Meta = (AllowPrivateAccess = true))
+		UAnimMontage* beAttackedMontage;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = beAttacked, Meta = (AllowPrivateAccess = true))
+		UAnimMontage* ThrowMontage;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = beAttacked, Meta = (AllowPrivateAccess = true))
+		UAnimMontage* DrinkMontage;
+
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = beAttacked, Meta = (AllowPrivateAccess = true))
+		UAnimMontage* StabMontage;
 private:
 	// 좀비 애니메이션 컨트롤을 위한 변수들
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Pawn, Meta = (AllowPrivateAccess = true))
@@ -53,6 +77,12 @@ private:
 		bool IsZoom;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
+		bool IsPunch;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
+		bool IsStab;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 		int32 Equipflag;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
@@ -62,7 +92,18 @@ private:
 		float CharacterRotationPitch;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
-		float CharacterRotationYaw;
+		float CharacterArmControl;
+
+	UFUNCTION()
+	void AnimNotify_Punch();
 
 	FName GetEquipMontageSectionName(int32 Section);
+
+	UFUNCTION()
+	void AnimNotify_ThrowNotify();
+
+	UFUNCTION()
+	void AnimNotify_StabNotify();
+
+
 };

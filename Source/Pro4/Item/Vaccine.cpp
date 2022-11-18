@@ -10,11 +10,13 @@ AVaccine::AVaccine()
 {
 	ItemType = BaseItemType::Vaccine;
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Cube(TEXT("/Game/Military/Demo_content/Geometry/Meshes/1M_Cube"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Cube(TEXT("/Game/DownloadAssets/First_Aid_Health_Kit/Meshes/SM_EnergySyringe1_01"));
 	if (SM_Cube.Succeeded())
 	{
 		BoxMesh->SetStaticMesh(SM_Cube.Object);
 	}
+
+	BoxMesh->SetRelativeScale3D(FVector(4.0f));
 }
 
 /* 아이템이 월드에 생성되었을 때, 실행되는 함수 */
@@ -27,14 +29,13 @@ void AVaccine::BeginPlay()
 	WBP_NameWidget = Cast<UItemNameWidget>(NameWidget->GetUserWidgetObject());
 	if (WBP_NameWidget != nullptr)
 	{
-		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/AR4_Icon_500x500";
+		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/Vaccine_Icon_500x500";
 		ItemName = "Vaccine";
+		ItemNum = 1;
 		WBP_NameWidget->SetItemName(ItemName);
 	}
 	else
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, NameWidget->GetName());
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, NameWidget->GetUserWidgetObject()->GetName());
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("CANT FIND WBP_NAMEWIDGET"));
 	}
 }

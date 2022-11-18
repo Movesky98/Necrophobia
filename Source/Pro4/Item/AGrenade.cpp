@@ -2,6 +2,7 @@
 
 #include "AGrenade.h"
 #include "../Pro4Character.h"
+#include "../Pro4Zombie.h"
 
 #include "TimerManager.h"
 #include "Components/WidgetComponent.h"
@@ -27,14 +28,49 @@ AAGrenade::AAGrenade()
 	GrenadeParticle->SetupAttachment(BoxMesh);
 	GrenadeParticle->bAutoActivate = false;
 
-	static ConstructorHelpers::FObjectFinder<USoundCue>ThrowSound(TEXT("/Game/StarterContent/Audio/ThrowFires"));
-	if (ThrowSound.Succeeded())
+	BoxMesh->SetRelativeScale3D(FVector(3.0f));
+
+	/* 사운드 세팅 */
+	static ConstructorHelpers::FObjectFinder<USoundCue> SC_Grenade(TEXT("/Game/Sounds/Grenade-Explosion_Cue"));
+	if (SC_Grenade.Succeeded())
 	{
-		SC = ThrowSound.Object;
+		ExplosionSound = SC_Grenade.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<USoundCue> SC_Smoke(TEXT("/Game/SmokeFlashGrenades/GrenadesSounds/SmokeBurstCue"));
+	if (SC_Smoke.Succeeded())
+	{
+		SmokeSound = SC_Smoke.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<USoundCue> SC_Flash(TEXT("/Game/Sounds/FlashBang_Cue"));
+	if (SC_Flash.Succeeded())
+	{
+		FlashSound = SC_Flash.Object;
+	}
+
 	AC = CreateDefaultSubobject<UAudioComponent>(TEXT("AC"));
 	AC->bAutoActivate = false;
 	AC->SetupAttachment(BoxMesh);
+
+	/* 파티클 세팅 */
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> P_Explosion(TEXT("/Game/Impacts/Particles/Explosion/Explosion_2/P_Explosion_2_CheapTrails"));
+	if (P_Explosion.Succeeded())
+	{
+		P_GrenadeParticle = P_Explosion.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> P_Smoke(TEXT("/Game/SmokeFlashGrenades/SmokeParticles/PS_SmokeCPU"));
+	if (P_Smoke.Succeeded())
+	{
+		P_SmokeParticle = P_Smoke.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UParticleSystem> P_Flash(TEXT("/Game/SmokeFlashGrenades/SmokeParticles/PS_Flashbang"));
+	if (P_Flash.Succeeded())
+	{
+		P_FlashParticle = P_Flash.Object;
+	}
 
 	uint32 RandomItemNum = FMath::RandRange(0, static_cast<int32>(GrenadeType::MAX) - 1);
 	RandomSpawn(RandomItemNum);
@@ -43,14 +79,6 @@ AAGrenade::AAGrenade()
 
 	NameWidget->InitWidget();
 	WBP_NameWidget = Cast<UItemNameWidget>(NameWidget->GetUserWidgetObject());
-
-	static ConstructorHelpers::FObjectFinder<UParticleSystem> P_GrenadeExplosion(TEXT("/Game/Impacts/Particles/Explosion/Explosion_2/P_Explosion_2_CheapTrails"));
-	if (P_GrenadeExplosion.Succeeded())
-	{
-		UE_LOG(Pro4, Warning, TEXT("Grenade Particle has Succeeded"));
-		GrenadeParticle->SetTemplate(P_GrenadeExplosion.Object);
-		
-	}
 }
 
 /* 아이템이 월드에 생성되었을 때, 실행되는 함수 */
@@ -60,18 +88,19 @@ void AAGrenade::BeginPlay()
 
 	if (GetWorld()->IsServer())
 	{
-		NetMulticast_SetUp(SM_GrenadeItem, TemporaryName, 1);
+		NetMulticast_SetUp(SM_GrenadeItem, TemporaryName, 1, CurrentParticle);
 	}
 }
 
 /* Server -> Client들에게 생성된 투척무기 정보를 뿌려주는 함수 */
-void AAGrenade::NetMulticast_SetUp_Implementation(UStaticMesh* SM_Grenade, const FString& _ItemName, uint16 _ItemNum)
+void AAGrenade::NetMulticast_SetUp_Implementation(UStaticMesh* SM_Grenade, const FString& _ItemName, uint16 _ItemNum, UParticleSystem* ParticleSystem)
 {
 	if (WBP_NameWidget == nullptr)
 	{
 		return;
 	}
 
+	GrenadeParticle->SetTemplate(ParticleSystem);
 	BoxMesh->SetStaticMesh(SM_Grenade);
 	ItemName = _ItemName;
 	WBP_NameWidget->SetItemName(ItemName);
@@ -123,7 +152,7 @@ void AAGrenade::RandomSpawn(int32 Random)
 		{
 			SM_GrenadeItem = SM_Grenade.Object;
 		}
-		
+		CurrentParticle = P_GrenadeParticle;
 		TemporaryName = "Grenade";
 	}
 		break;
@@ -136,6 +165,7 @@ void AAGrenade::RandomSpawn(int32 Random)
 			SM_GrenadeItem = SM_Flash.Object;
 		}
 
+		CurrentParticle = P_FlashParticle;
 		TemporaryName = "Flash";
 	}
 		break;
@@ -148,63 +178,100 @@ void AAGrenade::RandomSpawn(int32 Random)
 			SM_GrenadeItem = SM_Smoke.Object;
 		}
 
+		CurrentParticle = P_SmokeParticle;
 		TemporaryName = "Smoke";
 	}
 		break;
-	case AAGrenade::GrenadeType::Molotov:
-	{
-		UE_LOG(Pro4, Log, TEXT("Molotov is spawned."));
-		static ConstructorHelpers::FObjectFinder<UStaticMesh> SM_Molotov(TEXT("/Game/Weapon/Granade/firebomb"));
-		if (SM_Molotov.Succeeded())
-		{
-			SM_GrenadeItem = SM_Molotov.Object;
-		}
-
-		TemporaryName = "Molotov";
-	}
+	default:
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Magenta, TEXT("Grenade : Random Setting ERROR"));
 		break;
 	}
 }
 
-/* 수류탄이 폭발했을 때 실행되는 함수 */
+/* 투척무기가 폭발했을 때 실행되는 함수 */
 void AAGrenade::SetGrenadeExplosion()
 {
 	GetWorldTimerManager().ClearTimer(SetExplosionTimer);
-	TArray<FHitResult> OutHits;
-
-	FVector ExplosionLocation = GetActorLocation();
-	FName ProfileName = "Grenade";
-	FCollisionShape GrenadeColSphere = FCollisionShape::MakeSphere(500.0f);
-	FCollisionQueryParams GrenadeColParams;
-
-	DrawDebugSphere(GetWorld(), ExplosionLocation, GrenadeColSphere.GetSphereRadius(), 30, FColor::Green, true, 5.0f);
-
+	float ParticleTime = 0.0f;
 	SetStateToExplosion();
 
-	bool bIsHit = GetWorld()->SweepMultiByProfile(OutHits, ExplosionLocation, ExplosionLocation, FQuat::Identity, ProfileName, GrenadeColSphere);
-
-	if (bIsHit)
+	/* 투척 무기가 수류탄일 경우*/
+	if (ItemName == "Grenade")
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Silver, TEXT("Grenade is Expluded!"));
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Silver, FString::FromInt(OutHits.Num()));
+		ParticleTime = 1.5f;
 
-		for (auto& Hit : OutHits)
+		TArray<FHitResult> OutHits;
+
+		FVector ExplosionLocation = GetActorLocation();
+		FName ProfileName = "Grenade";
+		FCollisionShape GrenadeColSphere = FCollisionShape::MakeSphere(500.0f);
+		FCollisionQueryParams GrenadeColParams;
+
+		// DrawDebugSphere(GetWorld(), ExplosionLocation, GrenadeColSphere.GetSphereRadius(), 30, FColor::Green, true, 5.0f);
+
+		/* 일정 거리내의 구를 그려내어 그 안에 있는 오브젝트들을 받아옴. */
+		bool bIsHit = GetWorld()->SweepMultiByProfile(OutHits, ExplosionLocation, ExplosionLocation, FQuat::Identity, ProfileName, GrenadeColSphere);
+
+		/* 맞은 오브젝트가 있다면 */
+		if (bIsHit)
 		{
-			if (Hit.GetActor()->ActorHasTag("Player"))
+			for (auto& Hit : OutHits)
 			{
-				DrawDebugSolidBox(GetWorld(), Hit.GetActor()->GetActorLocation(), FVector(50.0f), FColor::Red, true, -1);
-				APro4Character* PlayerCharacter = Cast<APro4Character>(Hit.GetActor());
+				if (Hit.GetActor()->ActorHasTag("Player"))
+				{
+					// DrawDebugSolidBox(GetWorld(), Hit.GetActor()->GetActorLocation(), FVector(50.0f), FColor::Red, true, -1);
+					APro4Character* PlayerCharacter = Cast<APro4Character>(Hit.GetActor());
 
-				PlayerCharacter->GetDamaged(40.0f);
+					PlayerCharacter->GetDamaged(40.0f, GetOwner());
+				}
+				else if (Hit.GetActor()->ActorHasTag("Zombie"))
+				{
+					// DrawDebugSolidBox(GetWorld(), Hit.GetActor()->GetActorLocation(), FVector(50.0f), FColor::Red, true, -1);
+					APro4Zombie* Zombie = Cast<APro4Zombie>(Hit.GetActor());
+
+					Zombie->ZombieGetDamaged(40.0f, GetOwner());
+				}
 			}
+		}
+	}
+	else if (ItemName == "Smoke")	// 투척 무기가 연막탄이라면
+	{
+		ParticleTime = 15.0f;
+	}
+	else if (ItemName == "Flash")	// 투척 무기가 섬광탄이라면
+	{
+		ParticleTime = 2.0f;
+		TArray<FHitResult> OutHits;
 
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Orange, Hit.GetActor()->GetName());
+		FVector ExplosionLocation = GetActorLocation();
+		FName ProfileName = "Grenade";
+		FCollisionShape GrenadeColSphere = FCollisionShape::MakeSphere(800.0f);
+		FCollisionQueryParams GrenadeColParams;
+
+		// DrawDebugSphere(GetWorld(), ExplosionLocation, GrenadeColSphere.GetSphereRadius(), 30, FColor::Green, true, 5.0f);
+
+		/* 일정 거리내의 구를 그려내어 그 안에 있는 오브젝트들을 받아옴. */
+		bool bIsHit = GetWorld()->SweepMultiByProfile(OutHits, ExplosionLocation, ExplosionLocation, FQuat::Identity, ProfileName, GrenadeColSphere);
+
+		/* 맞은 오브젝트가 있다면 */
+		if (bIsHit)
+		{
+			for (auto& Hit : OutHits)
+			{
+				if (Hit.GetActor()->ActorHasTag("Player"))
+				{
+					// DrawDebugSolidBox(GetWorld(), Hit.GetActor()->GetActorLocation(), FVector(50.0f), FColor::Red, true, -1);
+					APro4Character* PlayerCharacter = Cast<APro4Character>(Hit.GetActor());
+
+					PlayerCharacter->FlashBangExplosion();
+				}
+			}
 		}
 	}
 
 	PlayGrenadeSound();
 
-	GetWorldTimerManager().SetTimer(SetExplosionTimer, this, &AAGrenade::GrenadeExplosion, 1.5f);
+	GetWorldTimerManager().SetTimer(SetExplosionTimer, this, &AAGrenade::GrenadeExplosion, ParticleTime);
 }
 
 /* 수류탄 폭발 파티클이 끝나고 실행되는 함수 */
@@ -212,6 +279,37 @@ void AAGrenade::GrenadeExplosion()
 {
 	GetWorldTimerManager().ClearTimer(SetExplosionTimer);
 	Destroy();
+}
+
+/* 서버가 던진 투척 무기를 월드내에 소환했을 때, 해당 투척무기 정보를 클라이언트에게 뿌려주는 함수 */
+void AAGrenade::ThrowGrenade_Implementation(const FString& GrenadeType, UStaticMesh* GrenadeMesh)
+{
+	if (WBP_NameWidget == nullptr)
+	{
+		return;
+	}
+
+	if (GrenadeType == "Grenade")
+	{
+		GrenadeParticle->SetTemplate(P_GrenadeParticle);
+		CurrentSound = ExplosionSound;
+	}
+	else if (GrenadeType == "Smoke")
+	{
+		GrenadeParticle->SetTemplate(P_SmokeParticle);
+		CurrentSound = SmokeSound;
+	}
+	else if (GrenadeType == "Flash")
+	{
+		GrenadeParticle->SetTemplate(P_FlashParticle);
+		CurrentSound = FlashSound;
+	}
+
+	AC->SetSound(Cast<USoundBase>(CurrentSound));
+	BoxMesh->SetStaticMesh(GrenadeMesh);
+	ItemName = GrenadeType;
+	WBP_NameWidget->SetItemName(ItemName);
+	ItemNum = 1;
 }
 
 /* 수류탄을 던졌을 때, 날아가도록 하는 함수 */
@@ -225,12 +323,14 @@ void AAGrenade::SetSimulatePhysics(const FVector& ThrowDirection)
 	GetWorldTimerManager().SetTimer(SetExplosionTimer, this, &AAGrenade::SetGrenadeExplosion, 5.0f);
 }
 
+/* 투척무기 사운드를 재생하는 함수 */
 void AAGrenade::PlayGrenadeSound_Implementation()
 {
-	AC->SetSound(Cast<USoundBase>(SC));
+	AC->SetSound(Cast<USoundBase>(CurrentSound));
 	AC->Play();
 }
 
+/* 수류탄이 폭발하기 위해 필요없는 기능들을 끄고 파티클을 재생하는 함수 */
 void AAGrenade::SetStateToExplosion_Implementation()
 {
 	BoxMesh->SetVisibility(false);

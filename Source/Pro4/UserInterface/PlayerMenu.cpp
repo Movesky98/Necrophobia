@@ -63,7 +63,6 @@ bool UPlayerMenu::Initialize()
 	
 	GameOverExitButton->OnClicked.AddDynamic(this, &UPlayerMenu::ExitInGame);
 	
-
 	return true;
 }
 
@@ -88,6 +87,10 @@ void UPlayerMenu::SetUp()
 	MainWeaponBox->SetVisibility(ESlateVisibility::Hidden);
 	SubWeaponBox->SetVisibility(ESlateVisibility::Hidden);
 	KnifeBox->SetVisibility(ESlateVisibility::Hidden);
+
+	RoundsText->SetText(FText::FromString(FString("0 / 0")));
+
+	PlayerFlashDegree = 0;
 }
 
 /* 인게임 내 플레이 시간을 표기하는 함수 */
@@ -110,13 +113,13 @@ void UPlayerMenu::Client_SetTimeText_Implementation(uint16 min_, uint16 sec_)
 /* PlayeDefaultUI <-> Inventory UI랑 변경하기 위한 함수 */
 void UPlayerMenu::ChangePlayerWidget()
 {
-
 	UWorld* World = GetWorld();
 	if (!ensure(World != nullptr)) return;
 
 	APlayerController* PlayerController = World->GetFirstPlayerController();
 	if (!ensure(PlayerController != nullptr)) return;
 
+	/* PlayerDefault UI -> Inventory UI */
 	if (UISwitcher->GetActiveWidgetIndex() == 0)
 	{
 		UISwitcher->SetActiveWidgetIndex(1);
@@ -129,6 +132,7 @@ void UPlayerMenu::ChangePlayerWidget()
 	}
 	else
 	{
+		/* Inventory UI -> PlayerDefault UI*/
 		UISwitcher->SetActiveWidgetIndex(0);
 
 		FInputModeGameOnly InputModeData;
@@ -136,6 +140,13 @@ void UPlayerMenu::ChangePlayerWidget()
 		PlayerController->SetShowMouseCursor(false);
 	}
 	UE_LOG(Pro4, Warning, TEXT("ActiveWidgetIndex = %d."), UISwitcher->ActiveWidgetIndex);
+}
+
+/* 플레이어가 AR을 들고 줌을 했을 때, 크로스 헤어를 토글하기위한 함수 */
+void UPlayerMenu::ToggleCrosshair()
+{
+	(Crosshair->GetVisibility() == ESlateVisibility::Hidden) ?
+		Crosshair->SetVisibility(ESlateVisibility::Visible) : Crosshair->SetVisibility(ESlateVisibility::Hidden);
 }
 
 /* 플레이어가 줌 했을 경우 실행되는 함수 */
@@ -166,13 +177,21 @@ void UPlayerMenu::PlayerZoomWidget()
 }
 
 /* 게임 오버 UI를 활성화 하는 함수 */
-void UPlayerMenu::ActiveGameOverUI()
+void UPlayerMenu::ActiveGameOverUI(uint16 PlayerKill, uint16 ZombieKill, uint16 PlayerRanking, uint16 TotalPlayer)
 {
 	UWorld* World = GetWorld();
 	if (!ensure(World != nullptr)) return;
 
 	APlayerController* PlayerController = World->GetFirstPlayerController();
 	if (!ensure(PlayerController != nullptr)) return;
+
+	FString PlayerKillNum = FString::FromInt(PlayerKill);
+	FString ZombieKillNum = FString::FromInt(ZombieKill);
+	
+	KillPlayerText->SetText(FText::FromString(PlayerKillNum));
+	KillZombieText->SetText(FText::FromString(ZombieKillNum));
+
+	SetRankingUI(PlayerRanking, TotalPlayer);
 
 	UISwitcher->SetActiveWidgetIndex(3);
 
@@ -183,21 +202,107 @@ void UPlayerMenu::ActiveGameOverUI()
 	PlayerController->SetShowMouseCursor(true);
 }
 
+/* 게임이 종료하기 전, 플레이어의 랭킹을 띄워주는 함수 */
+void UPlayerMenu::SetRankingUI(uint16 PlayerRanking, uint16 TotalPlayer)
+{
+	FString CurrentRankingPath;
+	FString TotalRankingPath;
+
+	// 이미지 랭킹에 따른 이미지 경로 연결
+	switch (PlayerRanking)
+	{
+	case 1:
+		CurrentRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_1";
+		break;
+	case 2:
+		CurrentRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_2";
+		break;
+	case 3:
+		CurrentRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_3";
+		break;
+	case 4:
+		CurrentRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_4";
+		break;
+	case 5:
+		CurrentRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_5";
+		break;
+	case 6:
+		CurrentRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_6";
+		break;
+	case 7:
+		CurrentRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_7";
+		break;
+	case 8:
+		CurrentRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_8";
+		break;
+	case 9:
+		CurrentRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_9";
+		break;
+	default:
+		CurrentRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_0";
+		break;
+	}
+
+	// 이미지 랭킹에 따른 이미지 경로 연결
+	switch (TotalPlayer)
+	{
+	case 1:
+		TotalRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_1";
+		break;
+	case 2:
+		TotalRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_2";
+		break;
+	case 3:
+		TotalRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_3";
+		break;
+	case 4:
+		TotalRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_4";
+		break;
+	case 5:
+		TotalRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_5";
+		break;
+	case 6:
+		TotalRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_6";
+		break;
+	case 7:
+		TotalRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_7";
+		break;
+	case 8:
+		TotalRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_8";
+		break;
+	case 9:
+		TotalRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_9";
+		break;
+	default:
+		TotalRankingPath = "/Game/UI/Sprites/Gameover_UI/GameoverUI_0";
+		break;
+	}
+
+	UTexture2D* CurrentRankingImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *CurrentRankingPath), NULL, LOAD_None, NULL);
+	UTexture2D* TotalRankingImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *TotalRankingPath), NULL, LOAD_None, NULL);
+
+	CurrentRanking->SetBrushFromTexture(CurrentRankingImage);
+	MaxRanking->SetBrushFromTexture(TotalRankingImage);
+}
+
 /* 플레이어가 Item을 획득했을 때, 실행되는 함수 */
 void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 {
 	AABaseItem* BaseItem = Cast<AABaseItem>(ItemActor);
 	APro4Character* MyPawn = Cast<APro4Character>(GetWorld()->GetFirstPlayerController()->GetPawn());
+	bool isUpdated;
 
 	switch (BaseItem->ItemType)
 	{
 	case AABaseItem::BaseItemType::Weapon:
 	{
+		// 무기 획득
 		AAWeapon* NewWeapon = Cast<AAWeapon>(BaseItem);
 		if (!ensure(NewWeapon != nullptr)) return;
 
 		MyPawn->SetPlayerWeapon(NewWeapon);
 
+		// 인벤토리 UI에 무기가 보이도록 설정
 		if (NewWeapon->GetItemName() == "AR")
 		{
 			MainWeaponSizeBox->SetWidthOverride(475);
@@ -246,26 +351,18 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		break;
 	case AABaseItem::BaseItemType::Armor:
 	{
+		// 방어구 획득
 		AAArmor* Armor = Cast<AAArmor>(BaseItem);
 		if (!ensure(Armor != nullptr)) return;
 
 		MyPawn->SetPlayerArmor(Armor);
-		/*if (Armor->GetItemName() == "Helmet")
-		{
-			ActiveArmorImage(true);
-		}
-		else
-		{
-
-		}*/
 
 		(Armor->GetItemName() == "Helmet") ? ActiveArmorImage(true) : ActiveArmorImage(false);
-		
-
 	}
 		break;
 	case AABaseItem::BaseItemType::Grenade:
 	{
+		// 투척 무기 획득
 		AAGrenade* Grenade = Cast<AAGrenade>(BaseItem);
 		if (!ensure(Grenade != nullptr)) return;
 
@@ -274,35 +371,55 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 		break;
 	case AABaseItem::BaseItemType::Recovery:
 	{
-		// TO DO : Implement Item of Recovery
+		// 잠식 치료제 획득
 		ARecovery* Recovery = Cast<ARecovery>(BaseItem);
+		
+		isUpdated = UpdateInventoryBox(Recovery->GetItemName(), Recovery->GetItemNum());
 
-		UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
-		InventoryItem->SetUp("Recovery", Recovery->GetItemName(), Recovery->GetItemNum(), Recovery->GetIconPath());
-		InventoryBox->AddChildToWrapBox(InventoryItem);
+		if (!isUpdated)
+		{
+			UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
+			InventoryItem->SetUp("Recovery", Recovery->GetItemName(), Recovery->GetItemNum(), Recovery->GetIconPath());
+			InventoryBox->AddChildToWrapBox(InventoryItem);
+		}
+
+		MyPawn->Server_DestroyActor(Recovery);
 	}
 		break;
 	case AABaseItem::BaseItemType::Ammo:
 	{
-		// TO DO : Implement Item of Ammo
+		// 탄약 획득
 		AAmmo* Ammo = Cast<AAmmo>(BaseItem);
 
-		UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
-		InventoryItem->SetUp("Ammo", Ammo->GetItemName(), Ammo->GetItemNum(), Ammo->GetIconPath());
-		InventoryBox->AddChildToWrapBox(InventoryItem);
+		isUpdated = UpdateInventoryBox(Ammo->GetItemName(), Ammo->GetItemNum());
+
+		if (!isUpdated)
+		{
+			UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
+			InventoryItem->SetUp("Ammo", Ammo->GetItemName(), Ammo->GetItemNum(), Ammo->GetIconPath());
+
+			InventoryBox->AddChildToWrapBox(InventoryItem);
+		}
 
 		MyPawn->SetPlayerRound(Ammo);
 	}
 		break;
 	case AABaseItem::BaseItemType::Vaccine:
 	{
-		// TO DO : Implement Item of Vaccine
+		// 백신 획득
 		AVaccine* Vaccine = Cast<AVaccine>(BaseItem);
 		MyPawn->SetIsPossibleEscapeOnServer(true);
 
-		UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
-		InventoryItem->SetUp("Vaccine", Vaccine->GetItemName(), Vaccine->GetItemNum(), Vaccine->GetIconPath());
-		InventoryBox->AddChildToWrapBox(InventoryItem);
+		isUpdated = UpdateInventoryBox(Vaccine->GetItemName(), Vaccine->GetItemNum());
+
+		if (!isUpdated)
+		{
+			UInventorySlot* InventoryItem = CreateWidget<UInventorySlot>(GetWorld(), InventorySlot);
+			InventoryItem->SetUp("Vaccine", Vaccine->GetItemName(), Vaccine->GetItemNum(), Vaccine->GetIconPath());
+			InventoryBox->AddChildToWrapBox(InventoryItem);
+		}
+
+		MyPawn->Server_DestroyActor(Vaccine);
 	}
 		break;
 	default:
@@ -311,11 +428,13 @@ void UPlayerMenu::AddItemToInventory(AActor* ItemActor, uint16 Num)
 	}
 }
 
+/* 낮/밤에 따른 이미지 활성화 */
 void UPlayerMenu::SetImage(UTexture2D* InTexture)
 {
 	TimeImage->SetBrushFromTexture(InTexture);
 }
 
+/* 인벤토리 UI에 투척 무기 수를 보여주는 함수 */
 void UPlayerMenu::AddItemToGrenade(const FString& GrenadeName, uint16 Num)
 {
 	FString GrenadeNumber = FString::FromInt(Num);
@@ -334,6 +453,7 @@ void UPlayerMenu::AddItemToGrenade(const FString& GrenadeName, uint16 Num)
 	}
 }
 
+/* 플레이어가 무기를 획득할 경우, 해당 무기의 이미지를 인벤토리 UI에서 보여주는 함수 */
 void UPlayerMenu::AddItemToWeapon(FString _ImagePath, FString _IconPath, FString _WeaponName)
 {
 	// Image를 그림
@@ -344,22 +464,16 @@ void UPlayerMenu::AddItemToWeapon(FString _ImagePath, FString _IconPath, FString
 	{
 		SubWeaponBox->SetBrushFromTexture(ItemImage);
 		SubWeaponSlot->SetBrushFromTexture(ItemIcon);
-
-		UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *SubWeaponBox->Brush.GetResourceName().ToString());
 	}
 	else if (_WeaponName == "Knife")
 	{
 		KnifeBox->SetBrushFromTexture(ItemImage);
 		KnifeSlot->SetBrushFromTexture(ItemIcon);
-
-		UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *KnifeBox->Brush.GetResourceName().ToString());
 	}
 	else
 	{
 		MainWeaponBox->SetBrushFromTexture(ItemImage);
 		MainWeaponSlot->SetBrushFromTexture(ItemIcon);
-
-		UE_LOG(Pro4, Warning, TEXT("Image Object Name : %s"), *MainWeaponBox->Brush.GetResourceName().ToString());
 	}
 }
 
@@ -370,6 +484,7 @@ void UPlayerMenu::ActiveWeaponShortcut(uint16 SlotNumber)
 	SubWeaponSlotBox->SetBrushFromTexture(SlotEmpty);
 	KnifeSlotBox->SetBrushFromTexture(SlotEmpty);
 	GrenadeSlotBox->SetBrushFromTexture(SlotEmpty);
+
 	switch (SlotNumber)
 	{
 	case 1:
@@ -387,6 +502,31 @@ void UPlayerMenu::ActiveWeaponShortcut(uint16 SlotNumber)
 	default:
 		break;
 	}
+}
+
+void UPlayerMenu::ActiveGrenadeShortcutImage(const FString& GrenadeType)
+{
+	FString IconPath;
+	
+	if (GrenadeType == "Grenade")
+	{
+		IconPath = "/Game/UI/Sprites/Player_UI/Grenade_icon/Grenade";
+	}
+	else if (GrenadeType == "Smoke")
+	{
+		IconPath = "/Game/UI/Sprites/Player_UI/Grenade_icon/Smoke";
+	}
+	else if (GrenadeType == "Flash")
+	{
+		IconPath = "/Game/UI/Sprites/Player_UI/Grenade_icon/Flash";
+	}
+	else
+	{
+		IconPath = SlotItemEmptyPath;
+	}
+
+	UTexture2D* GrenadeImage = LoadObject<UTexture2D>(NULL, (TEXT("%s"), *IconPath), NULL, LOAD_None, NULL);
+	GrenadeSlot->SetBrushFromTexture(GrenadeImage);
 }
 
 /* 방어구를 획득할 경우, 인벤토리에서 보이도록 하는 함수 */
@@ -408,10 +548,98 @@ void UPlayerMenu::ActiveArmorImage(bool IsHelmet)
 	}
 }
 
+/* 플레이어의 탄알 수를 업데이트 하는 함수 */
+void UPlayerMenu::UpdatePlayerRounds(uint16 CurrentRound, uint16 TotalRound)
+{
+	FString RoundText = FString::FromInt(CurrentRound) + " / " + FString::FromInt(TotalRound);
+
+	RoundsText->SetText(FText::FromString(RoundText));
+}
+
+/* 인벤토리 내의 박스를 업데이트하는 함수 */
+bool UPlayerMenu::UpdateInventoryBox(FString ItemName, uint16 Num)
+{
+	TArray<UWidget*> PlayerInventory = InventoryBox->GetAllChildren();
+
+	// 인벤토리 안에 아이템이 존재한다면
+	if (PlayerInventory.Num())
+	{
+		for (UWidget* ItemWidget : PlayerInventory)
+		{
+			UInventorySlot* ItemSlot = Cast<UInventorySlot>(ItemWidget);
+
+			if (ItemSlot->GetItemName() == ItemName)
+			{
+				ItemSlot->SetItemNum(ItemSlot->GetItemNum() + Num);
+				ItemSlot->UpdateSlotCount();
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
+/* 인벤토리 UI 내의 아이템 중, 무기 탄약과 관련된 아이템일 경우 수를 최신화하는 함수 */
+void UPlayerMenu::UpdatePlayerWeaponAmmo(uint16 MainWeaponRounds, uint16 SubWeaponRounds)
+{
+	TArray<UWidget*> PlayerInventory = InventoryBox->GetAllChildren();
+
+	// 인벤토리 안에 아이템이 존재한다면
+	if (PlayerInventory.Num())
+	{
+		for (UWidget* ItemWidget : PlayerInventory)
+		{
+			UInventorySlot* ItemSlot = Cast<UInventorySlot>(ItemWidget);
+
+			if (ItemSlot->GetItemType() == "Ammo")
+			{
+				if (ItemSlot->GetItemName() == "MainWeaponAmmo")
+				{
+					ItemSlot->SetItemNum(MainWeaponRounds);
+				}
+				else
+				{
+					ItemSlot->SetItemNum(SubWeaponRounds);
+				}
+			}
+
+			ItemSlot->UpdateSlotCount();
+		}
+	}
+}
+
 /* 인게임 -> 메인메뉴로 나갈때 실행되는 함수 */
 void UPlayerMenu::ExitInGame()
 {
 	UNecrophobiaGameInstance* NecGameInstance = Cast<UNecrophobiaGameInstance>(GetGameInstance());
 
 	NecGameInstance->LoadMainMenu();
+}
+
+/* 플레이어가 섬광탄에 맞았을 때 실행되는 함수 */
+void UPlayerMenu::SetFlashBangImage()
+{
+	PlayerFlashDegree = 1.0f;
+
+	GetWorld()->GetTimerManager().SetTimer(FlashBangTimer, this, &UPlayerMenu::RecoverPlayerFlashbang, 0.01f, true, 3.0f);
+}
+
+/* 플레이어가 섬광탄에 맞고난 후, 회복하는 함수 */
+void UPlayerMenu::RecoverPlayerFlashbang()
+{
+	PlayerFlashDegree -= 0.005f;
+
+	if (PlayerFlashDegree <= 0)
+	{
+		PlayerFlashDegree = 0;
+
+		GetWorld()->GetTimerManager().ClearTimer(FlashBangTimer);
+	}
+}
+
+/* 아이템을 획득했을 때, 실행되는 함수. 월드 내에 있는 아이템을 삭제함. */
+void UPlayerMenu::DestroyItem_Implementation(AActor* DestroyActor)
+{
+	DestroyActor->Destroy();
 }

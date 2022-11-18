@@ -3,15 +3,19 @@
 
 #include "Pro4Character.h"
 #include "Pro4AnimInstance.h"
+#include "Pro4Zombie.h"
 #include "NecrophobiaGameInstance.h"
 #include "UserInterface/PlayerMenu.h"
 #include "Item/AWeapon.h"
 #include "Item/AArmor.h"
 #include "Item/AGrenade.h"
 #include "Item/Ammo.h"
+#include "InGamePlayerState.h"
 #include "ZombieSpawner.h"
 #include "Heli_AH64D.h"
 #include "Door.h"
+
+#include "Engine/TextureRenderTarget2D.h"
 #include "Components/AudioComponent.h"
 #include "Sound/SoundCue.h"
 #include "DrawDebugHelpers.h"
@@ -39,6 +43,7 @@ APro4Character::APro4Character()
 	MuzzleFlash = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("MuzzleFlash"));
 	MapSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("MAPSPRINGARM"));
 	MapCapture = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("MAPCAPTURE"));
+	PaperSprite = CreateDefaultSubobject<UPaperSpriteComponent>(TEXT("Minimap"));
 	/* 캐릭터 클래스를 구성하는 컴포넌트(카메라, 방어구, 무기..) */
 
 	/* 총알 발사효과를 무기컴포넌트의 하위로*/
@@ -67,10 +72,13 @@ APro4Character::APro4Character()
 	MapSpringArm->SetupAttachment(GetCapsuleComponent());
 	MapCapture->SetupAttachment(MapSpringArm);
 	MapSpringArm->SetRelativeRotation(FRotator(-90.0f, 0.0f, 0.0f));
+	MapSpringArm->SetRelativeRotation(FRotator(-90.0f, 0.0f, 0.0f));
+	PaperSprite->SetupAttachment(MapSpringArm);
 	/* 컴포넌트 계층 설정 */
 
 	/* 캐릭터 메쉬 위치, 회전 값 설정*/
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f));
+	GetMesh()->SetCollisionProfileName(TEXT("PCharacter"));
 	GetCapsuleComponent()->SetCollisionProfileName(TEXT("PCharacter"));
 
 	/* 초기설정 함수 */
@@ -95,10 +103,10 @@ APro4Character::APro4Character()
 	}
 
 	/* Helicopter 클래스를 찾아옴 */
-	static ConstructorHelpers::FObjectFinder<UBlueprint> Helicopter(TEXT("/Game/VigilanteContent/Vehicles/West_Heli_AH64D/BP_TESTHeli"));
+	static ConstructorHelpers::FClassFinder<AHeli_AH64D> Helicopter(TEXT("/Game/VigilanteContent/Vehicles/West_Heli_AH64D/BP_TESTHeli"));
 	if(Helicopter.Succeeded())
 	{
-		BP_Helicopter = Helicopter.Object;
+		BP_Helicopter = Helicopter.Class;
 	}
 
 	SocketSetting();
@@ -111,6 +119,8 @@ APro4Character::APro4Character()
 	SubS = SubSound.Object;
 	static ConstructorHelpers::FObjectFinder<USoundCue>EmptySound(TEXT("SoundCue'/Game/StarterContent/Audio/EmptyShoots.EmptyShoots'"));
 	EmptyS = EmptySound.Object;
+	static ConstructorHelpers::FObjectFinder<USoundCue>SRSounds(TEXT("SoundCue'/Game/StarterContent/Audio/SRSounds.SRSounds'"));
+	SRSound = SRSounds.Object;
 	FireA = CreateDefaultSubobject<UAudioComponent>(TEXT("FireA"));
 	FireA->bAutoActivate = false;
 	FireA->SetupAttachment(GetMesh());
@@ -124,9 +134,11 @@ void APro4Character::BeginPlay()
 	DetectZSpawnerCol->OnComponentBeginOverlap.AddDynamic(this, &APro4Character::ZombieSpawnerBeginOverlap);
 	DetectZSpawnerCol->OnComponentEndOverlap.AddDynamic(this, &APro4Character::ZombieSpawnerEndOverlap);
 	NecGameInstance = Cast<UNecrophobiaGameInstance>(GetGameInstance());
-	GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, GetActorLocation().ToString());
+	// GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, GetActorLocation().ToString());
 
 	PlayerController = Cast<APro4PlayerController>(GetWorld()->GetFirstPlayerController());
+
+	SetTextureTargetOnServer();
 }
 
 /// <summary>
@@ -154,6 +166,24 @@ void APro4Character::CameraSetting()
 
 	MapCapture->ProjectionType = ECameraProjectionMode::Perspective;
 	MapCapture->OrthoWidth = 1000.0f;
+	MapCapture->SetRelativeLocation(FVector(-1000.0f, 0.0f, 0.0f));
+
+	static ConstructorHelpers::FObjectFinder<UTextureRenderTarget2D> RT_Minimap(TEXT("/Game/UI/MinimapRenderTarget2D"));
+	if (RT_Minimap.Succeeded())
+	{
+		RenderTarget = RT_Minimap.Object;
+	}
+
+	static ConstructorHelpers::FObjectFinder<UPaperSprite> PS_CharacterIcon(TEXT("/Game/UI/Sprites/Player_UI/Minimap/character_icon_Sprite"));
+	if (PS_CharacterIcon.Succeeded())
+	{
+		RenderIcon = PS_CharacterIcon.Object;
+	}
+
+	PaperSprite->SetRelativeLocation(FVector(20.0f, 0.0f, 0.0f));
+	PaperSprite->SetRelativeRotation(FRotator(0.0f, 90.0f, 180.0f));
+	PaperSprite->SetRelativeScale3D(FVector(0.2f, 0.2f, 0.2f));
+	PaperSprite->SetOwnerNoSee(true);
 }
 
 // 캐릭터 위상 세팅
@@ -284,6 +314,22 @@ void APro4Character::SocketSetting()
 	}
 }
 
+void APro4Character::SetTextureTargetOnServer_Implementation()
+{
+	SetTextureTargetOnClient();
+}
+
+void APro4Character::SetTextureTargetOnClient_Implementation()
+{
+	if (GetWorld()->IsServer())
+	{
+		return;
+	}
+
+	PaperSprite->SetSprite(RenderIcon);
+	MapCapture->TextureTarget = RenderTarget;
+}
+
 /// <summary>
 ////////////////////////////////////////////////////// 초기세팅 ////////////////////////////////////////////////////////////
 /// </summary>
@@ -325,10 +371,22 @@ void APro4Character::Tick(float DeltaTime)
 		SpringArm->SetRelativeRotation(FRotator::ZeroRotator);
 	}
 	
-	
-	ViewPoint();
-	// Character Role Test.
-	// DrawDebugString(GetWorld(), FVector(0, 0, 150), GetEnumRole(GetLocalRole()), this, FColor::Green, DeltaTime);
+	if (!IsDrinking)
+	{
+		CharacterRotationPitch = GetControlRotation().Pitch;
+	}
+	else
+	{
+		CharacterRotationPitch = 0.0f;
+	}
+	if (IsZoom)
+	{
+		CharacterArmControl= GetControlRotation().Pitch;
+	}
+	else
+	{
+		CharacterArmControl = 0.0f;
+	}
 }
 
 // Character Role Test.
@@ -363,6 +421,11 @@ void APro4Character::PostInitializeComponents()
 	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnEquipMontageEnded);
 	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnReloadMontageEnded);
 	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnAttackMontageEnded);
+	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnbeAttackedMontageEnded);
+	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnThrowMontageEnded);
+	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnDrinkMontageEnded);
+	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnPunchMontageEnded);
+	Pro4Anim->OnMontageEnded.AddDynamic(this, &APro4Character::OnStabMontageEnded);
 }
 
 // 장착 몽타주 종료시 콜백
@@ -385,6 +448,51 @@ void APro4Character::OnReloadMontageEnded(UAnimMontage* Montage, bool bInterrupt
 void APro4Character::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	IsMontagePlay = false;
+	IsAttacking = false;
+}
+
+// 피격 몽타주 종료시 콜백
+void APro4Character::OnbeAttackedMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	IsMontagePlay = false;
+	IsbeAttacking = false;
+}
+
+// 투척 몽타주 종료시 콜백
+void APro4Character::OnThrowMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	IsMontagePlay = false;
+	IsThrowing = false;
+	if (CurrentWeaponMode == WeaponMode::ATW)
+	{
+		// Throw();
+	}
+}
+
+// 드링크 몽타주 종료시 콜백
+void APro4Character::OnDrinkMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	IsMontagePlay = false;
+	IsDrinking = false;
+	if (IsDrink)
+	{
+		RecoveryEncroach();
+	}
+}
+
+// 펀치 몽타주 종료시 콜백
+void APro4Character::OnPunchMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	IsMontagePlay = false;
+	SetPlayerStateOnServer("Punch", false);
+	IsAttacking = false;
+}
+
+// 찌르기 몽타주 종료시 콜백
+void APro4Character::OnStabMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+{
+	IsMontagePlay = false;
+	SetPlayerStateOnServer("Stab", false);
 	IsAttacking = false;
 }
 
@@ -418,27 +526,6 @@ void APro4Character::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 /// <summary>
 ////////////////////////////////////////////////////// 캐릭터 움직임 코드 ////////////////////////////////////////////////////////////
 /// </summary>
-
-void APro4Character::ViewPoint()
-{
-	FHitResult HitResult;
-	UWorld* World = GetWorld();
-	FVector Start = Camera->GetComponentLocation();
-	FVector End= Camera->GetComponentLocation() + (Camera->GetComponentRotation().Vector()*10000);
-	FCollisionQueryParams TraceParams;
-
-	bHit = World->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, TraceParams);
-	if (bHit)
-	{
-		FVector TargetLocation = HitResult.ImpactPoint;
-		FRotator LookAtRotator = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), TargetLocation);
-		FRotator NewRotator = FRotator(GetActorRotation().Pitch, (LookAtRotator.Yaw - 90.0f), GetActorRotation().Roll);
-
-		GetMesh()->SetWorldRotation(NewRotator);
-	}
-	//CharacterRotationPitch = GetControlRotation().Pitch;
-	//CharacterRotationYaw = GetControlRotation().Yaw;
-}
 
 // 앞 뒤 이동시 속도 조정
 float APro4Character::UpdownSpeed()
@@ -534,7 +621,8 @@ void APro4Character::UpDown(float NewAxisValue)
 	{
 		if (NewAxisValue > 0.5f || NewAxisValue < -0.5f)
 		{
-			IsForward = true;
+			SetPlayerStateOnServer("IsForward", true);
+
 			if (NewAxisValue < 0)
 			{
 				SetPlayerFlagOnServer("MoveFlag", 1);
@@ -548,7 +636,7 @@ void APro4Character::UpDown(float NewAxisValue)
 		}
 		else
 		{
-			IsForward = false;
+			SetPlayerStateOnServer("IsForward", false);
 			Updownflag = 0;
 		}
 
@@ -564,21 +652,22 @@ void APro4Character::LeftRight(float NewAxisValue)
 	{
 		if (NewAxisValue > 0.5f || NewAxisValue < -0.5f)
 		{
-			IsForward = false;
+			SetPlayerStateOnServer("IsForward", false);
+
 			if (NewAxisValue < 0)
 			{
 				SetPlayerFlagOnServer("MoveFlag", 1);
-				LeftRightflag = 1;
+				SetPlayerFlagOnServer("LeftRightFlag", 1);
 			}
 			else
 			{
 				SetPlayerFlagOnServer("MoveFlag", 0);
-				LeftRightflag = -1;
+				SetPlayerFlagOnServer("LeftRightFlag", -1);
 			}
 		}
 		else
 		{
-			LeftRightflag = 0;
+			SetPlayerFlagOnServer("LeftRightFlag", 0);
 		}
 		MoveRate = NewAxisValue * LeftRightSpeed();
 		AddMovementInput(FRotationMatrix(FRotator(0.0f, GetControlRotation().Yaw, 0.0f)).GetUnitAxis(EAxis::Y), MoveRate);
@@ -693,6 +782,7 @@ void APro4Character::EquipMain()
 		{
 			SetPlayerFlagOnServer("EquipFlag", 0);
 			CurrentWeaponMode = WeaponMode::Disarming;
+			NecGameInstance->PlayerMenu->ActiveWeaponShortcut(0);
 		}
 		else
 		{
@@ -704,7 +794,11 @@ void APro4Character::EquipMain()
 			IsMontagePlay = true;
 			IsEquipping = true;
 			CurrentWeaponMode = WeaponMode::Main;
+
+			NecGameInstance->PlayerMenu->ActiveWeaponShortcut(1);
+			NecGameInstance->PlayerMenu->UpdatePlayerRounds(MainWeapon.CurrentRound, MainWeapon.TotalRound);
 		}
+
 	}
 
 	EquipPlayerWeaponOnServer(CurrentWeaponMode);
@@ -728,17 +822,20 @@ void APro4Character::EquipSub()
 		{
 			SetPlayerFlagOnServer("EquipFlag", 0);
 			CurrentWeaponMode = WeaponMode::Disarming;
+			NecGameInstance->PlayerMenu->ActiveWeaponShortcut(0);
 		}
 		else
 		{
 			if (IsZoom)
 				Zoom();
 
-			SetPlayerFlagOnServer("EquipFlag", 1);
+			SetPlayerFlagOnServer("EquipFlag", 2);
 			PlayMontageOnServer(Pro4Anim->GetEquipMontage(), 2);
 			IsMontagePlay = true;
 			IsEquipping = true;
 			CurrentWeaponMode = WeaponMode::Sub;
+			NecGameInstance->PlayerMenu->ActiveWeaponShortcut(2);
+			NecGameInstance->PlayerMenu->UpdatePlayerRounds(SubWeapon.CurrentRound, SubWeapon.TotalRound);
 		}
 	}
 
@@ -763,17 +860,19 @@ void APro4Character::EquipKnife()
 		{
 			SetPlayerFlagOnServer("EquipFlag", 0);
 			CurrentWeaponMode = WeaponMode::Disarming;
+			NecGameInstance->PlayerMenu->ActiveWeaponShortcut(0);
 		}
 		else
 		{
 			if (IsZoom)
 				Zoom();
 
-			SetPlayerFlagOnServer("EquipFlag", 2);
+			SetPlayerFlagOnServer("EquipFlag", 3);
 			PlayMontageOnServer(Pro4Anim->GetEquipMontage(), 2);
 			IsMontagePlay = true;
 			IsEquipping = true;
 			CurrentWeaponMode = WeaponMode::Knife;
+			NecGameInstance->PlayerMenu->ActiveWeaponShortcut(3);
 		}
 	}
 
@@ -783,18 +882,24 @@ void APro4Character::EquipKnife()
 // 투척 무기
 void APro4Character::EquipATW()
 {
-	if (CurrentWeaponMode == WeaponMode::ATW)
+	EquipGrenade();
+
+	UStaticMesh* EquipGrenadeMesh = nullptr;
+
+	if (PlayerGrenade.EquipGrenade == "Grenade")
 	{
-		UE_LOG(Pro4, Log, TEXT("Disarming."));
-		CurrentWeaponMode = WeaponMode::Disarming;
+		EquipGrenadeMesh =  PlayerGrenade.SM_Grenade;
 	}
-	else
+	else if (PlayerGrenade.EquipGrenade == "Smoke")
 	{
-		UE_LOG(Pro4, Log, TEXT("ATW."));
-		CurrentWeaponMode = WeaponMode::ATW;
+		EquipGrenadeMesh = PlayerGrenade.SM_Smoke;
+	}
+	else if (PlayerGrenade.EquipGrenade == "Flash")
+	{
+		EquipGrenadeMesh = PlayerGrenade.SM_Flash;
 	}
 
-	EquipPlayerWeaponOnServer(CurrentWeaponMode, PlayerGrenade.SM_Grenade);
+	EquipPlayerWeaponOnServer(CurrentWeaponMode, EquipGrenadeMesh);
 }
 
 // 장전
@@ -812,21 +917,14 @@ void APro4Character::Reload()
 		{
 		// 주무기 장전
 		case WeaponMode::Main:
-			if (CurrentCharacterState == CharacterState::Standing)
-			{
-				PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 1);
-				IsMontagePlay = true;
-				IsReloading = true;
-			}
-			else if (CurrentCharacterState == CharacterState::Crouching)
-			{
-				UE_LOG(Pro4, Log, TEXT("Reload."));
-			}
+			PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 1);
+			IsMontagePlay = true;
+			IsReloading = true;
 
-			// 현재 가지고 있는 탄약 수 = 현재 가지고 있는 탄약 수 - (주무기의 탄창에 들어갈 수 있는 탄약 수 - 현재 탄창에 들어가있는 탄약 수)
-			if (MainWeapon.TotalRound <= MainWeapon.Magazine)
+			// 주무기의 탄약 수 처리
+			if (MainWeapon.TotalRound + MainWeapon.CurrentRound <= MainWeapon.Magazine)
 			{
-				MainWeapon.CurrentRound = MainWeapon.TotalRound;
+				MainWeapon.CurrentRound += MainWeapon.TotalRound;
 				MainWeapon.TotalRound = 0;
 			}
 			else
@@ -834,25 +932,18 @@ void APro4Character::Reload()
 				MainWeapon.TotalRound -= MainWeapon.Magazine - MainWeapon.CurrentRound;
 				MainWeapon.CurrentRound = MainWeapon.Magazine;
 			}
+			NecGameInstance->PlayerMenu->UpdatePlayerRounds(MainWeapon.CurrentRound, MainWeapon.TotalRound);
 			break;
 		// 보조무기 장전
 		case WeaponMode::Sub:
-			if (CurrentCharacterState == CharacterState::Standing)
-			{
-				PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 2);
-				IsMontagePlay = true;
-				IsReloading = true;
-			}
-			else
-			{
-				UE_LOG(Pro4, Log, TEXT("Reload."));
-			}
+			PlayMontageOnServer(Pro4Anim->GetReloadMontage(), 3);
+			IsMontagePlay = true;
+			IsReloading = true;
 
-
-			// 현재 가지고 있는 탄약 수 = 현재 가지고 있는 탄약 수 - (주무기의 탄창에 들어갈 수 있는 탄약 수 - 현재 탄창에 들어가있는 탄약 수)
-			if (SubWeapon.TotalRound <= SubWeapon.Magazine)
+			// 보조무기의 탄약 수 처리
+			if (SubWeapon.TotalRound + SubWeapon.CurrentRound <= SubWeapon.Magazine)
 			{
-				SubWeapon.CurrentRound = SubWeapon.TotalRound;
+				SubWeapon.CurrentRound += SubWeapon.TotalRound;
 				SubWeapon.TotalRound = 0;
 			}
 			else
@@ -860,6 +951,8 @@ void APro4Character::Reload()
 				SubWeapon.TotalRound -= SubWeapon.Magazine - SubWeapon.CurrentRound;
 				SubWeapon.CurrentRound = SubWeapon.Magazine;
 			}
+
+			NecGameInstance->PlayerMenu->UpdatePlayerRounds(SubWeapon.CurrentRound, SubWeapon.TotalRound);
 			break;
 		default:
 			break;
@@ -882,13 +975,16 @@ void APro4Character::Attack()
 		{
 		// 총은 Fire
 		case WeaponMode::Main:
+			IsFire = true;
 			Fire();
 			break;
 		case WeaponMode::Sub:
+			IsFire = true;
 			Fire();
 			break;
 		// 칼은 Swing
 		case WeaponMode::Knife:
+			Stab();
 			break;
 		// 투척무기는 Throw
 		case WeaponMode::ATW:
@@ -918,6 +1014,7 @@ void APro4Character::Zoom()
 				SpringArm->TargetArmLength = 450.0f;
 				SpringArm->SocketOffset = FVector(0.0f, 100.0f, 50.0f);
 				Camera->FieldOfView = 90.0f;
+				NecGameInstance->PlayerMenu->ToggleCrosshair();
 			}
 			else
 			{
@@ -933,10 +1030,12 @@ void APro4Character::Zoom()
 				// 달리기 상태였을시 해제
 				if (IsRun)
 					SetPlayerStateOnServer("Run", false);
+
+				NecGameInstance->PlayerMenu->ToggleCrosshair();
 			}
 
 			// 장착무기가 SR일시 스코프 UI로 변경
-			if (MainWeapon.Name == "SR")
+			if (MainWeapon.Name == "SR" && CurrentWeaponMode == WeaponMode::Main)
 			{
 				UNecrophobiaGameInstance* Instance = Cast<UNecrophobiaGameInstance>(GetGameInstance());
 				Instance->PlayerMenu->PlayerZoomWidget();
@@ -955,13 +1054,42 @@ void APro4Character::Fire_Mod()
 // 마우스 클릭시 실행
 void APro4Character::StartFire()
 {
-	IsFire = true;
-	Attack();
+	if (CurrentWeaponMode == WeaponMode::ATW)
+	{
+		if (!IsMontagePlay && !IsThrowing)
+		{
+			PlayMontageOnServer(Pro4Anim->GetThrowMontage(), 1);
+			IsMontagePlay = true;
+			IsThrowing = true;
+			IsThrow = true;
+		}
+	}
+	else
+	{
+		Attack();
+	}
 }
 
 // 마우스에서 때면 실행
 void APro4Character::StopFire()
 {
+	/*
+	IsThrow = false;
+	PlayMontageOnServer(Pro4Anim->GetThrowMontage(), 2);
+	IsMontagePlay = true;
+	IsThrowing = true;
+	if (CurrentWeaponMode == WeaponMode::ATW)
+	{
+		IsThrow = false;
+		PlayMontageOnServer(Pro4Anim->GetThrowMontage(), 2);
+		IsMontagePlay = true;
+		IsThrowing = true;	
+	}
+	*/
+	if (FireMod)
+	{
+		FireA->Stop();
+	}
 	IsFire = false;
 }
 
@@ -972,7 +1100,6 @@ void APro4Character::Fire()
 	{
 		FVector MuzzleLocation;
 		FRotator MuzzleRotation;
-
 		// 무기 장착중일 때 총알 스폰 지점 설정
 		if (Weapon != nullptr)
 		{
@@ -985,7 +1112,7 @@ void APro4Character::Fire()
 
 		}
 
-		if (CurrentWeaponMode == WeaponMode::Main) // 주무기일 때의 총알 발사 (탄창 상태 반영 안함)
+		if (CurrentWeaponMode == WeaponMode::Main) // 주무기일 때의 총알 발사
 		{
 			if (MainWeapon.CurrentRound <= 0)
 			{
@@ -997,11 +1124,19 @@ void APro4Character::Fire()
 			}
 			else
 			{
-				FireA->SetSound(FireS);
+				if (MainWeapon.Name == "SR")
+				{
+					FireA->SetSound(SRSound);
+				}
+				else
+				{
+					FireA->SetSound(FireS);
+				}
 				FireA->Play();
 			}
 
 			MainWeapon.CurrentRound--;
+			NecGameInstance->PlayerMenu->UpdatePlayerRounds(MainWeapon.CurrentRound, MainWeapon.TotalRound);
 		}
 		else if (CurrentWeaponMode == WeaponMode::Sub) // 보조무기일 때의 총알 발사
 		{
@@ -1020,17 +1155,25 @@ void APro4Character::Fire()
 			}
 
 			SubWeapon.CurrentRound--;
+			NecGameInstance->PlayerMenu->UpdatePlayerRounds(SubWeapon.CurrentRound, SubWeapon.TotalRound);
 		}
 
 		// 총알 발사 애니메이션
-		if (!IsMontagePlay)
+		if (!IsMontagePlay && !(CurrentWeaponMode == WeaponMode::Sub))
 		{
+			// 줌 한 상태일 경우 카메라 위치에 따라 스폰하도록 구현
 			if (IsZoom)
 			{
 				PlayMontageOnServer(Pro4Anim->GetAttackMontage(), 2);
 				IsMontagePlay = true;
 				IsAttacking = true;
 				UE_LOG(Pro4, Log, TEXT("2"));
+
+				if (CurrentWeaponMode == WeaponMode::Main && MainWeapon.Name == "SR")
+				{
+					GetController()->GetPlayerViewPoint(MuzzleLocation, MuzzleRotation);
+					MuzzleLocation += MuzzleRotation.Vector() * 150.0f;
+				}
 			}
 			else
 			{
@@ -1038,12 +1181,16 @@ void APro4Character::Fire()
 				IsMontagePlay = true;
 				IsAttacking = true;
 				UE_LOG(Pro4, Log, TEXT("1"));
+
+				GetController()->GetPlayerViewPoint(MuzzleLocation, MuzzleRotation);
+
+				MuzzleLocation += MuzzleRotation.Vector() * 150.0f;
 			}
 		}
 
 		MuzzleFlash->ToggleActive();
 		SpawnProjectileOnServer(MuzzleLocation, MuzzleRotation, MuzzleRotation.Vector(), this);
-
+		
 		if (FireMod) // 연사 상태이면 함수 딜레이 후 다시 콜 (주무기 종류에 따라서 연사속도 변경)
 		{
 			GetWorld()->GetTimerManager().SetTimer(FireDelay, this, &APro4Character::Fire, .075f, false);
@@ -1077,17 +1224,114 @@ void APro4Character::Throw()
 		FRotator ThrowRotation = CameraRotation;
 		ThrowRotation.Pitch += 10.0f;
 
-		DrawDebugSolidBox(GetWorld(), ThrowLocation, FVector(5.0f), FColor::Blue, true, 5.0f);
-		SpawnGrenadeOnServer(ThrowLocation, ThrowRotation, ThrowRotation.Vector(), this);
+		// DrawDebugSolidBox(GetWorld(), ThrowLocation, FVector(5.0f), FColor::Blue, true, 5.0f);
+		SpawnGrenadeOnServer(PlayerGrenade.EquipGrenade, ThrowLocation, ThrowRotation, ThrowRotation.Vector(), this);
+
+		SubtractGrenade();
 	}
 }
 
 void APro4Character::Punch() // 주먹질
 {
-	/*
-	* 주먹질 애니메이션 꾹 눌렀을 때 주먹질 계속하도록
-	*/
-	UE_LOG(Pro4, Log, TEXT("Punch"));
+	/* 주먹질 애니메이션 꾹 눌렀을 때 주먹질 계속하도록 */
+	if (!IsMontagePlay)
+	{
+		SetPlayerStateOnServer("Punch", true);
+		PlayMontageOnServer(Pro4Anim->GetPunchMontage());
+		IsMontagePlay = true;
+		IsAttacking = true;
+	}
+}
+
+void APro4Character::Stab() // 칼
+{
+	/* 주먹질 애니메이션 꾹 눌렀을 때 주먹질 계속하도록 */
+	if (!IsMontagePlay)
+	{
+		SetPlayerStateOnServer("Stab", true);
+		PlayMontageOnServer(Pro4Anim->GetStabMontage());
+		IsMontagePlay = true;
+		IsAttacking = true;	
+	}
+}
+
+void APro4Character::DrawStab()
+{
+	FHitResult AttackHit;
+	FName Profile = "Player";
+	TArray<AActor*> IgnoreActor;
+	IgnoreActor.Add(this);
+	FVector Start = Weapon->GetSocketLocation("KnifeStart");
+	FVector End = Weapon->GetSocketLocation("KnifeEnd");
+	FRotator Rotation = (End - Start).Rotation();
+
+	bool IsHit = UKismetSystemLibrary::BoxTraceSingleByProfile(
+		GetWorld(),
+		Start,
+		End,
+		FVector(10.0f),
+		Rotation,
+		Profile,
+		true,
+		IgnoreActor,
+		EDrawDebugTrace::None,
+		AttackHit,
+		true);
+
+	if (IsHit)
+	{
+		if (AttackHit.GetActor()->ActorHasTag("Player"))
+		{
+			APro4Character* PlayerCharacter = Cast<APro4Character>(AttackHit.GetActor());
+
+			PlayerCharacter->GetDamaged(35.0f, this);
+		}
+		else if (AttackHit.GetActor()->ActorHasTag("Zombie"))
+		{
+			APro4Zombie* Zombie = Cast<APro4Zombie>(AttackHit.GetActor());
+
+			Zombie->ZombieGetDamaged(35.0f, this);
+		}
+	}
+}
+
+/* 펀치 영역을 그리는 함수 */
+void APro4Character::DrawPunch()
+{
+	FHitResult HitResult;
+	FVector Location = GetMesh()->GetSocketLocation("LeftHandPunch");
+	Location += GetActorForwardVector() * 50.0f;
+
+	TArray<AActor*> IgnoreActor;
+	IgnoreActor.Add(this);
+
+	bool isHit = UKismetSystemLibrary::SphereTraceSingleByProfile(
+		GetWorld(),
+		Location,
+		Location,
+		20.0f,
+		"Player",
+		true,
+		IgnoreActor,
+		EDrawDebugTrace::None,
+		HitResult,
+		true
+	);
+
+	if (isHit)
+	{
+		if (HitResult.GetActor()->ActorHasTag("Player"))
+		{
+			APro4Character* OtherPlayer = Cast<APro4Character>(HitResult.GetActor());
+			OtherPlayer->GetDamaged(15.0f, this);
+		}
+		else if(HitResult.GetActor()->ActorHasTag("Zombie"))
+		{
+			APro4Zombie* Zombie = Cast<APro4Zombie>(HitResult.GetActor());
+			
+			Zombie->ZombieGetDamaged(15.0f, this);
+		}
+	}
 }
 
 /* 플레이어가 서버에게 총알을 스폰해달라고 요청하는 함수 */
@@ -1116,9 +1360,9 @@ bool APro4Character::SpawnProjectileOnServer_Validate(FVector Location, FRotator
 }
 
 /* 플레이어가 서버에게 수류탄을 스폰해달라고 요청하는 함수 */
-void APro4Character::SpawnGrenadeOnServer_Implementation(FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner)
+void APro4Character::SpawnGrenadeOnServer_Implementation(const FString& GrenadeType, FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Cyan, TEXT("Server spawn Grenade"));
+	// GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Cyan, TEXT("Server spawn Grenade"));
 	UWorld* World = GetWorld();
 
 	if (World)
@@ -1132,16 +1376,49 @@ void APro4Character::SpawnGrenadeOnServer_Implementation(FVector Location, FRota
 
 		if (SpawnGrenade)
 		{
-			FString GrenadeName = "Grenade";
-			SpawnGrenade->NetMulticast_SetUp(Grenade->GetStaticMesh(), GrenadeName, 1);
+			SpawnGrenade->ThrowGrenade(GrenadeType, Grenade->GetStaticMesh());
 			SpawnGrenade->SetSimulatePhysics(LaunchDirection);
 		}
 	}
 }
 
-bool APro4Character::SpawnGrenadeOnServer_Validate(FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner)
+bool APro4Character::SpawnGrenadeOnServer_Validate(const FString& GrenadeType, FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner)
 {
 	return true;
+}
+
+/* 플레이어가 수류탄을 던진 후 개수를 업데이트하는 함수 */
+void APro4Character::SubtractGrenade()
+{
+	uint16 GrenadeNum = 0;
+
+	if (PlayerGrenade.EquipGrenade == "Grenade")
+	{
+		PlayerGrenade.GrenadeNum--;
+		GrenadeNum = PlayerGrenade.GrenadeNum;
+	}
+	else if (PlayerGrenade.EquipGrenade == "Smoke")
+	{
+		PlayerGrenade.SmokeNum--;
+		GrenadeNum = PlayerGrenade.SmokeNum;
+	}
+	else if (PlayerGrenade.EquipGrenade == "Flash")
+	{
+		PlayerGrenade.FlashNum--;
+		GrenadeNum = PlayerGrenade.FlashNum;
+	}
+	
+	NecGameInstance->PlayerMenu->AddItemToGrenade(PlayerGrenade.EquipGrenade, GrenadeNum);
+
+	// 지금 던진 투척무기가 0개라면!
+	if (!GrenadeNum)
+	{
+		CurrentWeaponMode = WeaponMode::Disarming;
+		PlayerGrenade.EquipGrenade = "None";
+		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(0);
+		NecGameInstance->PlayerMenu->ActiveGrenadeShortcutImage(PlayerGrenade.EquipGrenade);
+		EquipPlayerWeaponOnServer(CurrentWeaponMode, nullptr);
+	}
 }
 
 #pragma endregion
@@ -1158,7 +1435,7 @@ void APro4Character::InteractPressed()
 	GetController()->GetPlayerViewPoint(CharacterLoc, CharacterRot);
 
 	FVector Start = CharacterLoc;
-	FVector End = CharacterLoc + (CharacterRot.Vector() * 1000);
+	FVector End = CharacterLoc + (CharacterRot.Vector() * 1500);
 
 	FCollisionQueryParams TraceParams;
 	UWorld* World = GetWorld();
@@ -1169,8 +1446,8 @@ void APro4Character::InteractPressed()
 	if (bHit)
 	{
 		if (Hit.GetActor()) {
-			DrawDebugSolidBox(World, Hit.ImpactPoint, FVector(5.0f), FColor::Blue, false, 2.0f);
-			DrawDebugLine(World, Start, Hit.ImpactPoint, FColor::Red, false, 2.0f);
+			// DrawDebugSolidBox(World, Hit.ImpactPoint, FVector(5.0f), FColor::Blue, false, 2.0f);
+			// DrawDebugLine(World, Start, Hit.ImpactPoint, FColor::Red, false, 2.0f);
 
 			UE_LOG(Pro4, Log, TEXT("HitActor : %s"), *Hit.GetActor()->GetName());
 
@@ -1206,11 +1483,16 @@ void APro4Character::ChangePlayerWidget()
 	}
 	UE_LOG(Pro4, Warning, TEXT("Change PlayerWidget."));
 
+	uint16 MainWeaponRounds = MainWeapon.CurrentRound + MainWeapon.TotalRound;
+	uint16 SubWeaponRounds = SubWeapon.CurrentRound + SubWeapon.TotalRound;
+
+	NecGameInstance->PlayerMenu->UpdatePlayerWeaponAmmo(MainWeaponRounds, SubWeaponRounds);
 	NecGameInstance->PlayerMenu->ChangePlayerWidget();
 
 }
 
-void APro4Character::Server_DestroyItem_Implementation(AActor* DestroyActor)
+/* 서버에서 액터를 삭제하도록 하는 함수 */
+void APro4Character::Server_DestroyActor_Implementation(AActor* DestroyActor)
 {
 	DestroyActor->Destroy();
 }
@@ -1218,25 +1500,6 @@ void APro4Character::Server_DestroyItem_Implementation(AActor* DestroyActor)
 /// <summary>
 ////////////////////////////////////////////////////// 잠식 상호작용 코드 ////////////////////////////////////////////////////////////
 /// </summary>
-
-// 잠식지역에 들어가고 벗어날 때 실행되는 함수
-void APro4Character::NotifyActorBeginOverlap(AActor* Act)
-{
-	// Tag가 Encroach인 필드에 입장하면 잠식상태 함수 콜백
-	if (Act->ActorHasTag(TEXT("Encroach")))
-	{
-		Encroached();
-	}
-}
-
-void APro4Character::NotifyActorEndOverlap(AActor* Act)
-{
-	// Tag가 Encroach인 필드에 벗어나면 잠식상태 해제 함수 콜백
-	if (Act->ActorHasTag(TEXT("Encroach")))
-	{
-		UnEncroached();
-	}
-}
 
 #pragma region PlayerUI_Inventory_Section
 
@@ -1272,7 +1535,7 @@ void APro4Character::SetPlayerWeapon(AAWeapon* SetWeapon)
 		NoticePlayerWeaponOnServer(SetWeapon);
 	}
 
-	Server_DestroyItem(SetWeapon);
+	Server_DestroyActor(SetWeapon);
 }
 
 /* 클라이언트가 서버에게 드랍된 아이템의 상태를 설정하라고 알리는 함수. */
@@ -1286,22 +1549,12 @@ void APro4Character::SpawnWeaponItemOnServer_Implementation(FVector Location, US
 
 	AAWeapon* DropItem = World->SpawnActor<AAWeapon>(AAWeapon::StaticClass(), Location, Rotation, SpawnParams);
 
-	SpawnWeaponItemOnClient(DropItem, WeaponMesh, ScopeMesh, WeaponName, IconPath, ImagePath);
+	DropItem->SetUpOnServer(WeaponMesh, ScopeMesh, WeaponName, IconPath, ImagePath, 1);
 }
 
 bool APro4Character::SpawnWeaponItemOnServer_Validate(FVector Location, USkeletalMesh* WeaponMesh, UStaticMesh* ScopeMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath)
 {
 	return true;
-}
-
-/* NetMulticast로 호출됨. 서버가 클라이언트들에게 드랍된 무기 아이템의 설정을 뿌리는 함수. */
-void APro4Character::SpawnWeaponItemOnClient_Implementation(AAWeapon* SpawnWeapon, USkeletalMesh* WeaponMesh, UStaticMesh* ScopeMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath)
-{
-	SpawnWeapon->SetSKWeaponItem(WeaponMesh, ScopeMesh);
-	SpawnWeapon->SetItemName(WeaponName);
-	SpawnWeapon->SetIconPath(IconPath);
-	SpawnWeapon->SetBoxImagePath(ImagePath);
-	SpawnWeapon->SetItemNum(1);
 }
 
 /* 클라이언트가 서버에게 플레이어의 무기를 세팅하라고 알리는 함수 */
@@ -1313,7 +1566,8 @@ void APro4Character::NoticePlayerWeaponOnServer_Implementation(AAWeapon* _Weapon
 /* NetMulticast로 호출됨. 서버가 클라이언트들에게 해당 플레이어의 무기 설정을 뿌리는 함수. */
 void APro4Character::NoticePlayerWeaponOnClient_Implementation(AAWeapon* _Weapon)
 {
-	Weapon->SetSkeletalMesh(_Weapon->GetSKWeaponItem());
+	// Weapon->SetSkeletalMesh(_Weapon->GetSKWeaponItem());
+
 	// 무기 타입에 따라 해당하는 변수에 아이템 정보 저장 
 	if (_Weapon->GetItemName() == "AR" || _Weapon->GetItemName() == "SR")
 	{
@@ -1328,13 +1582,6 @@ void APro4Character::NoticePlayerWeaponOnClient_Implementation(AAWeapon* _Weapon
 		{
 			MainWeapon.bHaveWeapon = true;
 		}
-
-		// 스코프 소켓에 스코프 장착
-		if (Weapon->DoesSocketExist("b_gun_scopeSocket"))
-		{
-			Scope->SetStaticMesh(_Weapon->GetSKScopeItem());
-			Scope->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetIncludingScale, "b_gun_scopeSocket");
-		}
 	}
 	else if (_Weapon->GetItemName() == "Pistol")
 	{
@@ -1348,6 +1595,8 @@ void APro4Character::NoticePlayerWeaponOnClient_Implementation(AAWeapon* _Weapon
 		{
 			SubWeapon.bHaveWeapon = true;
 		}
+
+		Scope->SetStaticMesh(nullptr);
 	}
 	else
 	{
@@ -1361,7 +1610,11 @@ void APro4Character::NoticePlayerWeaponOnClient_Implementation(AAWeapon* _Weapon
 		{
 			Knife.bHaveWeapon = true;
 		}
+
+		Scope->SetStaticMesh(nullptr);
 	}
+
+	EquipPlayerWeaponOnServer(CurrentWeaponMode);
 }
 
 /* 플레이어의 방어구를 착용하는 함수 */
@@ -1392,7 +1645,7 @@ void APro4Character::SetPlayerArmor(AAArmor* Armor)
 		NoticePlayerArmorOnServer(Armor, Armor->GetItemName());
 	}
 
-	Server_DestroyItem(Armor);
+	Server_DestroyActor(Armor);
 }
 
 /* Client가 드랍한 방어구 아이템을 스폰해달라고 서버에게 알리는 함수 */
@@ -1502,7 +1755,7 @@ void APro4Character::AddPlayerGrenade(AAGrenade* _Grenade)
 		NecGameInstance->PlayerMenu->AddItemToGrenade(_Grenade->GetItemName(), PlayerGrenade.FlashNum);
 	}
 
-	Server_DestroyItem(_Grenade);
+	Server_DestroyActor(_Grenade);
 }
 
 /* 탄약을 획득했을 때 실행되는 함수 */
@@ -1511,100 +1764,33 @@ void APro4Character::SetPlayerRound(AAmmo* _Ammo)
 	if (_Ammo->GetItemName() == "MainWeaponAmmo")
 	{
 		MainWeapon.TotalRound += _Ammo->GetItemNum();
-	}
-	else
-	{
-		SubWeapon.TotalRound += _Ammo->GetItemNum();
-	}
 
-	Server_DestroyItem(_Ammo);
-}
-#pragma endregion
-
-/* 플레이어 앞에있는 물건 확인하는 함수 */
-void APro4Character::CheckFrontActorUsingTrace()
-{
-	FVector CharacterLoc;
-	FRotator CharacterRot;
-	FHitResult Hit;
-
-	GetController()->GetPlayerViewPoint(CharacterLoc, CharacterRot);
-
-	FVector Start = CharacterLoc;
-	FVector End = CharacterLoc + (CharacterRot.Vector() * 500);
-
-	FCollisionQueryParams TraceParams;
-	UWorld* World = GetWorld();
-
-	bHit = World->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, TraceParams);
-
-	// 커서에 닿은 물체가 있을때
-	if (bHit)
-	{
-		// 닿은 물체의 클래스가 액터이면
-		if (Hit.GetActor())
+		if (CurrentWeaponMode == WeaponMode::Main)
 		{
-			DrawDebugLine(World, Start, Hit.ImpactPoint, FColor::Red, false, 2.0f);
-			DrawDebugString(GetWorld(), Hit.ImpactPoint - Start, TEXT("There are Something exist."), this, FColor::Green, 1.0f);
-
-			AActor* HitActor = Hit.GetActor();
-
-			// 아이템 태그 확인
-			if (HitActor->ActorHasTag(TEXT("Item")))
-			{
-				AABaseItem* BaseItem = Cast<AABaseItem>(HitActor);
-				switch (BaseItem->ItemType)
-				{
-				case AABaseItem::BaseItemType::Weapon:
-				{
-					AAWeapon* Hit_Weapon = Cast<AAWeapon>(BaseItem);
-					Hit_Weapon->ViewWeaponName();
-				}
-					break;
-				case AABaseItem::BaseItemType::Grenade:
-				{
-				
-				}
-					break;
-				case AABaseItem::BaseItemType::Armor:
-				{
-
-				}
-					break;
-				case AABaseItem::BaseItemType::Ammo:
-				{
-
-				}
-					break;
-				case AABaseItem::BaseItemType::Recovery:
-				{
-
-				}
-					break;
-				case AABaseItem::BaseItemType::Vaccine:
-				{
-
-				}
-					break;
-				default:
-					UE_LOG(Pro4, Error, TEXT("Player Trace Error"));
-					break;
-				}
-			}
+			NecGameInstance->PlayerMenu->UpdatePlayerRounds(MainWeapon.CurrentRound, MainWeapon.TotalRound);
 		}
 	}
 	else
 	{
+		SubWeapon.TotalRound += _Ammo->GetItemNum();
 
+		if (CurrentWeaponMode == WeaponMode::Sub)
+		{
+			NecGameInstance->PlayerMenu->UpdatePlayerRounds(SubWeapon.CurrentRound, SubWeapon.TotalRound);
+		}
 	}
-}
 
-/* Player Controller Class */
+	Server_DestroyActor(_Ammo);
+}
+#pragma endregion
+
+/* Get Player Controller Class */
 APro4PlayerController* APro4Character::GetPlayerController()
 {
 	return PlayerController;
 }
 
+/* Set Player Controller class */
 void APro4Character::SetPlayerController(APro4PlayerController* _PlayerController)
 {
 	PlayerController = _PlayerController;
@@ -1612,10 +1798,10 @@ void APro4Character::SetPlayerController(APro4PlayerController* _PlayerControlle
 
 #pragma region PlayerHealth
 
-/* 플레이어의 체력이 회복되었음을 서버에 알리는 함수 */
+/* 서버가 플레이어의 체력을 회복하는 함수  */
 void APro4Character::RecoverPlayerHealthOnServer_Implementation()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, "Recovery Player HP On Server");
+	// GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, "Recovery Player HP On Server");
 	CurrentHP += 10.0f;
 
 	if (CurrentHP >= MaxHP)
@@ -1626,21 +1812,57 @@ void APro4Character::RecoverPlayerHealthOnServer_Implementation()
 	}
 }
 
+/* 체력이 회복되었음을 서버에 알리기 전에, 체크하는 함수 */
 bool APro4Character::RecoverPlayerHealthOnServer_Validate()
 {
 	return true;
 }
 
-// 플레이어 체력이 닳았을 때
-void APro4Character::PlayerHealthGetDamagedOnServer_Implementation(float Damage)
+/* UFUNCTION(Client)로 실행, 해당 캐릭터를 조종하고 있는 클라이언트에게 죽었다는 메세지를 날려주는 함수 */
+void APro4Character::PlayerDead_Implementation()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue, "Processing Player get Damage On Server");
+	AInGamePlayerState* ThisPlayerState = Cast<AInGamePlayerState>(GetPlayerState());
+	APro4PlayerController* ThisPlayerController = Cast<APro4PlayerController>(GetController());
+
+	NecGameInstance->PlayerMenu->ActiveGameOverUI(
+		ThisPlayerState->GetPlayerKill(),
+		ThisPlayerState->GetZombieKill(),
+		ThisPlayerController->SetPlayerRankning(false),
+		ThisPlayerController->GetTotalRanking()
+	);
+	
+	Server_DestroyActor(this);
+}
+
+/* 최후의 1인이 되어 게임이 종료되었을 때 실행되는 함수*/
+void APro4Character::GameOver_Implementation()
+{
+	AInGamePlayerState* ThisPlayerState = Cast<AInGamePlayerState>(GetPlayerState());
+	APro4PlayerController* ThisPlayerController = Cast<APro4PlayerController>(GetController());
+
+	NecGameInstance->PlayerMenu->ActiveGameOverUI(
+		ThisPlayerState->GetPlayerKill(),
+		ThisPlayerState->GetZombieKill(),
+		ThisPlayerController->SetPlayerRankning(false),
+		ThisPlayerController->GetTotalRanking()
+	);
+}
+
+/* 플레이어 체력이 감소했을 때, 서버에게 데미지만큼 체력을 감소하라고 알리는 함수 */
+void APro4Character::PlayerHealthGetDamagedOnServer_Implementation(float Damage, AActor* AttackActor)
+{
 	CurrentHP -= Damage;
 
-	if (CurrentHP < 0)
+	if (CurrentHP <= 0)
 	{
 		CurrentHP = 0;
-		UE_LOG(Pro4, Warning, TEXT("Player is dead."));
+		AInGamePlayerState* ThisPlayerState = Cast<AInGamePlayerState>(GetPlayerState());
+
+		ThisPlayerState->SetIsDead(true);
+
+		RecordPlayerKill(AttackActor);
+		// Player Dead
+		PlayerDead();
 	}
 
 	/* 플레이어가 공격받지 않는 상황에서 맞았을 경우 */
@@ -1654,7 +1876,8 @@ void APro4Character::PlayerHealthGetDamagedOnServer_Implementation(float Damage)
 	GetWorldTimerManager().SetTimer(HealthRecoveryTimer, this, &APro4Character::RecoverPlayerHealthOnServer, 1.0f, true, 5.0f);
 }
 
-bool APro4Character::PlayerHealthGetDamagedOnServer_Validate(float Damage)
+/* 서버에게 플레이어가 입은 데미지를 알려주기 전, 전처리 함수 */
+bool APro4Character::PlayerHealthGetDamagedOnServer_Validate(float Damage, AActor* AttackActor)
 {
 
 	if (Damage >= 100.0f || Damage < 0.0f)
@@ -1665,14 +1888,52 @@ bool APro4Character::PlayerHealthGetDamagedOnServer_Validate(float Damage)
 	return true;
 }
 
-// 플레이어 피격시
-void APro4Character::GetDamaged(float Damage)
+/* 플레이어가 피격당할 경수 실행되는 함수 */
+void APro4Character::GetDamaged(float Damage, AActor* AttackActor)
 {
 	if (GetWorld()->IsServer())
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("Player Get Damaged"));
-		PlayerHealthGetDamagedOnServer(Damage);
+		if (IsMontagePlay)
+		{
+			Pro4Anim->Montage_Stop(0.0f);
+			IsMontagePlay = false;
+		}
+		PlayMontageOnServer(Pro4Anim->GetbeAttackedMontage(), 1);
+		IsMontagePlay = true;
+		IsbeAttacking = true;
+		PlayerHealthGetDamagedOnServer(Damage, AttackActor);
 	}
+}
+
+/* 플레이어의 킬 정보를 기록하는 함수 */
+void APro4Character::RecordPlayerKill_Implementation(AActor* AttackActor)
+{
+	if (AttackActor->ActorHasTag("Player"))
+	{
+		// 다른 플레이어에게 죽은 경우, 다른 플레이어의 킬수를 올려줌.
+		APro4Character* OtherPlayer = Cast<APro4Character>(AttackActor);
+		AInGamePlayerState* AttackPlayerState = Cast<AInGamePlayerState>(OtherPlayer->GetPlayerState());
+
+		// 다른 플레이어의 플레이어 스테이트가 없다면!
+		// 이 함수는 서버에서 실행되기 때문의 모든 플레이어의 스테이트를 보존하고 있음!
+		if (!AttackPlayerState)
+		{
+			// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Cyan, TEXT("There are no Playerstate in Other Player Pawn."));
+		}
+		else
+		{
+			FString TargetType = "Player";
+			AttackPlayerState->UpdatePlayerKillInfo(TargetType, AttackActor);
+		}
+
+	}
+	else
+	{
+		// 좀비한테 죽은 경우
+		;
+	}
+
+	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Record Player Kill"));
 }
 
 #pragma endregion
@@ -1683,7 +1944,7 @@ void APro4Character::ZombieSpawnerBeginOverlap(UPrimitiveComponent* OverlappedCo
 {
 	if (OtherActor->ActorHasTag("ZombieSpawner"))
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, TEXT("ZombieSpawner is Detected."));
+		// GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, TEXT("ZombieSpawner is Detected."));
 
 		AZombieSpawner* ZombieSpawner = Cast<AZombieSpawner>(OtherActor);
 		if (SpawnZombieCurCount < SpawnZombieMaxCount)
@@ -1692,43 +1953,114 @@ void APro4Character::ZombieSpawnerBeginOverlap(UPrimitiveComponent* OverlappedCo
 		}
 		else
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, TEXT("20 zombies have already been spawned."));
+			// GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, TEXT("20 zombies have already been spawned."));
 		}
 	}
 
 
 	/* Draw Player's ZombieSpawner Detection Extent */
-	DrawDebugBox(GetWorld(), GetActorLocation(), DetectExtent, FColor::Green, false, 5.0f, 0, 10.0f);
+	// DrawDebugBox(GetWorld(), GetActorLocation(), DetectExtent, FColor::Green, false, 5.0f, 0, 10.0f);
 }
 
 void APro4Character::ZombieSpawnerEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	if (OtherActor->ActorHasTag("ZombieSpawner"))
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, TEXT("ZombieSpawner is Detected."));
+		// GEngine->AddOnScreenDebugMessage(-1, 4.0f, FColor::Blue, TEXT("ZombieSpawner is Detected."));
 
 		AZombieSpawner* ZombieSpawner = Cast<AZombieSpawner>(OtherActor);
 		ZombieSpawner->PlayerAwayFromSpawner(GetInstigator());
 	}
 
 	/* Draw Player's ZombieSpawner Detection Extent */
-	DrawDebugBox(GetWorld(), GetActorLocation(), DetectExtent, FColor::Red, false, 5.0f, 0, 10.0f);
+	// DrawDebugBox(GetWorld(), GetActorLocation(), DetectExtent, FColor::Red, false, 5.0f, 0, 10.0f);
 }
 
 
 void APro4Character::DetectZombieSpawner(bool isNight)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Detect Zombie Spawner"));
+	// GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Detect Zombie Spawner"));
 	DetectZSpawnerCol->SetGenerateOverlapEvents(isNight);
 }
 
 #pragma endregion
 
 #pragma region EquipPlayerWeapon
+void APro4Character::EquipGrenade()
+{
+	CurrentWeaponMode = WeaponMode::ATW;
+
+	if (PlayerGrenade.EquipGrenade == "Grenade")	// 현재 들고 있는 투척무기가 수류탄인 경우
+	{
+		if (PlayerGrenade.SmokeNum > 0)
+		{
+			PlayerGrenade.EquipGrenade = "Smoke";
+		}
+		else if (PlayerGrenade.FlashNum > 0)
+		{
+			PlayerGrenade.EquipGrenade = "Flash";
+		}
+		else
+		{
+			CurrentWeaponMode = WeaponMode::Disarming;
+			PlayerGrenade.EquipGrenade = "None";
+		}
+
+	}
+	else if(PlayerGrenade.EquipGrenade == "Smoke")	// 현재 들고 있는 투척무기가 연막탄인 경우
+	{
+		if (PlayerGrenade.FlashNum > 0)
+		{
+			PlayerGrenade.EquipGrenade = "Flash";
+		}
+		else
+		{
+			CurrentWeaponMode = WeaponMode::Disarming;
+			PlayerGrenade.EquipGrenade = "None";
+		}
+
+	}
+	else if (PlayerGrenade.EquipGrenade == "Flash")	// 현재 들고 있는 투척무기가 섬광탄인 경우
+	{
+		CurrentWeaponMode = WeaponMode::Disarming;
+		PlayerGrenade.EquipGrenade = "None";
+	}
+	else // 현재 아무것도 들고 있지 않은 경우
+	{
+		if (PlayerGrenade.GrenadeNum > 0)
+		{
+			PlayerGrenade.EquipGrenade = "Grenade";
+		}
+		else if (PlayerGrenade.SmokeNum > 0)
+		{
+			PlayerGrenade.EquipGrenade = "Smoke";
+		}
+		else if (PlayerGrenade.FlashNum > 0)
+		{
+			PlayerGrenade.EquipGrenade = "Flash";
+		}
+		else
+		{
+			CurrentWeaponMode = WeaponMode::Disarming;
+			PlayerGrenade.EquipGrenade = "None";
+		}
+	}
+
+	if (PlayerGrenade.EquipGrenade == "None")
+	{
+		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(0);
+	}
+	else
+	{
+		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(4);
+	}
+
+	NecGameInstance->PlayerMenu->ActiveGrenadeShortcutImage(PlayerGrenade.EquipGrenade);
+}
 
 void APro4Character::EquipPlayerWeaponOnServer_Implementation(const WeaponMode& _CurWeaponMode, UStaticMesh* GrenadeMesh = nullptr)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("EquipPlayerWeaponOnServer"));
+	// GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("EquipPlayerWeaponOnServer"));
 	EquipPlayerWeaponOnClient(_CurWeaponMode, GrenadeMesh);
 }
 
@@ -1737,37 +2069,35 @@ void APro4Character::EquipPlayerWeaponOnClient_Implementation(const WeaponMode& 
 	switch (_CurWeaponMode)
 	{
 	case WeaponMode::Main:
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("MainWeapon"));
 		Weapon->SetSkeletalMesh(MainWeapon.Weapon);
-		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
-		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(1);
-		break;
-	case WeaponMode::Sub:
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("SubWeapon"));
-		Weapon->SetSkeletalMesh(SubWeapon.Weapon);
-		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
-		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(2);
-		break;
-	case WeaponMode::Knife:
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("Knife"));
-		Weapon->SetSkeletalMesh(Knife.Weapon);
-		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
-		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(3);
-		break;
-	case WeaponMode::ATW:
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("ATW"));
-		if (PlayerGrenade.GrenadeNum >= 0)
+
+		if (Weapon->DoesSocketExist("b_gun_scopeSocket"))
 		{
-			Grenade->SetStaticMesh(GrenadeMesh);
+			Scope->SetStaticMesh(MainWeapon.Scope);
+			Scope->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetIncludingScale, "b_gun_scopeSocket");
 		}
 
-		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(4);
+		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
+		break;
+	case WeaponMode::Sub:
+		Weapon->SetSkeletalMesh(SubWeapon.Weapon);
+		Scope->SetStaticMesh(nullptr);
+		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
+		break;
+	case WeaponMode::Knife:
+		Weapon->SetSkeletalMesh(Knife.Weapon);
+		Scope->SetStaticMesh(nullptr);
+		MuzzleFlash->AttachToComponent(Weapon, FAttachmentTransformRules::SnapToTargetNotIncludingScale, "gunFireLocation");
+		break;
+	case WeaponMode::ATW:
+		Grenade->SetStaticMesh(GrenadeMesh);
+		Scope->SetStaticMesh(nullptr);
 		break;
 	case WeaponMode::Disarming:
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("Disarming"));
 		Weapon->SetSkeletalMesh(nullptr);
 		Grenade->SetStaticMesh(nullptr);
-		NecGameInstance->PlayerMenu->ActiveWeaponShortcut(0);
+		Scope->SetStaticMesh(nullptr);
+		PlayerGrenade.EquipGrenade = "None";
 		break;
 	default:
 		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Emerald, TEXT("_CurWeaponMode Variable has garbage value."));
@@ -1779,6 +2109,7 @@ void APro4Character::EquipPlayerWeaponOnClient_Implementation(const WeaponMode& 
 
 #pragma region Escape
 
+/* 플레이어가 백신을 획득하였을 때, 서버에게 알리는 함수 */
 void APro4Character::SetIsPossibleEscapeOnServer_Implementation(bool Escape)
 {
 	IsPossibleEscape = Escape;
@@ -1808,14 +2139,14 @@ void APro4Character::CallHelicopterToEscapeOnServer_Implementation()
 		return;
 	}
 
-	DrawDebugSolidBox(GetWorld(), GetActorLocation(), FVector(20.0f), FColor::Blue, true);
+	// DrawDebugSolidBox(GetWorld(), GetActorLocation(), FVector(20.0f), FColor::Blue, true);
 
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.Owner = this;
 
 	// 헬리콥터가 생성될 좌표
 	FVector SpawnLocation = FVector::ZeroVector;
-	SpawnLocation.Z = 1000.0f;
+	SpawnLocation.Z = 3000.0f;
 
 	FVector ToPlayerVector = GetActorLocation() - SpawnLocation;
 	ToPlayerVector.Z = 0.0f;
@@ -1823,7 +2154,7 @@ void APro4Character::CallHelicopterToEscapeOnServer_Implementation()
 
 	FRotator SpawnRotation = ToPlayerVector.Rotation();
 
-	AActor* SpawnHeliActor = GetWorld()->SpawnActor(BP_Helicopter->GeneratedClass);
+	AActor* SpawnHeliActor = GetWorld()->SpawnActor(BP_Helicopter);
 	AHeli_AH64D* SpawnHelicopter = Cast<AHeli_AH64D>(SpawnHeliActor);
 
 	if (SpawnHelicopter)
@@ -1837,16 +2168,72 @@ void APro4Character::CallHelicopterToEscapeOnServer_Implementation()
 /* 플레이어가 탈출에 성공했을 때 실행되는 함수 */
 void APro4Character::PlayerEscape()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Purple, TEXT("Player Escape"));
-
 	APro4PlayerController* NecrophobiaPlayerController = Cast<APro4PlayerController>(GetController());
 
-	NecrophobiaPlayerController->AvaialbleHelicopterSpawnOnServer();
+	// 서버에 헬리콥터 스폰이 가능하다고 알림
+	NecrophobiaPlayerController->RequestSpawnHelicopterOnServer();
 
+	// 서버에 플레이어가 탈출하도록 요청
+	SuccessPlayerEscapeOnServer();
 }
+
+/* 서버에 플레이어가 탈출했음을 알리는 함수 */
+void APro4Character::SuccessPlayerEscapeOnServer_Implementation()
+{
+	AInGamePlayerState* ThisPlayerState = Cast<AInGamePlayerState>(GetPlayerState());
+
+	ThisPlayerState->SetIsDead(true);
+
+	SuccessPlayerEscapeOnClient();
+}
+
+/* 서버가 플레이어의 탈출상태를 확인하고 해당 클라이언트를 월드에서 삭제하도록 하는 함수 */
+void APro4Character::SuccessPlayerEscapeOnClient_Implementation()
+{
+	AInGamePlayerState* ThisPlayerState = Cast<AInGamePlayerState>(GetPlayerState());
+	APro4PlayerController* ThisPlayerController = Cast<APro4PlayerController>(GetController());
+
+	NecGameInstance->PlayerMenu->ActiveGameOverUI(
+		ThisPlayerState->GetPlayerKill(),
+		ThisPlayerState->GetZombieKill(),
+		ThisPlayerController->SetPlayerRankning(true),
+		ThisPlayerController->GetTotalRanking()
+	);
+
+	Server_DestroyActor(this);
+}
+
 #pragma endregion
 
 #pragma region EncroachField
+
+/* 잠식지역에 들어갈 때 실행되는 함수 */
+void APro4Character::NotifyActorBeginOverlap(AActor* Act)
+{
+	// Tag가 Encroach인 필드에 입장하면 잠식상태 함수 콜백
+	if (Act->ActorHasTag(TEXT("Encroach")))
+	{
+		Encroached();
+	}
+}
+
+/* 잠식지역에 들어가고 벗어날 때 실행되는 함수 */
+void APro4Character::NotifyActorEndOverlap(AActor* Act)
+{
+	// Tag가 Encroach인 필드에 벗어나면 잠식상태 해제 함수 콜백
+	if (Act->ActorHasTag(TEXT("Encroach")))
+	{
+		UnEncroached();
+	}
+}
+
+void APro4Character::Drink()
+{
+	PlayMontageOnServer(Pro4Anim->GetDrinkMontage(), 1);
+	IsMontagePlay = true;
+	IsDrinking = true;
+	IsDrink = true;
+}
 
 /* 잠식 치료제를 사용했을 때, 플레이어의 잠식도를 치료하는 함수 */
 void APro4Character::RecoveryEncroach_Implementation()
@@ -1867,8 +2254,10 @@ void APro4Character::RecoveryEncroach_Implementation()
 		GetWorldTimerManager().ClearTimer(HealthRecoveryTimer);
 		GetWorldTimerManager().SetTimer(HealthRecoveryTimer, this, &APro4Character::RecoverPlayerHealthOnServer, 1.0f, true, 5.0f);
 	}
+	IsDrink = false;
 }
 
+/* 플레이어의 잠식 타이머를 실행하는 함수, 일정 시간이 지나면 플레이어의 잠식도를 올림. */
 void APro4Character::StartEncroachTimer()
 {
 	if (IsEncroach && GetWorld()->IsServer())
@@ -1877,6 +2266,7 @@ void APro4Character::StartEncroachTimer()
 	}
 }
 
+/* 플레이어의 잠식도를 올리는 함수 */
 void APro4Character::SetPlayerEncroach_Implementation() 
 {
 	if (EncroachLevel < 5)
@@ -1892,6 +2282,7 @@ void APro4Character::SetPlayerEncroach_Implementation()
 	}
 }
 
+/* 플레이어가 잠식구역에서 벗어날 경우, 플레이어의 잠식 타이머를 멈추는 함수 */
 void APro4Character::StopEncroachTimer()
 {
 	if (!IsEncroach && GetWorld()->IsServer())
@@ -1901,11 +2292,15 @@ void APro4Character::StopEncroachTimer()
 }
 #pragma endregion
 
+#pragma region Animation
+
+/* 플레이어의 애니메이션을 실행하도록 서버에게 알리는 함수 */
 void APro4Character::PlayMontageOnServer_Implementation(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0)
 {
 	PlayMontageOnClient(AnimationMontage, SectionNumber);
 }
 
+/* 플레이어가 서버로 보낸 애니메이션을 클라이언트로 뿌려주는 함수 (모든 클라이언트에서 해당 플레이어 캐릭터의 애니메이션 실행) */
 void APro4Character::PlayMontageOnClient_Implementation(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0)
 {
 	Pro4Anim->Montage_Play(AnimationMontage, 1.0f);
@@ -1917,6 +2312,7 @@ void APro4Character::PlayMontageOnClient_Implementation(UAnimMontage* AnimationM
 	}
 }
 
+/* 플레이어의 움직임 상태를 서버에게 알리는 함수 */
 void APro4Character::SetPlayerStateOnServer_Implementation(const FString& State, bool bIsState)
 {
 	if (State == "Run")
@@ -1927,8 +2323,21 @@ void APro4Character::SetPlayerStateOnServer_Implementation(const FString& State,
 	{
 		IsZoom = bIsState;
 	}
+	else if (State == "IsForward")
+	{
+		IsForward = bIsState;
+	}
+	else if (State == "Punch")
+	{
+		IsPunch = bIsState;
+	}
+	else if (State == "Stab")
+	{
+		IsStab = bIsState;
+	}
 }
 
+/* 플레이어의 무기상태를 서버에 알리는 함수 */
 void APro4Character::SetPlayerFlagOnServer_Implementation(const FString& State, int32 Flag)
 {
 	if (State == "EquipFlag")
@@ -1939,8 +2348,36 @@ void APro4Character::SetPlayerFlagOnServer_Implementation(const FString& State, 
 	{
 		Moveflag = Flag;
 	}
+	else if (State == "UpDownFlag")
+	{
+		Updownflag = Flag;
+	}
+	else if (State == "LeftRightFlag")
+	{
+		LeftRightflag = Flag;
+	}
 }
 
+#pragma endregion
+
+
+/* 섬광탄을 맞았을 때 실행되는 함수 */
+void APro4Character::FlashBangExplosion_Implementation()
+{
+	NecGameInstance->PlayerMenu->SetFlashBangImage();
+}
+
+void APro4Character::ThrowGrenade()
+{
+	IsMontagePlay = false;
+	IsThrowing = false;
+	if (CurrentWeaponMode == WeaponMode::ATW)
+	{
+		Throw();
+	}
+}
+
+/* 플레이어 캐릭터가 서버, 클라이언트에 복제되어야 하는 변수 목록을 구현한 함수 */
 void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -1948,8 +2385,15 @@ void APro4Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(APro4Character, CurrentHP);
 	DOREPLIFETIME(APro4Character, MaxHP);
 	DOREPLIFETIME(APro4Character, CurrentAP);
+	DOREPLIFETIME(APro4Character, bIsPlayerGetAttacked);
+	DOREPLIFETIME(APro4Character, bIsRecoveryTimerStarted);
 	DOREPLIFETIME(APro4Character, IsRun);
 	DOREPLIFETIME(APro4Character, IsZoom);
 	DOREPLIFETIME(APro4Character, Equipflag);
 	DOREPLIFETIME(APro4Character, Moveflag);
+	DOREPLIFETIME(APro4Character, IsPunch);
+	DOREPLIFETIME(APro4Character, IsStab);
+	DOREPLIFETIME(APro4Character, IsDead);
+	DOREPLIFETIME(APro4Character, IsDrink);
+	DOREPLIFETIME(APro4Character, SpawnZombieCurCount);
 }

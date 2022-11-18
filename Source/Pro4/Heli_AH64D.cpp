@@ -5,6 +5,8 @@
 #include "Pro4Character.h"
 
 #include "Particles/ParticleSystemComponent.h"
+#include "Components/AudioComponent.h"
+#include "Sound/SoundCue.h"
 #include "Net/UnrealNetwork.h"
 #include "DrawDebugHelpers.h"
 
@@ -20,6 +22,7 @@ AHeli_AH64D::AHeli_AH64D()
 	Damaged = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Damaged"));
 	DamagedSmoke = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("DamagedSmoke"));
 	EscapeCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("EscapeCollision"));
+	Heli = CreateDefaultSubobject<UAudioComponent>(TEXT("Heli"));
 
 	RootComponent = SkeletalMesh;
 	MachineGunFX->SetupAttachment(SkeletalMesh);
@@ -34,6 +37,15 @@ AHeli_AH64D::AHeli_AH64D()
 	EscapeCollision->SetBoxExtent(FVector(100.0f));
 	EscapeCollision->SetIsReplicated(true);
 	EscapeCollision->SetCollisionProfileName(TEXT("Escape"));
+
+	Heli->bAutoActivate = false;
+	Heli->SetupAttachment(SkeletalMesh);
+
+	static ConstructorHelpers::FObjectFinder<USoundCue> SC_HeliSound(TEXT("/Game/StarterContent/Audio/HeliSound"));
+	if (SC_HeliSound.Succeeded())
+	{
+		HeliSound = SC_HeliSound.Object;
+	}
 
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_Heli(TEXT("/Game/VigilanteContent/Vehicles/West_Heli_AH64D/SK_West_Heli_AH64D"));
 	if (SK_Heli.Succeeded())
@@ -77,7 +89,8 @@ void AHeli_AH64D::CallEscape()
 void AHeli_AH64D::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	Heli->SetSound(Cast<USoundBase>(HeliSound));
+	Heli->Play();
 	CallEscape();
 	EscapeCollision->OnComponentBeginOverlap.AddDynamic(this, &AHeli_AH64D::CheckEscapeCollision);
 }
@@ -86,16 +99,23 @@ void AHeli_AH64D::BeginPlay()
 void AHeli_AH64D::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
-	if (!IsReachPlayer)
+
+	if (!IsReachToPlayerLocation)
 	{
 		AddActorWorldOffset(GetActorRotation().Vector() * 30.0f);
 
 		if (FVector::Dist2D(GetActorLocation(), GetTargetPlayerLocation()) <= 100.0f)
 		{
-			IsReachPlayer = true;
+			IsReachToPlayerLocation = true;
 			ActiveEscapeCollision();
 		}
+	}
+
+	if (IsBoardTheHelicopter)
+	{
+		AddActorWorldOffset(GetActorRotation().Vector() * 30.0f);
+
+		SetLifeSpan(10.0f);
 	}
 }
 
@@ -105,7 +125,7 @@ void AHeli_AH64D::ActiveEscapeCollision()
 	FHitResult HitResult;
 
 	FVector Start = GetActorLocation();
-	FVector End = Start + (-FVector::ZAxisVector * 2000);
+	FVector End = Start + (-FVector::ZAxisVector * 5000);
 	
 	FCollisionQueryParams TraceParams;
 
@@ -125,10 +145,16 @@ void AHeli_AH64D::ActiveEscapeCollision()
 /* 탈출을 위한 콜리전에 플레이어가 들어왔을 경우 실행되는 함수 */ 
 void AHeli_AH64D::CheckEscapeCollision(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	// GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Cyan, TEXT("CheckEscapeCollision"));
 	if (OtherActor->ActorHasTag("Player"))
 	{
 		APro4Character* PlayerChracter = Cast<APro4Character>(OtherActor);
-		PlayerChracter->PlayerEscape();
+
+		if (PlayerChracter->GetIsPossibleEscape())
+		{
+			PlayerChracter->PlayerEscape();
+			IsBoardTheHelicopter = true;
+		}
 	}
 }
 
@@ -138,5 +164,6 @@ void AHeli_AH64D::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AHeli_AH64D, TargetPlayerLocation);
-	DOREPLIFETIME(AHeli_AH64D, IsReachPlayer);
+	DOREPLIFETIME(AHeli_AH64D, IsReachToPlayerLocation);
+	DOREPLIFETIME(AHeli_AH64D, IsBoardTheHelicopter);
 }

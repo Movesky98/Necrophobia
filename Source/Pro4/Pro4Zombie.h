@@ -89,10 +89,10 @@ public:
 	void DrawAttackField();
 
 	/* Zombie Get Damaged */
-	void ZombieGetDamaged(float _Damage);
+	void ZombieGetDamaged(float _Damage, AActor* AttackActor);
 
 	UFUNCTION(Server, Reliable)
-	void ZombieGetDamagedOnServer(float _Damage);
+	void ZombieGetDamagedOnServer(float _Damage, AActor* AttackActor);
 
 	/* Zombie State Syncronization */
 	UFUNCTION(Server, Reliable)

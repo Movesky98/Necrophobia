@@ -24,7 +24,7 @@ protected:
 
 	float FieldSize;
 
-	UFUNCTION(Server, Reliable)
+	UFUNCTION(NetMulticast, Reliable)
 	void GrowEncroachField();
 
 	void NotifyActorBeginOverlap(AActor* Act) override;

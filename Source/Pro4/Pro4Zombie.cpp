@@ -5,7 +5,9 @@
 #include "Pro4ZombieAI.h"
 #include "ZombieAnimInstance.h"
 #include "ZombieSpawner.h"
+
 #include "Pro4Character.h"
+#include "InGamePlayerState.h"
 
 #include "DrawDebugHelpers.h"
 #include "Net/UnrealNetwork.h"
@@ -20,14 +22,19 @@ APro4Zombie::APro4Zombie()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	NetCullDistanceSquared = 9000000202358128640.0f;
+
 	ZombieCollision = CreateDefaultSubobject<UCapsuleComponent>(TEXT("ZombieCollision"));
 
 	ZombieCollision->SetupAttachment(RootComponent);
 	ZombieCollision->SetCollisionProfileName(TEXT("Detect_ZSpawner"));
 	ZombieCollision->SetCapsuleHalfHeight(150.0f);
 	ZombieCollision->SetCapsuleRadius(150.0f);
+	
+	GetCapsuleComponent()->SetGenerateOverlapEvents(false);
 
-	GetCapsuleComponent()->SetCollisionProfileName(TEXT("Zombie"));
+	GetMesh()->SetCollisionProfileName(TEXT("Zombie"));
+	GetMesh()->SetGenerateOverlapEvents(true);
 
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh>SK_Zombie(TEXT("/Game/Character_Animation/Zombie/NormalMaleZombie/attack.attack"));
 	if (SK_Zombie.Succeeded())
@@ -44,7 +51,10 @@ APro4Zombie::APro4Zombie()
 	{
 		GetMesh()->SetAnimInstanceClass(SK_ZombieAnim.Class);
 	}
-	
+
+	//GetCapsuleComponent()->SetRelativeRotation(FRotator(-90.0f, 0.0f, 0.0f));
+	GetMesh()->SetRelativeRotation(FRotator(0.0f, 270.0f, 0.0f));
+	GetMesh()->SetRelativeLocation(FVector(0.0f, 0.0f, -90.0f));
 	MovementSetting();
 	IsAttacking = false;
 	IsDowning = true;
@@ -173,15 +183,15 @@ void APro4Zombie::ZombieEndOverlapToSpawner(UPrimitiveComponent* OverlappedComp,
 	}
 }
 
-void APro4Zombie::ZombieGetDamaged(float _Damage)
+void APro4Zombie::ZombieGetDamaged(float _Damage, AActor* AttackActor)
 {
 	if (GetWorld()->IsServer())
 	{
-		ZombieGetDamagedOnServer(_Damage);
+		ZombieGetDamagedOnServer(_Damage, AttackActor);
 	}
 }
 
-void APro4Zombie::ZombieGetDamagedOnServer_Implementation(float _Damage)
+void APro4Zombie::ZombieGetDamagedOnServer_Implementation(float _Damage, AActor* AttackActor)
 {
 	CurrentHP -= _Damage;
 
@@ -190,14 +200,37 @@ void APro4Zombie::ZombieGetDamagedOnServer_Implementation(float _Damage)
 		if (IsDead) return;
 		if (IsMontagePlay)
 			ZombieAnim->Montage_Stop(0.0f);
-
+		
 		PlayMontageOnServer(ZombieAnim->GetDeadMontage());
 		IsDead = true;
 		IsMontagePlay = true;
 		IsDeading = true;
 
+		// 좀비 킬수를 플레이어에게 저장하도록 구현 필요.
+		if (AttackActor->ActorHasTag("Player"))
+		{
+			APro4Character* AttackPlayer = Cast<APro4Character>(AttackActor);
+
+			AInGamePlayerState* AttackPlayerState = Cast<AInGamePlayerState>(AttackPlayer->GetPlayerState());
+
+			FString TargetType = "Zombie";
+			AttackPlayerState->UpdatePlayerKillInfo(TargetType, AttackActor);
+		}
+
+		APro4ZombieAI* AIController = Cast<APro4ZombieAI>(GetController());
+
+		// 좀비 타겟이 존재한다면
+		if (AIController->GetZombieTarget())
+		{
+			APro4Character* TargetPlayer = Cast<APro4Character>(AIController->GetZombieTarget());
+			if (TargetPlayer->GetSpawnZombieCurCount() > 0)
+			{
+				TargetPlayer->SetSpawnZombieCurCount(TargetPlayer->GetSpawnZombieCurCount() - 1);
+			}
+		}
+
 		Dead();
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Zombie is dead."));
+		// GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Zombie is dead."));
 	}
 }
 
@@ -218,24 +251,33 @@ void APro4Zombie::DrawAttackField()
 
 	FCollisionQueryParams GrenadeColParams;
 	bool IsHit = GetWorld()->SweepSingleByProfile(AttackHit, CollisionLocation, CollisionLocation, FQuat::Identity, Profile, BoxCollision);
-	DrawDebugBox(GetWorld(), CollisionLocation, BoxCollision.GetExtent(), FColor::Red, true, 5.0f, 0, 5.0f);
+	// DrawDebugBox(GetWorld(), CollisionLocation, BoxCollision.GetExtent(), FColor::Red, true, 5.0f, 0, 5.0f);
 
 	if (IsHit)
 	{
 		if (AttackHit.GetActor()->ActorHasTag("Player"))
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue, TEXT("Player get damaged."));
-
 			APro4Character* PlayerCharacter = Cast<APro4Character>(AttackHit.GetActor());
-			PlayerCharacter->GetDamaged(Damage);
+			PlayerCharacter->GetDamaged(Damage, this);
 		}
 	}
 }
 
 void APro4Zombie::SetZombieTarget(APawn* TargetPlayer)
 {
-	APro4ZombieAI* ZombieAI = Cast<APro4ZombieAI>(GetController());
-	ZombieAI->SetZombieTarget(TargetPlayer);
+	if (TargetPlayer)
+	{
+		if (GetController())
+		{
+			// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("SetZombieTarget"));
+			APro4ZombieAI* ZombieAI = Cast<APro4ZombieAI>(GetController());
+			ZombieAI->SetZombieTarget(TargetPlayer);
+		}
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("Zombie Target is NULL"));
+	}
 }
 
 void APro4Zombie::PlayMontageOnServer_Implementation(UAnimMontage* AnimationMontage, uint16 SectionNumber = 0)

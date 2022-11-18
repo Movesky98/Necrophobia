@@ -32,11 +32,17 @@ AInGameMode::AInGameMode()
     {
         PlayerControllerClass = APro4PlayerController::StaticClass();
     }
-
+    
     DefaultPawnClass = APro4Character::StaticClass();
     UE_LOG(Pro4, Warning, TEXT("Set PawnClass : APro4Character"));
     GameStateClass = AInGameState::StaticClass();
     PlayerStateClass = AInGamePlayerState::StaticClass();
+
+    // 게임에 입장한 플레이어 수 (총 플레이어 수, 서버 제외)
+    NumberOfPlayers = -1;
+    isGameStart = false;
+    CountSeconds = 30;
+    Time = 0;
 }
 
 /* 월드에 생성되었을 때 실행되는 함수 */
@@ -107,13 +113,12 @@ void AInGameMode::PostLogin(APlayerController* NewPlayer)
     ++NumberOfPlayers;
     UE_LOG(Pro4, Warning, TEXT("Reached Player"));
 
-    if (NumberOfPlayers >= 3 && !isGameStart)
+    if (NumberOfPlayers >= 2 && !isGameStart)
     {
         UE_LOG(Pro4, Warning, TEXT("Start Timer..."));
         GetWorldTimerManager().SetTimer(GameStartTimer, this, &AInGameMode::CountingTheSeconds, 1.0f, true);
         isGameStart = true;
     }
-
 }
 
 /* 플레이어가 세션에서 나갔을 때 실행되는 함수 */
@@ -122,11 +127,11 @@ void AInGameMode::Logout(AController* Exiting)
     Super::Logout(Exiting);
     --NumberOfPlayers;
 
+    // 게임이 시작되고 플레이어가 한명만 남았다면 게임 끝.
     if (isGameStart && NumberOfPlayers == 1)
     {
         GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Game Over"));
     }
-
 }
 
 /* 게임을 시작하는 함수 */
@@ -150,18 +155,32 @@ void AInGameMode::StartGame()
 
     InGameState->SpawnPlayerToStartLocation(SpawnArray);
     InGameState->SetIsTimeToSpawnItem(true);
+    InGameState->SetEscapePlayer(0);
+    InGameState->SetSurvivePlayer(NumberOfPlayers);
+    InGameState->SetTotalPlayer(NumberOfPlayers);
+
+    // GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Emerald, FString::Printf(TEXT("Total Player Num : %d"), NumberOfPlayers));
 
     int32 NumberOfSpawner = ItemSpawnerArray.Num();
 
-    // 아이템 스포너에 백신 생성
-    for (int i = 0; i < 3; i++)
+    if (NumberOfSpawner > 0)
     {
-        int32 Rand = FMath::RandRange(0, NumberOfSpawner);
-        AAItemSpawner* ItemSpawner = Cast<AAItemSpawner>(ItemSpawnerArray[Rand]);
+        // 아이템 스포너에 백신 생성
+        for (int i = 0; i < 3; i++)
+        {
+            int32 Rand = FMath::RandRange(0, NumberOfSpawner);
+            AAItemSpawner* ItemSpawner = Cast<AAItemSpawner>(ItemSpawnerArray[Rand]);
 
-        ItemSpawner->SpawnVaccine();
+            ItemSpawner->SpawnVaccine();
+        }
     }
 
+    for (AActor* ItemSpawnerActor : ItemSpawnerArray)
+    {
+        AAItemSpawner* ItemSpawner = Cast<AAItemSpawner>(ItemSpawnerActor);
+
+        ItemSpawner->Server_SpawnItem();
+    }
 }
 
 /* 충분한 인원이 모이고 시간초를 세는 함수 */
@@ -178,7 +197,7 @@ void AInGameMode::CountingTheSeconds()
 /* 서버가 보스를 생성하는 함수 */
 void AInGameMode::SpawnBossZombie()
 {
-    FVector SpawnLocation = FVector(-47632.0f, 19246.0f, 40.0f);
+    FVector SpawnLocation = FVector(-54517.0f, 16819.0f, 92.5f);
     FRotator SpawnRotation = FRotator(0.0f);
     FActorSpawnParameters SpawnParams;
     SpawnParams.Owner = this;

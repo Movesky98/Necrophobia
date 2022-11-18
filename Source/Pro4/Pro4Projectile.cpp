@@ -4,6 +4,7 @@
 #include "Pro4Projectile.h"
 #include "Pro4Character.h"
 #include "Pro4Zombie.h"
+#include "Pro4Boss.h"
 
 #include "DrawDebugHelpers.h"
 
@@ -11,6 +12,7 @@
 APro4Projectile::APro4Projectile()
 {
 	bReplicates = true;
+	NetCullDistanceSquared = 9000000202358128640.0f;
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MESH"));
 	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
@@ -23,8 +25,8 @@ APro4Projectile::APro4Projectile()
 	Mesh->SetUseCCD(true);
 
 	ProjectileMovementComponent->SetUpdatedComponent(Mesh);
-	ProjectileMovementComponent->InitialSpeed = 3000.0f;
-	ProjectileMovementComponent->MaxSpeed = 3000.0f;
+	ProjectileMovementComponent->InitialSpeed = 9000.0f;
+	ProjectileMovementComponent->MaxSpeed = 9000.0f;
 	ProjectileMovementComponent->bRotationFollowsVelocity = true;
 	ProjectileMovementComponent->bShouldBounce = false;
 
@@ -33,6 +35,7 @@ APro4Projectile::APro4Projectile()
 
 	ProjectileParticle->bAutoActivate = false;
 
+	/* 필요한 에셋들을 불러옴 */
 	static ConstructorHelpers::FObjectFinder<UStaticMesh>SK_PROJECTILE(TEXT("/Game/Weapon/FPS_Weapon_Bundle/Weapons/Meshes/Ammunition/SM_Shell_556x45"));
 	if (SK_PROJECTILE.Succeeded())
 	{
@@ -82,28 +85,31 @@ void APro4Projectile::FireInDirection(const FVector& ShootDirection)
 /* 총알이 무언가에 맞았을 때 실행되는 함수 */
 void APro4Projectile::ProjectileBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, OtherActor->GetName());
 	ProjectileMovementComponent->bSimulationEnabled = false;
 	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	FRotator NewRotation = SweepResult.ImpactNormal.Rotation();
-
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Blue , Mesh->GetRelativeRotation().ToString());
-	GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, NewRotation.ToString());
 
 	if (OtherActor->ActorHasTag("Player"))
 	{
 		ProjectileParticle->SetTemplate(Particle_Blood);
 		
 		APro4Character* PlayerCharacter = Cast<APro4Character>(OtherActor);
-		PlayerCharacter->GetDamaged(30.0f);
+		PlayerCharacter->GetDamaged(30.0f, GetOwner());
 	}
 	else if(OtherActor->ActorHasTag("Zombie"))
 	{
 		ProjectileParticle->SetTemplate(Particle_Blood);
 
 		APro4Zombie* Zombie = Cast<APro4Zombie>(OtherActor);
-		Zombie->ZombieGetDamaged(30.0f);
+		Zombie->ZombieGetDamaged(30.0f, GetOwner());
+	}
+	else if (OtherActor->ActorHasTag("BossZombie"))
+	{
+		ProjectileParticle->SetTemplate(Particle_Blood);
+
+		APro4Boss* BossZombie = Cast<APro4Boss>(OtherActor);
+		BossZombie->ZombieGetDamaged(30.0f, GetOwner());
 	}
 	else
 	{

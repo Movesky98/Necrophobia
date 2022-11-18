@@ -32,7 +32,7 @@ void AZombieSpawner::BeginPlay()
 }
 
 /* 플레이어의 콜리전에 스포너가 들어올 때 실행되는 함수 */
-void AZombieSpawner::PlayerOverlapToZSpawner(APawn* PlayerInstigator)
+void AZombieSpawner::PlayerOverlapToZSpawner_Implementation(APawn* PlayerInstigator)
 {
 	// 이미 플레이어가 지정되어 있으면 함수를 실행하지 않음.
 	if (OverlapPlayer != nullptr && OverlapPlayer != PlayerInstigator)
@@ -49,7 +49,7 @@ void AZombieSpawner::PlayerOverlapToZSpawner(APawn* PlayerInstigator)
 }
 
 /* 플레이어의 콜리전에 스포너가 멀어졌을 때 실행되는 함수 */
-void AZombieSpawner::PlayerAwayFromSpawner(APawn* PlayerInstigator)
+void AZombieSpawner::PlayerAwayFromSpawner_Implementation(APawn* PlayerInstigator)
 {
 	if (OverlapPlayer == nullptr || OverlapPlayer != PlayerInstigator)
 	{
@@ -77,20 +77,24 @@ void AZombieSpawner::SpawnZombieOnServer_Implementation(APawn* PlayerInstigator)
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.Owner = this;	// Server
 			SpawnParams.Instigator = PlayerInstigator;	// Target Player
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue, PlayerInstigator->GetName());
+			// GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue, PlayerInstigator->GetName());
 
 			APro4Zombie* SpawnZombie = World->SpawnActor<APro4Zombie>(Zombie, SpawnLocation, SpawnRotation, SpawnParams);
-			SpawnZombie->SetZombieTarget(PlayerInstigator);
-			
-			PlayerCharacter->SetSpawnZombieCurCount(PlayerCharacter->GetSpawnZombieCurCount() + 1);
+
+			if (SpawnZombie)
+			{
+				SpawnZombie->SetZombieTarget(PlayerInstigator);
+
+				PlayerCharacter->SetSpawnZombieCurCount(PlayerCharacter->GetSpawnZombieCurCount() + 1);
+			}
 		}
 
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Server Spawned Zombie."));
+		// GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red, TEXT("Server Spawned Zombie."));
 		bIsSpawn = true;
 	}
 	else
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue, TEXT("Zombie already has spawned"));
+		// GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Blue, TEXT("Zombie already has spawned"));
 	}
 }
 

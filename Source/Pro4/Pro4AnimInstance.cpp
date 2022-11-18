@@ -36,6 +36,41 @@ UPro4AnimInstance::UPro4AnimInstance()
 	{
 		AttackMontage = ATTACK_MONTAGE.Object;
 	}
+
+	// 戚摹 局聪皋捞记 根鸥林
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> PUNCH_MONTAGE(TEXT("/Game/Character_Animation/Mannequin/Animations/Punch_Montage.Punch_Montage"));
+	if (PUNCH_MONTAGE.Succeeded())
+	{
+		PunchMontage = PUNCH_MONTAGE.Object;
+	}
+
+	// 乔拜 局聪皋捞记 根鸥林
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> BEATTACKED_MONTAGE(TEXT("/Game/Character_Animation/Mannequin/Animations/beAttacked_Montage.beAttacked_Montage"));
+	if (BEATTACKED_MONTAGE.Succeeded())
+	{
+		beAttackedMontage = BEATTACKED_MONTAGE.Object;
+	}
+
+	// 捧么 局聪皋捞记 根鸥林
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> THROW_MONTAGE(TEXT("/Game/Character_Animation/Mannequin/Animations/Throw_Montage.Throw_Montage"));
+	if (THROW_MONTAGE.Succeeded())
+	{
+		ThrowMontage = THROW_MONTAGE.Object;
+	}
+
+	// 靛傅农 局聪皋捞记 根鸥林
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> DRINK_MONTAGE(TEXT("/Game/Character_Animation/Mannequin/Animations/Drink_Montage.Drink_Montage"));
+	if (DRINK_MONTAGE.Succeeded())
+	{
+		DrinkMontage = DRINK_MONTAGE.Object;
+	}
+
+	// 骂福扁 局聪皋捞记 根鸥林
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> STAB_MONTAGE(TEXT("/Game/Character_Animation/Mannequin/Animations/Stab_Montage.Stab_Montage"));
+	if (STAB_MONTAGE.Succeeded())
+	{
+		StabMontage = STAB_MONTAGE.Object;
+	}
 }
 
 void UPro4AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
@@ -56,10 +91,12 @@ void UPro4AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 			IsCrouch = Character->GetMovementComponent()->IsCrouching();
 			IsRun = Character->IsRunning();
 			IsZoom = Character->IsZooming();
+			IsPunch = Character->IsPunching();
+			IsStab = Character->IsStabbing();
 			Equipflag = Character->IsEquip();
 			Moveflag = Character->MoveMode();
 			CharacterRotationPitch = Character->CharacterPitch();
-			CharacterRotationYaw = Character->CharacterYaw();
+			CharacterArmControl = Character->CharacterArmPitch();
 		}
 	}
 }
@@ -82,10 +119,33 @@ void UPro4AnimInstance::PlayAttackMontage()
 	Montage_Play(AttackMontage, 1.0f);
 }
 
+// 戚摹 根鸥林 角青
+void UPro4AnimInstance::PlayPunchMontage()
+{
+	Montage_Play(PunchMontage, 1.0f);
+}
+
+// 乔拜 根鸥林 角青
+void UPro4AnimInstance::PlaybeAttackedMontage()
+{
+	Montage_Play(beAttackedMontage, 1.0f);
+}
+
+// 捧么 根鸥林 角青
+void UPro4AnimInstance::PlayThrowMontage()
+{
+	Montage_Play(ThrowMontage, 1.0f);
+}
+
+// 骂福扁 根鸥林 角青
+void UPro4AnimInstance::PlayStabMontage()
+{
+	Montage_Play(StabMontage, 1.0f);
+}
+
 // 根鸥林 锅龋 捞悼
 void UPro4AnimInstance::JumpToEquipMontageSection(int32 NewSection)
 {
-	UE_LOG(Pro4, Log, TEXT("section1."));
 	Montage_JumpToSection(GetEquipMontageSectionName(NewSection), EquipMontage);
 }
 
@@ -93,6 +153,38 @@ FName UPro4AnimInstance::GetEquipMontageSectionName(int32 Section)
 {
 	UE_LOG(Pro4, Log, TEXT("section2."));
 	return FName(*FString::Printf(TEXT("%d")), Section);
+}
+
+void UPro4AnimInstance::AnimNotify_ThrowNotify()
+{
+	// GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Emerald, TEXT("Throw Notify"));
+	
+	auto Pawn = TryGetPawnOwner();
+	if (IsValid(Pawn))
+	{
+		APro4Character* Player = Cast<APro4Character>(Pawn);
+		Player->ThrowGrenade();
+	}
+}
+
+void UPro4AnimInstance::AnimNotify_Punch()
+{
+	auto Pawn = TryGetPawnOwner();
+	if (IsValid(Pawn))
+	{
+		APro4Character* Player = Cast<APro4Character>(Pawn);
+		Player->DrawPunch();
+	}
+}
+
+void UPro4AnimInstance::AnimNotify_StabNotify()
+{
+	auto Pawn = TryGetPawnOwner();
+	if (IsValid(Pawn))
+	{
+		APro4Character* Player = Cast<APro4Character>(Pawn);
+		Player->DrawStab();
+	}
 }
 
 UAnimMontage* UPro4AnimInstance::GetEquipMontage()
@@ -108,4 +200,29 @@ UAnimMontage* UPro4AnimInstance::GetReloadMontage()
 UAnimMontage* UPro4AnimInstance::GetAttackMontage()
 {
 	return AttackMontage;
+}
+
+UAnimMontage* UPro4AnimInstance::GetPunchMontage()
+{
+	return PunchMontage;
+}
+
+UAnimMontage* UPro4AnimInstance::GetbeAttackedMontage()
+{
+	return beAttackedMontage;
+}
+
+UAnimMontage* UPro4AnimInstance::GetThrowMontage()
+{
+	return ThrowMontage;
+}
+
+UAnimMontage* UPro4AnimInstance::GetDrinkMontage()
+{
+	return DrinkMontage;
+}
+
+UAnimMontage* UPro4AnimInstance::GetStabMontage()
+{
+	return StabMontage;
 }

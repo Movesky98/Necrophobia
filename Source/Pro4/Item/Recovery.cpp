@@ -6,15 +6,18 @@
 #include "Components/WidgetComponent.h"
 #include "Net/UnrealNetwork.h"
 
+/* 잠식 치료제 */
 ARecovery::ARecovery()
 {
 	ItemType = BaseItemType::Recovery;
 
-	static ConstructorHelpers::FObjectFinder<UStaticMesh>SM_Sphere(TEXT("/Game/StarterContent/Shapes/Shape_Sphere"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh>SM_Sphere(TEXT("/Game/DownloadAssets/First_Aid_Health_Kit/Meshes/SM_AidPot1_01"));
 	if (SM_Sphere.Succeeded())
 	{
 		BoxMesh->SetStaticMesh(SM_Sphere.Object);
 	}
+
+	BoxMesh->SetRelativeScale3D(FVector(3.0f));
 }
 
 /* 아이템이 월드에 생성되었을 때, 실행되는 함수 */
@@ -28,8 +31,9 @@ void ARecovery::BeginPlay()
 	WBP_NameWidget = Cast<UItemNameWidget>(NameWidget->GetUserWidgetObject());
 	if (WBP_NameWidget != nullptr)
 	{
-		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/SMG11_Icon_500x500";
+		ItemIconPath = "/Game/UI/Sprites/Weapon_Icon/Medicine_Icon_500x500";
 		ItemName = "EncroachMedicine";
+		ItemNum = 1;
 		WBP_NameWidget->SetItemName(ItemName);
 	}
 	else

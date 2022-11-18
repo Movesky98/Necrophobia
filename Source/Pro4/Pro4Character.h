@@ -6,6 +6,8 @@
 #include "GameFramework/Character.h"
 #include "Pro4Projectile.h"
 #include "Components/SceneCaptureComponent2D.h"
+#include "PaperSprite.h"
+#include "PaperSpriteComponent.h"
 #include "Engine/TextureRenderTarget2D.h"
 #include "Pro4PlayerController.h"
 #include "Pro4Character.generated.h"
@@ -14,12 +16,13 @@ USTRUCT()
 struct FGrenadeInfo // 투척무기 정보
 {
 	GENERATED_BODY()
-	UStaticMesh* SM_Grenade = nullptr; // 수류탄 메시
-	uint16 GrenadeNum = 0; // 수류탄 보유수
-	UStaticMesh* SM_Smoke = nullptr; // 연막탄 메시
-	uint16 SmokeNum = 0; // 연막탄 보유수
-	UStaticMesh* SM_Flash = nullptr; // 섬광탄 메시
-	uint16 FlashNum = 0; // 섬광탄 보유수
+	UStaticMesh* SM_Grenade = nullptr;	// 수류탄 메시
+	uint16 GrenadeNum = 0;				// 수류탄 보유수
+	UStaticMesh* SM_Smoke = nullptr;	// 연막탄 메시
+	uint16 SmokeNum = 0;				// 연막탄 보유수
+	UStaticMesh* SM_Flash = nullptr;	// 섬광탄 메시
+	uint16 FlashNum = 0;				// 섬광탄 보유수
+	FString EquipGrenade = "";			// 현재 들고있는 투척무기 
 };
 
 USTRUCT()
@@ -93,9 +96,21 @@ public:
 	void SetPlayerWeapon(class AAWeapon* SetWeapon);
 	void SetPlayerArmor(class AAArmor* Armor);
 	void AddPlayerGrenade(class AAGrenade* _Grenade);
+	void SetPlayerRound(class AAmmo* _Ammo);
+	void EquipGrenade();
 
-	void DetectZombieSpawner(bool isNight); //
+	UFUNCTION(Client, Reliable)
+	void FlashBangExplosion();
+
+	/* 좀비 스포너를 탐지하는 콜리전을 활성화하기 위한 함수 */
+	void DetectZombieSpawner(bool isNight); 
 	
+	/* 공격 함수 */
+	UFUNCTION(BlueprintCallable)
+	void DrawPunch();
+
+	void DrawStab();
+
 	// 잠식 시스템 함수
 	void StartEncroachTimer();
 	UFUNCTION(Server, Reliable)
@@ -105,7 +120,6 @@ public:
 	void RecoveryEncroach();
 
 	void PlayerEscape(); //
-	void SetPlayerRound(class AAmmo* _Ammo);
 	
 	APro4PlayerController* GetPlayerController();
 	void SetPlayerController(APro4PlayerController* PlayerController);
@@ -122,6 +136,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = MapCam)
 	USceneCaptureComponent2D* MapCapture;
+
+	UPROPERTY(VisibleAnywhere, Category = MapCam)
+	UPaperSpriteComponent* PaperSprite;
 	/* 카메라 변수 */
 
 	/* 총알 변수 */
@@ -151,8 +168,14 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = "Player")
 	UStaticMeshComponent* Grenade;
 
-	UPROPERTY(VisibleAnywhere, Category = "Player")
-	float CharacterRotationYaw;
+	UPROPERTY(VisibleAnywhere, Category = "View")
+		FVector TargetLocation;
+
+	UPROPERTY(VisibleAnywhere, Category = "View")
+		FVector CharacLocation;
+
+	UPROPERTY(VisibleAnywhere, Category = "View")
+		FVector CheckView;
 	/* 무기, 방어구 */
 
 	
@@ -166,6 +189,16 @@ public:
 	void SetIsPossibleEscapeOnServer(bool Escape);
 
 	/* 다른 클래스에서 캐릭터 상태 확인과 수정을 위한 함수들 */
+	void Drink();
+
+	bool GetIsDead()
+	{
+		if (IsDead)
+			return true;
+		else
+			return false;
+	}
+
 	bool IsRunning()
 	{
 		if (IsRun)
@@ -190,6 +223,21 @@ public:
 			return false;
 	}
 
+	bool ATWThrow()
+	{
+		return IsThrow;
+	}
+
+	bool IsPunching()
+	{
+		return IsPunch;
+	}
+
+	bool IsStabbing()
+	{
+		return IsStab;
+	}
+
 	int32 IsEquip()
 	{
 		return Equipflag;
@@ -202,9 +250,9 @@ public:
 		return CharacterRotationPitch;
 	}
 
-	float CharacterYaw()
+	float CharacterArmPitch()
 	{
-		return CharacterRotationYaw;
+		return CharacterArmControl;
 	}
 	/* 캐릭터와 카메라 회전값을 애니메이션에 반영하기 위한 함수*/
 
@@ -274,6 +322,14 @@ public:
 	UFUNCTION(Server, Reliable)
 	void CallHelicopterToEscapeOnServer();
 
+	/* 아이템 획득 시, 해당 아이템을 공통적으로 제거하는 함수 */
+	UFUNCTION(Server, Reliable)
+	void Server_DestroyActor(AActor* DestroyActor);
+
+	/* 수류탄을 던지는 타이밍에 실행되는 함수 */
+	UFUNCTION()
+	void ThrowGrenade();
+
 #pragma region PlayerState
 public:
 	/* 캐릭터 체력, 방어력 */
@@ -290,19 +346,27 @@ public:
 	float CurrentAP;
 	/* 캐릭터 체력, 방어력 */
 
-	/* 서버에서 캐릭터 체력관련 정보를 갱신하기 위한 함수 */
+	/* 서버에서 캐릭터 체력 회복 정보를 갱신하기 위한 함수 */
 	UFUNCTION(Server, Reliable, WithValidation)
 	void RecoverPlayerHealthOnServer();
-	
+
+	/* 서버에서 캐릭터 피격 정보를 갱신하기 위한 함수 */
 	UFUNCTION(Server, Reliable, WithValidation)
-	void PlayerHealthGetDamagedOnServer(float Damage);
-	/* 서버에서 캐릭터 체력관련 정보를 갱신하기 위한 함수 */
+	void PlayerHealthGetDamagedOnServer(float Damage, AActor* AttackActor);
 
 	// 캐릭터 피격
-	void GetDamaged(float Damage);
+	void GetDamaged(float Damage, AActor* AttackActor);
+
+	/* 플레이어의 킬 정보를 저장하는 함수 */
+	UFUNCTION(Server, Reliable)
+	void RecordPlayerKill(AActor* AttackActor);
+
+	UFUNCTION(Client, Reliable)
+	void GameOver();
 
 	/* 공격 효과음 */
 	class UAudioComponent* FireA;
+	class USoundCue* SRSound;
 	class USoundCue* SubS;
 	class USoundCue* EmptyS;
 	class USoundCue* FireS;
@@ -342,7 +406,7 @@ private:
 	void NotifyActorEndOverlap(AActor* Act) override;
 
 	UPROPERTY(EditAnywhere)
-	UBlueprint* BP_Helicopter;
+	TSubclassOf<class AHeli_AH64D> BP_Helicopter;
 
 	// 주요 클래스
 	APro4PlayerController* PlayerController;
@@ -375,6 +439,7 @@ private:
 	void Fire_Mod();
 	void Throw();
 	void Punch();
+	void Stab();
 
 	// 장착 함수
 	void EquipMain();
@@ -397,13 +462,22 @@ private:
 	bool FireMod;
 	UPROPERTY(Replicated)
 	bool IsZoom;
+	UPROPERTY(Replicated)
+	bool IsDead;
 	bool bHit;
 	bool IsForward;
 	bool IsFire;
+	UPROPERTY(Replicated)
+	bool IsPunch;
+	UPROPERTY(Replicated)
+	bool IsStab;
 	bool IsMontagePlay;
 	bool IsPossibleEscape;
 	bool CanZoom;
 	bool PlayerRun;
+	bool IsThrow;
+	UPROPERTY(Replicated)
+	bool IsDrink;
 
 	int32 Updownflag;
 	int32 LeftRightflag;
@@ -423,7 +497,7 @@ private:
 
 	// 캐릭터 애니메이션 컨트롤에 사용할 회전값 저장 변수
 	float CharacterRotationPitch;
-	//float CharacterRotationYaw;
+	float CharacterArmControl;
 
 	// 연사속도 조절 변수
 	FTimerHandle FireDelay;
@@ -439,6 +513,21 @@ private:
 
 	UFUNCTION()
 		void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	UFUNCTION()
+		void OnbeAttackedMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	UFUNCTION()
+		void OnThrowMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	UFUNCTION()
+		void OnDrinkMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	UFUNCTION()
+		void OnPunchMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	UFUNCTION()
+		void OnStabMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	/* 애니메이션 몽타주 종료시 콜백되는 함수 */
 
 	/* 애니메이션 몽타주 작동중인지 체크하기 위한 변수 */
@@ -453,6 +542,15 @@ private:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
 		bool IsAttacking;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = beAttacked, Meta = (AllowPrivateAccess = true))
+		bool IsbeAttacking;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = beAttacked, Meta = (AllowPrivateAccess = true))
+		bool IsThrowing;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = beAttacked, Meta = (AllowPrivateAccess = true))
+		bool IsDrinking;
 	/* 애니메이션 몽타주 작동중인지 체크하기 위한 변수 */
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, Meta = (AllowPrivateAccess = true))
@@ -465,16 +563,15 @@ private:
 	// Character Role Test.
 	FString GetEnumRole(ENetRole CharacterRole);
 
-	// Trace Sector
-	void CheckFrontActorUsingTrace();
-
-	/* Spawn Section */
+	/* Spawn Projectile & Grenade Section */
 	UFUNCTION(Server, Reliable, WithValidation)
 	void SpawnProjectileOnServer(FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner);
 
 	UFUNCTION(Server, Reliable, WithValidation)
-	void SpawnGrenadeOnServer(FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner);
-	/* Spawn Section */
+	void SpawnGrenadeOnServer(const FString& GrenadeType, FVector Location, FRotator Rotation, FVector LaunchDirection, AActor* _Owner);
+
+	void SubtractGrenade();
+	/* Spawn Projectile & Grenade Section */
 
 	/* Spawn Armor Section */
 	UFUNCTION(Server, Reliable, WithValidation)
@@ -494,9 +591,6 @@ private:
 	UFUNCTION(Server, Reliable, WithValidation)
 	void SpawnWeaponItemOnServer(FVector Location, USkeletalMesh* WeaponMesh, UStaticMesh* ScopeMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath);
 
-	UFUNCTION(NetMulticast, Reliable)
-	void SpawnWeaponItemOnClient(class AAWeapon* SpawnWeapon, USkeletalMesh* WeaponMesh, UStaticMesh* ScopeMesh, const FString& WeaponName, const FString& IconPath, const FString& ImagePath);
-
 	UFUNCTION(Server, Reliable)
 	void NoticePlayerWeaponOnServer(AAWeapon* _Weapon);
 
@@ -504,19 +598,16 @@ private:
 	void NoticePlayerWeaponOnClient(AAWeapon* _Weapon);
 	/* Spawn Weapon Section */
 
-	/* 아이템 획득 시, 해당 아이템을 공통적으로 제거하는 함수 */
-	UFUNCTION(Server, Reliable)
-	void Server_DestroyItem(AActor* DestroyActor);
-
 	/* Detect Zombie Spawner Sector */
 	UPROPERTY(VisibleAnywhere, Category = DetectZSpawner)
 	UBoxComponent* DetectZSpawnerCol;
 	bool IsDayChanged = false;
-	FVector DetectExtent = FVector(1000.0f, 1000.0f, 1000.0f);
+	FVector DetectExtent = FVector(1500.0f, 1500.0f, 2000.0f);
 
 	// 현재 스폰된 좀비수와 최대 좀비 수
+	UPROPERTY(Replicated)
 	uint16 SpawnZombieCurCount = 0;
-	uint16 SpawnZombieMaxCount = 20;
+	uint16 SpawnZombieMaxCount = 10;
 
 	/* 좀비 스포너 */
 	UFUNCTION()
@@ -542,7 +633,28 @@ private:
 
 	UFUNCTION(Server, Reliable)
 	void SetPlayerStateOnServer(const FString& State, bool bIsState);
-	
+
 	UFUNCTION(Server, Reliable)
 	void SetPlayerFlagOnServer(const FString& State, int32 Flag);
+
+	UFUNCTION(Client, Reliable)
+	void PlayerDead();
+
+	/* 플레이어가 탈출 조건에 적절했을 때  */
+	UFUNCTION(Server, Reliable)
+	void SuccessPlayerEscapeOnServer();
+
+	UFUNCTION(Client, Reliable)
+	void SuccessPlayerEscapeOnClient();
+
+	/* 플레이어 미니맵 세팅 */
+	UFUNCTION(Server, Reliable)
+	void SetTextureTargetOnServer();
+
+	UFUNCTION(Client, Reliable)
+	void SetTextureTargetOnClient();
+
+	UPaperSprite* RenderIcon;
+
+	UTextureRenderTarget2D* RenderTarget;
 };
