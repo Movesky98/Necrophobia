@@ -40,6 +40,8 @@ class ANecrophobiaCharacter : public ACharacter
 public:
 	ANecrophobiaCharacter();
 	
+	UPROPERTY(BlueprintReadWrite, Category = Test)
+	bool IsClicked;
 
 protected:
 
