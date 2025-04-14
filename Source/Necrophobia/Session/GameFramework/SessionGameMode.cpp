@@ -10,7 +10,7 @@
 #include "Session/GameFramework/SessionPlayerController.h"
 #include "Session/GameFramework/Subsystem/SessionEventBus.h"
 
-#include "GISessionSubsystem.h"
+#include "GameFramework/GISessionSubsystem.h"
 #include "OnlineSubsystemUtils.h"
 #include "OnlineSessionSettings.h"
 

@@ -65,7 +65,7 @@ TArray<FUniqueNetIdRepl> USessionDataProvider::GetPlayerList()
 
 void USessionDataProvider::OnSessionUpdated()
 {
-	GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green, FString("SessionDataProvider:: OnSessionUpdated() is called."));
+	UE_LOG(LogTemp, Warning, TEXT("SessionDataProvider:: OnSessionUpdated() is called."));
 
 	if (OnSessionDataUpdated.IsBound())
 	{

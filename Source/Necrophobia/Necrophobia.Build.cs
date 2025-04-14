@@ -21,7 +21,6 @@ public class Necrophobia : ModuleRules
 		PrivateIncludePaths.AddRange(new string[] {
 			"Necrophobia",
 			"Necrophobia/Session",
-			"Necrophobia/GameFramwork",
 			"Necrophobia/ZombieEscape",
 		});
 	}
